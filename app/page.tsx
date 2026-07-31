@@ -1,65 +1,197 @@
-import Image from "next/image";
+'use client'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { motion } from 'motion/react'
+import Nav from '@/components/Nav'
+import StarBackground from '@/components/StarBackground'
+import { HISTORICAL_EVENTS } from '@/lib/events'
+import { useAuth } from '@/context/AuthContext'
 
-export default function Home() {
+const FALLBACK_IMAGES: Record<string, string> = {
+  'jfk-1963': 'https://images.unsplash.com/photo-1569428034239-f9565e32e224?w=800&q=80',
+  'ww2-1939': 'https://images.unsplash.com/photo-1524536765000-b76084ca0f01?w=800&q=80',
+  'berlin-wall-1989': 'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800&q=80',
+  '9-11-2001': 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80',
+  'cuban-missile-1962': 'https://images.unsplash.com/photo-1541844053589-346841d0b34c?w=800&q=80',
+  'lincoln-1865': 'https://images.unsplash.com/photo-1617791160588-241658c0f566?w=800&q=80',
+  'titanic-1912': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80',
+  'moon-1969': 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=800&q=80',
+  'ww1-1914': 'https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?w=800&q=80',
+  'soviet-1991': 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&q=80',
+}
+
+export default function LandingPage() {
+  const router = useRouter()
+  const { user, profile } = useAuth()
+  const [freeText, setFreeText] = useState('')
+  const [expandedCard, setExpandedCard] = useState<string | null>(null)
+
+  const filtered = HISTORICAL_EVENTS.slice(0, 6)
+
+  function handleStart(eventId?: string) {
+    if (eventId) router.push(`/diverge/${eventId}`)
+    else if (freeText.trim()) router.push(`/diverge/custom?q=${encodeURIComponent(freeText)}`)
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', position: 'relative', overflowX: 'hidden', fontFamily: 'Inter, system-ui, sans-serif' }}>
+      <StarBackground />
+      <Nav active="home" />
+
+      {/* Hero */}
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', textAlign: 'center', padding: '0 24px', paddingTop: 80 }}>
+
+        {user && profile?.username && (
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-dim)', marginBottom: 16, letterSpacing: '-0.01em' }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            Hey, <span style={{ color: 'var(--text)' }}>{profile.username}</span>
+          </motion.p>
+        )}
+
+        <motion.h1
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          style={{ fontSize: 'clamp(40px, 7vw, 88px)', fontWeight: 900, lineHeight: 1.08, margin: '0 0 4px', letterSpacing: '-0.02em' }}
+        >
+          History had a plan.
+        </motion.h1>
+
+        <motion.h1
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.15, ease: 'easeOut' }}
+          style={{ fontSize: 'clamp(40px, 7vw, 88px)', fontWeight: 900, lineHeight: 1.08, color: 'var(--accent)', margin: '0 0 28px', letterSpacing: '-0.02em' }}
+        >
+          You don't have to follow it.
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3, ease: 'easeOut' }}
+          style={{ fontSize: 17, color: 'var(--text-dim)', marginBottom: 52, lineHeight: 1.6, whiteSpace: 'nowrap' }}
+        >
+          Pick any moment in time. Ask to see a change. Watch it unfold.
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.45, ease: 'easeOut' }}
+          style={{ display: 'flex', gap: 10, width: '100%', maxWidth: 680, marginBottom: 18 }}
+        >
+          <input
+            value={freeText}
+            onChange={e => setFreeText(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && freeText.trim() && handleStart()}
+            placeholder="What if the Berlin Wall never fell..."
+            style={{ flex: 1, padding: '15px 20px', borderRadius: 12, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text)', fontSize: 15, outline: 'none', fontFamily: 'inherit' }}
+          />
+          <button
+            onClick={() => handleStart()}
+            disabled={!freeText.trim()}
+            style={{
+              padding: '15px 28px', borderRadius: 12, fontSize: 15, fontWeight: 700,
+              border: 'none', whiteSpace: 'nowrap', transition: 'all 0.25s',
+              cursor: freeText.trim() ? 'pointer' : 'not-allowed',
+              background: freeText.trim() ? 'var(--accent)' : 'color-mix(in srgb, var(--accent) 15%, transparent)',
+              color: freeText.trim() ? '#fff' : 'var(--text-dim)',
+            }}
           >
-            Documentation
-          </a>
+            Explore →
+          </button>
+        </motion.div>
+      </div>
+
+      {/* Scenarios */}
+      <div id="scenarios" style={{ position: 'relative', zIndex: 1, padding: '80px 40px 80px', maxWidth: 1100, margin: '0 auto' }}>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 28 }}>
+            FEATURED SCENARIOS
+          </div>
+        </motion.div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+          {filtered.map((event, idx) => (
+            <motion.div
+              key={event.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: idx * 0.07, ease: 'easeOut' }}
+              whileHover={{ y: -4 }}
+              style={{ borderRadius: 16, border: '1px solid var(--border-color)', background: 'var(--card-bg)', overflow: 'hidden', cursor: 'pointer', position: 'relative', zIndex: 1, isolation: 'isolate' }}
+              onClick={() => setExpandedCard(expandedCard === event.id ? null : event.id)}
+            >
+              <div style={{ height: 140, overflow: 'hidden', position: 'relative', background: 'var(--card-bg)' }}>
+                <img
+                  src={FALLBACK_IMAGES[event.id] || `https://picsum.photos/seed/${event.id}/800/400`}
+                  alt={event.title}
+                  referrerPolicy="no-referrer"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.5)' }}
+                />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, var(--bg) 100%)', opacity: 0.92 }} />
+                <div style={{ position: 'absolute', top: 12, left: 14 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', background: 'rgba(0,0,0,0.55)', padding: '3px 8px', borderRadius: 4 }}>
+                    {event.era.toUpperCase()} · {event.year}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ padding: '14px 16px 16px' }}>
+                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6, color: 'var(--text)' }}>{event.title}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-dim)', lineHeight: 1.6, marginBottom: 12 }}>{event.shortDesc}</div>
+
+                {expandedCard === event.id && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    style={{ marginBottom: 12, padding: '10px 12px', borderRadius: 8, background: 'var(--card-bg)', border: '1px solid var(--border-color)', overflow: 'hidden' }}
+                  >
+                    <div style={{ fontSize: 12, color: 'var(--text-dim)', lineHeight: 1.7 }}>{event.fullDesc}</div>
+                  </motion.div>
+                )}
+
+                <button
+                  onClick={e => { e.stopPropagation(); handleStart(event.id) }}
+                  style={{ width: '100%', padding: '9px', borderRadius: 9, border: '1px solid color-mix(in srgb, var(--accent) 35%, transparent)', background: 'color-mix(in srgb, var(--accent) 8%, transparent)', color: 'var(--accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit' }}
+                  onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'color-mix(in srgb, var(--accent) 18%, transparent)'}
+                  onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'color-mix(in srgb, var(--accent) 8%, transparent)'}
+                >
+                  Explore this scenario →
+                </button>
+              </div>
+            </motion.div>
+          ))}
         </div>
-      </main>
-    </div>
-  );
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3 }}
+          style={{ marginTop: 32, textAlign: 'center' }}
+        >
+          <button
+            onClick={() => router.push('/explore')}
+            style={{ padding: '12px 32px', borderRadius: 12, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-dim)', fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit' }}
+            onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.borderColor = 'var(--accent)'; el.style.color = 'var(--text)' }}
+            onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.borderColor = 'var(--border-color)'; el.style.color = 'var(--text-dim)' }}
+          >
+            Show more scenarios →
+          </button>
+        </motion.div>
+      </div>
+    </main>
+  )
 }
