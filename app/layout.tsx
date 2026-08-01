@@ -3,8 +3,11 @@ import './globals.css'
 import { AuthProvider } from '@/context/AuthContext'
 
 export const metadata: Metadata = {
-  title: 'Diverge — AI-Powered Alternate History',
+  title: 'Diverge',
   description: 'Pick a moment in history. Ask what if. Watch the world change.',
+  icons: {
+    icon: '/icon.png',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

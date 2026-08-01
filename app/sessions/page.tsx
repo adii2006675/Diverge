@@ -62,7 +62,7 @@ export default function SessionsPage() {
       <StarBackground />
       <Nav active="sessions" />
 
-      <div style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto', padding: '140px 24px 60px' }}>
+      <div className="font-scale-wrapper" style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto', padding: '140px 24px 60px' }}>
         <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 8, letterSpacing: '-0.02em' }}>Sessions</h1>
         <p style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 40 }}>Your saved alternate timelines.</p>
 
@@ -129,7 +129,7 @@ export default function SessionsPage() {
                         onClick={e => { e.stopPropagation(); router.push(`/diverge/${session.event_id}`) }}
                         style={{ marginTop: 12, width: '100%', padding: '9px', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)', background: 'color-mix(in srgb, var(--accent) 8%, transparent)', color: 'var(--accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
                       >
-                        Continue exploring →
+                        Continue exploring
                       </button>
                     </div>
                   )}

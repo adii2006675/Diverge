@@ -39,7 +39,8 @@ export default function StarBackground() {
 
     let stars: Star[] = []
     let shootingStars: ShootingStar[] = []
-    let lastShot = 0
+    const SHOT_INTERVAL_MS = 5000
+    let lastShotSlot = Math.floor(Date.now() / SHOT_INTERVAL_MS)
 
     function resize() {
       canvas.width = window.innerWidth
@@ -80,8 +81,12 @@ export default function StarBackground() {
 
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      const now = Date.now()
-      if (now - lastShot > 30000) { spawnShootingStar(); lastShot = now }
+
+      const currentSlot = Math.floor(Date.now() / SHOT_INTERVAL_MS)
+      if (currentSlot !== lastShotSlot) {
+        spawnShootingStar()
+        lastShotSlot = currentSlot
+      }
 
       const { r: cr, g: cg, b: cb } = hexToRgb(getStarColor())
 
@@ -139,7 +144,6 @@ export default function StarBackground() {
     }
 
     resize()
-    setTimeout(() => { lastShot = Date.now() - 29500 }, 500)
     draw()
     window.addEventListener('resize', resize)
     return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', resize) }

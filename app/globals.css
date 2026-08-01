@@ -5,8 +5,8 @@
 }
 
 body {
-  background: #080810;
-  color: #ffffff;
+  background: var(--bg, #080810);
+  color: var(--text, #ffffff);
   font-family: 'Inter', system-ui, sans-serif;
   margin: 0;
 }
@@ -47,4 +47,19 @@ body {
 ::-webkit-scrollbar-thumb {
   background: rgba(255,255,255,0.1);
   border-radius: 99px;
+}
+
+.event-card {
+  position: relative;
+}
+.event-card .card-trace-right,
+.event-card .card-trace-left {
+  opacity: 0;
+  stroke-dasharray: 0 1;
+  transition: opacity 0.15s ease, stroke-dasharray 0.5s ease-out;
+}
+.event-card:hover .card-trace-right,
+.event-card:hover .card-trace-left {
+  opacity: 1;
+  stroke-dasharray: 0.6 0.35;
 }

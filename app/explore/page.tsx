@@ -6,18 +6,22 @@ import Nav from '@/components/Nav'
 import StarBackground from '@/components/StarBackground'
 import { HISTORICAL_EVENTS, ERAS } from '@/lib/events'
 import DualSlider from '@/components/DualSlider'
+import CardBorderTrace from '@/components/CardBorderTrace'
 
 const FALLBACK_IMAGES: Record<string, string> = {
   'jfk-1963': 'https://images.unsplash.com/photo-1569428034239-f9565e32e224?w=800&q=80',
-  'ww2-1939': 'https://images.unsplash.com/photo-1524536765000-b76084ca0f01?w=800&q=80',
+  'ww2-1939': 'https://images.unsplash.com/photo-1541535881962-3b7d3f2f7a3e?w=800&q=80',
   'berlin-wall-1989': 'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800&q=80',
-  '9-11-2001': 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80',
+  '9-11-2001': '/events/9-11-2001.jpg',
   'cuban-missile-1962': 'https://images.unsplash.com/photo-1541844053589-346841d0b34c?w=800&q=80',
   'lincoln-1865': 'https://images.unsplash.com/photo-1617791160588-241658c0f566?w=800&q=80',
-  'titanic-1912': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80',
+  'titanic-1912': '/events/titanic-1912.jpg',
   'moon-1969': 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=800&q=80',
-  'ww1-1914': 'https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?w=800&q=80',
+  'ww1-1914': '/events/ww1-1914.jpg',
   'soviet-1991': 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&q=80',
+  'covid-2020': '/events/covid-2020.jpg',
+  'mlk-march-1963': '/events/mlk-march-1963.jpg',
+  'great-depression-1929': '/events/great-depression-1929.jpg',
 }
 
 export default function ExplorePage() {
@@ -47,7 +51,7 @@ export default function ExplorePage() {
           <h1 style={{ fontSize: 'clamp(36px, 5vw, 64px)', fontWeight: 900, letterSpacing: '-0.02em', marginBottom: 12 }}>
             Explore history
           </h1>
-          <p style={{ fontSize: 16, color: 'var(--text-dim)', marginBottom: 40 }}>
+          <p style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', marginBottom: 40 }}>
             A list of major world events
           </p>
         </motion.div>
@@ -68,7 +72,7 @@ export default function ExplorePage() {
                 border: `1px solid ${selectedEra === era ? 'var(--accent)' : 'var(--border-color)'}`,
                 background: selectedEra === era ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'transparent',
                 color: selectedEra === era ? 'var(--accent)' : 'var(--text-dim)',
-                fontSize: 12, fontWeight: 500, transition: 'all 0.18s',
+                fontSize: 'var(--font-scale)', fontWeight: 500, transition: 'all 0.18s',
               }}
             >
               {era}
@@ -100,7 +104,7 @@ export default function ExplorePage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-dim)', fontSize: 15 }}
+            style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-dim)', fontSize: 'var(--font-scale)' }}
           >
             No events match your filters
           </motion.div>
@@ -109,46 +113,51 @@ export default function ExplorePage() {
             {filtered.map((event, idx) => (
               <motion.div
                 key={event.id}
+                className="event-card"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35, delay: idx * 0.05, ease: 'easeOut' }}
-                whileHover={{ y: -3 }}
+                whileHover={{ y: -7.5 }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
                 style={{
                   borderRadius: 16, border: '1px solid var(--border-color)',
-                  background: 'var(--card-bg)', overflow: 'hidden',
+                  background: 'var(--bg)', overflow: 'hidden',
                   cursor: 'pointer', position: 'relative', zIndex: 1, isolation: 'isolate',
                 }}
               >
-                <div style={{ height: 130, overflow: 'hidden', position: 'relative', background: 'var(--card-bg)' }}>
-                  <img
-                    src={FALLBACK_IMAGES[event.id] || `https://picsum.photos/seed/${event.id}/800/400`}
-                    alt={event.title}
-                    referrerPolicy="no-referrer"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.5)' }}
-                  />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, var(--bg) 100%)', opacity: 0.92 }} />
-                  <div style={{ position: 'absolute', top: 10, left: 12 }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', background: 'rgba(0,0,0,0.55)', padding: '2px 7px', borderRadius: 4 }}>
-                      {event.era.toUpperCase()} · {event.year < 0 ? `${Math.abs(event.year)} BC` : event.year}
-                    </span>
+                <div style={{ position: 'absolute', inset: 0, background: 'var(--card-bg)', zIndex: 0 }} />
+                <CardBorderTrace radius={16} startOffset={90} />
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  <div style={{ height: 130, overflow: 'hidden', position: 'relative', background: 'var(--card-bg)' }}>
+                    <img
+                      src={FALLBACK_IMAGES[event.id] || `https://picsum.photos/seed/${event.id}/800/400`}
+                      alt={event.title}
+                      referrerPolicy="no-referrer"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.5)' }}
+                    />
+                    <div style={{ position: 'absolute', top: 10, left: 12 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', background: 'var(--bg)', padding: '2px 7px', borderRadius: 4 }}>
+                        {event.era.toUpperCase()} · {event.year < 0 ? `${Math.abs(event.year)} BC` : event.year}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div style={{ padding: '12px 14px 14px' }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 5, color: 'var(--text)' }}>{event.title}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-dim)', lineHeight: 1.6, marginBottom: 12 }}>{event.shortDesc}</div>
-                  <button
-                    onClick={() => router.push(`/diverge/${event.id}`)}
-                    style={{
-                      width: '100%', padding: '8px', borderRadius: 8,
-                      border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)', background: 'color-mix(in srgb, var(--accent) 7%, transparent)',
-                      color: 'var(--accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                      fontFamily: 'inherit', transition: 'all 0.15s',
-                    }}
-                    onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'color-mix(in srgb, var(--accent) 16%, transparent)'}
-                    onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'color-mix(in srgb, var(--accent) 7%, transparent)'}
-                  >
-                    Explore →
-                  </button>
+                  <div style={{ padding: '12px 14px 14px' }}>
+                    <div style={{ fontSize: 'var(--font-scale)', fontWeight: 700, marginBottom: 5, color: 'var(--text)' }}>{event.title}</div>
+                    <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', lineHeight: 1.6, marginBottom: 12 }}>{event.shortDesc}</div>
+                    <button
+                      onClick={() => router.push(`/diverge/${event.id}`)}
+                      style={{
+                        width: '100%', padding: '8px', borderRadius: 8,
+                        border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)', background: 'color-mix(in srgb, var(--accent) 7%, transparent)',
+                        color: 'var(--accent)', fontSize: 'var(--font-scale)', fontWeight: 600, cursor: 'pointer',
+                        fontFamily: 'inherit', transition: 'all 0.15s',
+                      }}
+                      onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'color-mix(in srgb, var(--accent) 16%, transparent)'}
+                      onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'color-mix(in srgb, var(--accent) 7%, transparent)'}
+                    >
+                      Explore →
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             ))}

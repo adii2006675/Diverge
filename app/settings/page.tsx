@@ -4,15 +4,17 @@ import { useAuth } from '@/context/AuthContext'
 import StarBackground from '@/components/StarBackground'
 import Nav from '@/components/Nav'
 
-const THEMES = ['light', 'midnight']
-const LANGUAGES = ['English', 'Spanish', 'French', 'German', 'Japanese', 'Portuguese']
+const THEMES = ['light', 'dark']
+const LANGUAGES = ['English', 'Spanish', 'French', 'German', 'Japanese', 'Portuguese', 'Hindi', 'Chinese']
 const ACCENT_COLORS = [
-  { value: 'amber', label: 'Amber', hex: '#F59E0B' },
+  { value: 'none', label: 'None', hex: 'var(--text)' },
+  { value: 'red', label: 'Red', hex: '#F43F5E' },
+  { value: 'orange', label: 'Orange', hex: '#F59E0B' },
   { value: 'blue', label: 'Blue', hex: '#3B82F6' },
-  { value: 'emerald', label: 'Emerald', hex: '#10B981' },
-  { value: 'rose', label: 'Rose', hex: '#F43F5E' },
-  { value: 'violet', label: 'Violet', hex: '#8B5CF6' },
-  { value: 'cyan', label: 'Cyan', hex: '#06B6D4' },
+  { value: 'green', label: 'Green', hex: '#10B981' },
+  { value: 'purple', label: 'Purple', hex: '#8B5CF6' },
+  { value: 'pink', label: 'Pink', hex: '#EC4899' },
+  { value: 'teal', label: 'Teal', hex: '#14B8A6' },
 ]
 const FONT_SIZES = [
   { value: 'small', label: 'Small' },
@@ -57,7 +59,7 @@ export default function SettingsPage() {
         <p style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 40 }}>Changes save automatically to your account.</p>
 
         <Section title="Theme">
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {THEMES.map(t => (
               <button
                 key={t}
@@ -67,9 +69,11 @@ export default function SettingsPage() {
                   border: `1px solid ${settings?.theme === t ? 'var(--accent)' : 'var(--border-color)'}`,
                   background: settings?.theme === t ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--card-bg)',
                   color: settings?.theme === t ? 'var(--accent)' : 'var(--text-dim)',
-                  fontSize: 13, fontWeight: settings?.theme === t ? 700 : 400,
+                  fontSize: 'var(--font-scale)', fontWeight: settings?.theme === t ? 700 : 400,
                   transition: 'all 0.18s',
                   textTransform: 'capitalize',
+                  minWidth: 100,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
                 {t}
@@ -85,12 +89,13 @@ export default function SettingsPage() {
                 key={c.value}
                 onClick={() => updateSettings({ accent_color: c.value })}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  flex: '1 1 140px', minWidth: 140,
                   padding: '8px 16px', borderRadius: 999, cursor: 'pointer', fontFamily: 'inherit',
                   border: `1px solid ${settings?.accent_color === c.value ? c.hex : 'var(--border-color)'}`,
                   background: settings?.accent_color === c.value ? `${c.hex}26` : 'transparent',
                   color: settings?.accent_color === c.value ? c.hex : 'var(--text-dim)',
-                  fontSize: 13, fontWeight: settings?.accent_color === c.value ? 600 : 400,
+                  fontSize: 'var(--font-scale)', fontWeight: settings?.accent_color === c.value ? 600 : 400,
                   transition: 'all 0.18s',
                 }}
               >
@@ -102,7 +107,7 @@ export default function SettingsPage() {
         </Section>
 
         <Section title="Font Size">
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {FONT_SIZES.map(f => (
               <button
                 key={f.value}
@@ -112,8 +117,10 @@ export default function SettingsPage() {
                   border: `1px solid ${settings?.font_size === f.value ? 'var(--accent)' : 'var(--border-color)'}`,
                   background: settings?.font_size === f.value ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--card-bg)',
                   color: settings?.font_size === f.value ? 'var(--accent)' : 'var(--text-dim)',
-                  fontSize: 13, fontWeight: settings?.font_size === f.value ? 700 : 400,
+                  fontSize: 'var(--font-scale)', fontWeight: settings?.font_size === f.value ? 700 : 400,
                   transition: 'all 0.18s',
+                  minWidth: 100,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
                 {f.label}
@@ -129,12 +136,15 @@ export default function SettingsPage() {
                 key={lang}
                 onClick={() => updateSettings({ language: lang })}
                 style={{
+                  flex: '1 1 140px', minWidth: 140,
                   padding: '8px 16px', borderRadius: 999, cursor: 'pointer', fontFamily: 'inherit',
                   border: `1px solid ${settings?.language === lang ? 'var(--accent)' : 'var(--border-color)'}`,
                   background: settings?.language === lang ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent',
                   color: settings?.language === lang ? 'var(--accent)' : 'var(--text-dim)',
-                  fontSize: 13, fontWeight: settings?.language === lang ? 600 : 400,
+                  fontSize: 'var(--font-scale)', fontWeight: settings?.language === lang ? 600 : 400,
                   transition: 'all 0.18s',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
                 }}
               >
                 {lang}
@@ -156,10 +166,10 @@ export default function SettingsPage() {
                   textAlign: 'left', transition: 'all 0.18s',
                 }}
               >
-                <div style={{ fontSize: 13, fontWeight: 600, color: settings?.ai_response_style === style.value ? 'var(--accent)' : 'var(--text)', marginBottom: 2 }}>
+                <div style={{ fontSize: 'var(--font-scale)', fontWeight: 600, color: settings?.ai_response_style === style.value ? 'var(--accent)' : 'var(--text)', marginBottom: 2 }}>
                   {style.label}
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>{style.desc}</div>
+                <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)' }}>{style.desc}</div>
               </button>
             ))}
           </div>
@@ -184,11 +194,11 @@ export default function SettingsPage() {
 
         <button
           onClick={() => router.push('/')}
-          style={{ width: '100%', padding: '14px', borderRadius: 12, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}
+          style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-dim)', fontSize: 'var(--font-scale)', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)'}
           onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)'}
         >
-          ← Back to Home
+          Home
         </button>
       </div>
     </main>
@@ -210,18 +220,19 @@ function Toggle({ label, desc, value, onChange }: { label: string; desc: string;
   return (
     <div
       onClick={onChange}
-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: 12, border: '1px solid var(--border-color)', background: 'var(--card-bg)', cursor: 'pointer', transition: 'all 0.18s' }}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '12px 16px', borderRadius: 12, border: '1px solid var(--border-color)', background: 'var(--card-bg)', cursor: 'pointer', transition: 'all 0.18s' }}
       onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--accent)'}
       onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border-color)'}
     >
-      <div>
-        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', marginBottom: 2 }}>{label}</div>
-        <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>{desc}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 'var(--font-scale)', fontWeight: 500, color: 'var(--text)', marginBottom: 2 }}>{label}</div>
+        <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)' }}>{desc}</div>
       </div>
       <div style={{
-        width: 44, height: 24, borderRadius: 99, flexShrink: 0, marginLeft: 16,
+        width: 44, height: 24, borderRadius: 99, flexShrink: 0,
         background: value ? 'var(--accent)' : 'var(--border-color)',
         position: 'relative', transition: 'background 0.2s',
+        alignSelf: 'center',
       }}>
         <div style={{
           position: 'absolute', top: 3, left: value ? 23 : 3,

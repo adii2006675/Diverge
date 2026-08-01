@@ -75,15 +75,18 @@ export default function ProfilePage() {
       <Nav active="profile" />
 
       <div style={{ position: 'relative', zIndex: 1, maxWidth: 560, margin: '0 auto', padding: '140px 24px 60px' }}>
+        <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 8, letterSpacing: '-0.02em' }}>Profile</h1>
+        <p style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 40 }}>Changes save automatically to your account.</p>
+
         {/* Avatar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 40, padding: '20px 24px', borderRadius: 16, border: '1px solid var(--border-color)', background: 'var(--card-bg)' }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'color-mix(in srgb, var(--accent) 25%, transparent)', border: '2px solid color-mix(in srgb, var(--accent) 40%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 800, color: 'var(--accent)', flexShrink: 0 }}>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'color-mix(in srgb, var(--accent) 25%, transparent)', border: '2px solid color-mix(in srgb, var(--accent) 40%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--font-scale)', fontWeight: 800, color: 'var(--accent)', flexShrink: 0 }}>
             {initials}
           </div>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{profile?.username || 'User'}</div>
-            <div style={{ fontSize: 13, color: 'var(--text-dim)' }}>{user.email}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 4, opacity: 0.7 }}>
+            <div style={{ fontSize: 'var(--font-scale)', fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{profile?.username || 'User'}</div>
+            <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)' }}>{user.email}</div>
+            <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', marginTop: 4, opacity: 0.7 }}>
               Member since {new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </div>
           </div>
@@ -100,12 +103,12 @@ export default function ProfilePage() {
               onChange={e => setUsername(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSaveProfile()}
               placeholder="Your display name"
-              style={{ flex: 1, padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text)', fontSize: 14, outline: 'none', fontFamily: 'inherit' }}
+              style={{ flex: 1, padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text)', fontSize: 'var(--font-scale)', outline: 'none', fontFamily: 'inherit' }}
             />
             <button
               onClick={handleSaveProfile}
               disabled={saving || !username.trim()}
-              style={{ padding: '12px 20px', borderRadius: 10, border: 'none', background: saved ? '#10B981' : 'var(--accent)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', minWidth: 80 }}
+              style={{ padding: '12px 20px', borderRadius: 10, border: 'none', background: saved ? '#10B981' : 'var(--accent)', color: '#fff', fontSize: 'var(--font-scale)', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', minWidth: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               {saving ? '...' : saved ? 'Saved ✓' : 'Save'}
             </button>
@@ -120,9 +123,9 @@ export default function ProfilePage() {
           <input
             value={user.email || ''}
             disabled
-            style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-dim)', fontSize: 14, outline: 'none', fontFamily: 'inherit', cursor: 'not-allowed' }}
+            style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-dim)', fontSize: 'var(--font-scale)', outline: 'none', fontFamily: 'inherit', cursor: 'not-allowed' }}
           />
-          <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 6, opacity: 0.7 }}>Email cannot be changed</div>
+          <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', marginTop: 6, opacity: 0.7 }}>Email cannot be changed</div>
         </div>
 
         {/* Change password */}
@@ -136,7 +139,7 @@ export default function ProfilePage() {
               onChange={e => setNewPassword(e.target.value)}
               type="password"
               placeholder="New password"
-              style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text)', fontSize: 14, outline: 'none', fontFamily: 'inherit' }}
+              style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text)', fontSize: 'var(--font-scale)', outline: 'none', fontFamily: 'inherit' }}
             />
             <input
               value={confirmPassword}
@@ -144,15 +147,15 @@ export default function ProfilePage() {
               type="password"
               placeholder="Confirm new password"
               onKeyDown={e => e.key === 'Enter' && handleChangePassword()}
-              style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: `1px solid ${passwordError ? 'rgba(239,68,68,0.5)' : 'var(--border-color)'}`, background: 'var(--card-bg)', color: 'var(--text)', fontSize: 14, outline: 'none', fontFamily: 'inherit' }}
+              style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: `1px solid ${passwordError ? 'rgba(239,68,68,0.5)' : 'var(--border-color)'}`, background: 'var(--card-bg)', color: 'var(--text)', fontSize: 'var(--font-scale)', outline: 'none', fontFamily: 'inherit' }}
             />
             {passwordError && (
-              <div style={{ fontSize: 12, color: '#EF4444' }}>{passwordError}</div>
+              <div style={{ fontSize: 'var(--font-scale)', color: '#EF4444' }}>{passwordError}</div>
             )}
             <button
               onClick={handleChangePassword}
               disabled={savingPassword || !newPassword || !confirmPassword}
-              style={{ padding: '12px', borderRadius: 10, border: 'none', background: passwordSaved ? '#10B981' : 'var(--card-bg)', color: passwordSaved ? '#fff' : 'var(--text-dim)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}
+              style={{ padding: '12px', borderRadius: 10, border: 'none', background: passwordSaved ? '#10B981' : 'var(--card-bg)', color: passwordSaved ? '#fff' : 'var(--text-dim)', fontSize: 'var(--font-scale)', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               {savingPassword ? 'Updating...' : passwordSaved ? 'Password Updated ✓' : 'Update Password'}
             </button>
@@ -162,11 +165,11 @@ export default function ProfilePage() {
         {/* Back */}
         <button
           onClick={() => router.push('/')}
-          style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-dim)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}
+          style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-dim)', fontSize: 'var(--font-scale)', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)'}
           onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)'}
         >
-          ← Back to Home
+          Home
         </button>
       </div>
     </main>

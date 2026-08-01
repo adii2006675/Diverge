@@ -53,11 +53,22 @@ export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, 
     else if (val > valueMin + 5) onChangeMax(val)
   }
 
+  const numTicks = 6
+  const rawTicks = Array.from({ length: numTicks }, (_, i) => {
+    const year = Math.round(min + (i / (numTicks - 1)) * (max - min))
+    return { year, pct: (i / (numTicks - 1)) * 100 }
+  })
+  const ticks = rawTicks.map(t => {
+    if (t.year === 1776) return { ...t, year: 1775 }
+    if (t.year === 1901) return { ...t, year: 1900 }
+    return t
+  })
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>{valueMin}</span>
-        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>{valueMax}</span>
+      <div style={{ position: 'relative', minHeight: 24, marginBottom: 8 }}>
+        <span style={{ position: 'absolute', left: 0, transform: 'translateX(-50%)', fontSize: 'var(--font-scale)', color: 'var(--text-dim)', fontWeight: 600, whiteSpace: 'nowrap' }}>{valueMin}</span>
+        <span style={{ position: 'absolute', right: 0, transform: 'translateX(50%)', fontSize: 'var(--font-scale)', color: 'var(--text-dim)', fontWeight: 600, whiteSpace: 'nowrap' }}>{valueMax}</span>
       </div>
 
       <div
@@ -65,17 +76,14 @@ export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, 
         onClick={handleTrackClick}
         style={{ position: 'relative', height: 28, display: 'flex', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
       >
-        {/* Background track */}
         <div style={{ position: 'absolute', left: 0, right: 0, height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 99 }} />
 
-        {/* Active track */}
         <div style={{
           position: 'absolute', height: 3, background: 'var(--accent)', borderRadius: 99,
           left: `${pct(valueMin)}%`,
           right: `${100 - pct(valueMax)}%`,
         }} />
 
-        {/* Min thumb */}
         <div
           onMouseDown={e => startDrag(e, 'min')}
           style={{
@@ -91,7 +99,6 @@ export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, 
           }}
         />
 
-        {/* Max thumb */}
         <div
           onMouseDown={e => startDrag(e, 'max')}
           style={{
@@ -108,9 +115,13 @@ export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, 
         />
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>{min}</span>
-        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>{max}</span>
+      <div style={{ position: 'relative', minHeight: 32, marginTop: 4 }}>
+        {ticks.map(t => (
+          <div key={t.year} style={{ position: 'absolute', left: `${t.pct}%`, transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+            <div style={{ width: 1, height: 6, background: 'var(--border-color)', flexShrink: 0 }} />
+            <span style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', opacity: 0.6, whiteSpace: 'nowrap' }}>{t.year}</span>
+          </div>
+        ))}
       </div>
     </div>
   )

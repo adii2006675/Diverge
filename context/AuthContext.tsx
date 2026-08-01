@@ -44,18 +44,20 @@ const AuthContext = createContext<AuthContextType>({
 })
 
 const ACCENT_COLORS: Record<string, string> = {
-  amber: '#F59E0B',
+  none: 'var(--text)',
+  red: '#F43F5E',
+  orange: '#F59E0B',
   blue: '#3B82F6',
-  emerald: '#10B981',
-  rose: '#F43F5E',
-  violet: '#8B5CF6',
-  cyan: '#06B6D4',
+  green: '#10B981',
+  purple: '#8B5CF6',
+  pink: '#EC4899',
+  teal: '#14B8A6',
 }
 
-const FONT_SCALES: Record<string, number> = {
-  small: 8 / 12,
-  medium: 1,
-  large: 16 / 12,
+const FONT_SCALES: Record<string, string> = {
+  small: '8px',
+  medium: '12px',
+  large: '16px',
 }
 
 const THEME_VARS: Record<string, { bg: string; star: string; text: string; textDim: string; navBg: string; cardBg: string; borderColor: string }> = {
@@ -68,7 +70,7 @@ const THEME_VARS: Record<string, { bg: string; star: string; text: string; textD
     cardBg: 'rgba(0,0,0,0.03)',
     borderColor: 'rgba(0,0,0,0.1)',
   },
-  midnight: {
+  dark: {
     bg: '#080810',
     star: '#FFFFFF',
     text: '#FFFFFF',
@@ -81,9 +83,9 @@ const THEME_VARS: Record<string, { bg: string; star: string; text: string; textD
 
 function applyThemeToDOM(theme: string, accentKey: string, fontSize: string) {
   const root = document.documentElement
-  const themeVars = THEME_VARS[theme] || THEME_VARS.midnight
-  const accent = ACCENT_COLORS[accentKey] || ACCENT_COLORS.amber
-  const scale = FONT_SCALES[fontSize] || 1
+  const themeVars = THEME_VARS[theme] || THEME_VARS.dark
+  const accent = accentKey === 'none' ? themeVars.text : (ACCENT_COLORS[accentKey] || ACCENT_COLORS.orange)
+  const scale = FONT_SCALES[fontSize] || FONT_SCALES.medium
 
   root.style.setProperty('--bg', themeVars.bg)
   root.style.setProperty('--star-color', themeVars.star)
@@ -93,7 +95,7 @@ function applyThemeToDOM(theme: string, accentKey: string, fontSize: string) {
   root.style.setProperty('--card-bg', themeVars.cardBg)
   root.style.setProperty('--border-color', themeVars.borderColor)
   root.style.setProperty('--accent', accent)
-  root.style.setProperty('--font-scale', String(scale))
+  root.style.setProperty('--font-scale', scale)
   root.setAttribute('data-theme', theme)
 }
 
@@ -121,13 +123,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (data) {
       const merged = {
-        theme: data.theme === 'dim' ? 'midnight' : (data.theme || 'midnight'),
+        theme: data.theme === 'dim' ? 'dark' : (data.theme || 'dark'),
         language: data.language || 'English',
         ai_response_style: data.ai_response_style || 'detailed',
         show_confidence_level: data.show_confidence_level ?? true,
         show_historians_note: data.show_historians_note ?? true,
         default_era: data.default_era || 'All',
-        accent_color: data.accent_color || 'amber',
+        accent_color: data.accent_color || 'orange',
         font_size: data.font_size || 'medium',
       }
       setSettings(merged)
@@ -135,13 +137,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       const defaults = {
         id: userId,
-        theme: 'midnight',
+        theme: 'dark',
         language: 'English',
         ai_response_style: 'detailed',
         show_confidence_level: true,
         show_historians_note: true,
         default_era: 'All',
-        accent_color: 'amber',
+        accent_color: 'orange',
         font_size: 'medium',
       }
       await supabase.from('user_settings').insert(defaults)
@@ -159,7 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null)
     setProfile(null)
     setSettings(null)
-    applyThemeToDOM('midnight', 'amber', 'medium')
+    applyThemeToDOM('dark', 'orange', 'medium')
   }
 
   async function updateSettings(updates: Partial<UserSettings>) {
@@ -184,7 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    applyThemeToDOM('midnight', 'amber', 'medium')
+    applyThemeToDOM('dark', 'orange', 'medium')
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
@@ -203,7 +205,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setProfile(null)
         setSettings(null)
-        applyThemeToDOM('midnight', 'amber', 'medium')
+        applyThemeToDOM('dark', 'orange', 'medium')
       }
     })
 

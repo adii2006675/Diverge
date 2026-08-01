@@ -11,7 +11,7 @@ export default function AboutPage() {
       <StarBackground />
       <Nav active="about" />
 
-      <div style={{ position: 'relative', zIndex: 1, maxWidth: 680, margin: '0 auto', padding: '120px 24px 80px' }}>
+      <div className="font-scale-wrapper" style={{ position: 'relative', zIndex: 1, maxWidth: 680, margin: '0 auto', padding: '120px 24px 80px' }}>
         <h1 style={{ fontSize: 42, fontWeight: 900, marginBottom: 24, letterSpacing: '-0.02em' }}>What is Diverge?</h1>
 
         <p style={{ fontSize: 16, lineHeight: 1.85, color: 'var(--text-dim)', marginBottom: 24 }}>

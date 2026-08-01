@@ -46,8 +46,8 @@ export default function Nav({ active }: { active?: string }) {
               onClick={() => router.push(href)}
               style={{
                 padding: '8px 16px', borderRadius: 8, border: 'none',
-                background: active === label.toLowerCase() ? 'var(--card-bg)' : 'transparent',
-                color: active === label.toLowerCase() ? 'var(--text)' : 'var(--text-dim)',
+                background: active === label.toLowerCase() ? 'color-mix(in srgb, var(--accent) 20%, transparent)' : 'transparent',
+                color: active === label.toLowerCase() ? 'var(--accent)' : 'var(--text-dim)',
                 fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
                 transition: 'all 0.2s',
               }}
@@ -62,8 +62,8 @@ export default function Nav({ active }: { active?: string }) {
               onClick={() => router.push('/sessions')}
               style={{
                 padding: '8px 16px', borderRadius: 8, border: 'none',
-                background: active === 'sessions' ? 'var(--card-bg)' : 'transparent',
-                color: active === 'sessions' ? 'var(--text)' : 'var(--text-dim)',
+                background: active === 'sessions' ? 'color-mix(in srgb, var(--accent) 20%, transparent)' : 'transparent',
+                color: active === 'sessions' ? 'var(--accent)' : 'var(--text-dim)',
                 fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
                 transition: 'all 0.2s',
               }}
