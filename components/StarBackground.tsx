@@ -1,6 +1,13 @@
 'use client'
 import { useEffect, useRef } from 'react'
 
+const SHOT_INTERVAL_MS = 5000
+let globalLastSpawnSlot = -1
+
+function getGlobalSlot() {
+  return Math.floor(Date.now() / SHOT_INTERVAL_MS)
+}
+
 export default function StarBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -41,11 +48,24 @@ export default function StarBackground() {
     let shootingStars: ShootingStar[] = []
     const SHOT_INTERVAL_MS = 5000
     let lastShotSlot = Math.floor(Date.now() / SHOT_INTERVAL_MS)
+    let lastGlobalSlot = getGlobalSlot()
+
+    function getSize() {
+      const parent = canvas.parentElement
+      if (parent) {
+        const rect = parent.getBoundingClientRect()
+        return { width: Math.max(rect.width, 1), height: Math.max(rect.height, 1) }
+      }
+      return { width: window.innerWidth, height: window.innerHeight }
+    }
 
     function resize() {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-      stars = Array.from({ length: 120 }, () => ({
+      const { width, height } = getSize()
+      canvas.width = width
+      canvas.height = height
+      const density = (width * height) / (1920 * 1080)
+      const starCount = Math.max(20, Math.round(120 * density))
+      stars = Array.from({ length: starCount }, () => ({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
         r: Math.random() * 1.2 + 0.3,
@@ -82,10 +102,10 @@ export default function StarBackground() {
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      const currentSlot = Math.floor(Date.now() / SHOT_INTERVAL_MS)
-      if (currentSlot !== lastShotSlot) {
+      const currentSlot = getGlobalSlot()
+      if (currentSlot !== globalLastSpawnSlot) {
+        globalLastSpawnSlot = currentSlot
         spawnShootingStar()
-        lastShotSlot = currentSlot
       }
 
       const { r: cr, g: cg, b: cb } = hexToRgb(getStarColor())
@@ -152,7 +172,7 @@ export default function StarBackground() {
   return (
     <canvas
       ref={canvasRef}
-      style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }}
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }}
     />
   )
 }

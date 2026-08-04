@@ -59,7 +59,9 @@ body {
   transition: opacity 0.15s ease, stroke-dasharray 0.5s ease-out;
 }
 .event-card:hover .card-trace-right,
-.event-card:hover .card-trace-left {
+.event-card:hover .card-trace-left,
+.event-card.always-trace .card-trace-right,
+.event-card.always-trace .card-trace-left {
   opacity: 1;
   stroke-dasharray: 0.6 0.35;
 }

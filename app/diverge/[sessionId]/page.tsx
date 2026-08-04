@@ -44,11 +44,12 @@ export default function DivergePage() {
   const [summary, setSummary] = useState<any>(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [activeTimelineIdx, setActiveTimelineIdx] = useState(0)
-  const [showSettings, setShowSettings] = useState(false)
-  const [theme, setTheme] = useState('dark')
+  const [showAISettings, setShowAISettings] = useState(false)
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const { settings, user } = useAuth()
+  const { settings, user, updateSettings } = useAuth()
 
   const currentEntry = whatIfs[activeTimelineIdx] || null
   const currentResponse = currentEntry?.response || null
@@ -112,6 +113,32 @@ export default function DivergePage() {
     setLoading(false)
   }
 
+  async function handleManualSave() {
+    if (!user || whatIfs.length === 0 || saving) return
+    setSaving(true)
+    try {
+      const sessionData = {
+        user_id: user.id,
+        event_id: sessionId,
+        event_title: startingEvent,
+        what_ifs: whatIfs.map(w => ({ question: w.question })),
+        divergence_score: currentResponse?.divergenceScore || 0,
+        updated_at: new Date().toISOString(),
+      }
+      if (currentSessionId) {
+        await supabase.from('sessions').update(sessionData).eq('id', currentSessionId)
+      } else {
+        const { data: savedRow } = await supabase.from('sessions').insert(sessionData).select().single()
+        if (savedRow) setCurrentSessionId(savedRow.id)
+      }
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      console.error(err)
+    }
+    setSaving(false)
+  }
+
   async function handleSummary() {
     if (whatIfs.length === 0) return
     setSummaryLoading(true)
@@ -134,47 +161,132 @@ export default function DivergePage() {
   const eventImage = FALLBACK_IMAGES[sessionId] || `https://picsum.photos/seed/${sessionId}/800/400`
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', overflow: 'hidden', position: 'relative' }}>
-      <StarBackground />
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
 
       {/* Top bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', borderBottom: '1px solid var(--border-color)', flexShrink: 0, background: 'var(--nav-bg)', position: 'relative', zIndex: 10 }}>
-        <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: '0.15em', cursor: 'pointer', textTransform: 'uppercase', color: 'var(--text)' }} onClick={() => router.push('/')}>DIVERGE</div>
-        <div style={{ fontSize: 13, color: 'var(--text-dim)' }}>
-          Starting point: <span style={{ color: 'var(--text)', fontWeight: 600 }}>{startingEvent}</span>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '12px 24px', borderBottom: '1px solid var(--border-color)', flexShrink: 0, background: 'var(--nav-bg)', position: 'relative', zIndex: 10 }}>
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+          <StarBackground />
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button style={btnStyle}>Save</button>
-          <button onClick={handleSummary} style={{ ...btnStyle, color: 'var(--accent)', borderColor: 'color-mix(in srgb, var(--accent) 25%, transparent)', background: 'color-mix(in srgb, var(--accent) 7%, transparent)' }}>
-            Summary →
+        <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: '0.15em', cursor: 'pointer', textTransform: 'uppercase', color: 'var(--text)', position: 'relative', zIndex: 1, justifySelf: 'start' }} onClick={() => router.push('/')}>DIVERGE</div>
+        <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 600, position: 'relative', zIndex: 1, justifySelf: 'center', whiteSpace: 'nowrap' }}>
+          {startingEvent}
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', position: 'relative', zIndex: 1, justifySelf: 'end' }}>
+          <button
+            onClick={() => setShowAISettings(true)}
+            style={{ ...btnStyle, padding: "7px 12px", fontWeight: 700 }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--accent)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-dim)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)' }}
+          >
+            AI
           </button>
-          <button onClick={() => router.push('/')} style={btnStyle}>New Game</button>
-          <div style={{ position: 'relative' }}>
-            <button onClick={() => setShowSettings(!showSettings)} style={{ ...btnStyle, padding: '7px 12px', fontSize: 15 }}>⚙</button>
-            {showSettings && (
-              <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '12px 8px', minWidth: 180, zIndex: 100 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--text-dim)', padding: '4px 10px 8px' }}>SETTINGS</div>
-                {[
-                  { label: 'Profile', action: () => router.push('/profile') },
-                  { label: 'Full Settings', action: () => router.push('/settings') },
-                ].map(item => (
-                  <button key={item.label} onClick={() => { item.action(); setShowSettings(false) }}
-                    style={{ display: 'block', width: '100%', padding: '8px 10px', borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--text-dim)', fontSize: 13, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
-                    onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'var(--card-bg)'}
-                    onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
-                  >{item.label}</button>
-                ))}
-              </div>
-            )}
-          </div>
+          <button
+            onClick={handleManualSave}
+            disabled={saving || whatIfs.length === 0}
+            style={{ ...btnStyle, background: saved ? '#10B981' : 'var(--card-bg)', color: saved ? '#fff' : 'var(--text-dim)', border: saved ? 'none' : '1px solid var(--border-color)', minWidth: 70, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onMouseEnter={e => { if (!saved) { (e.currentTarget as HTMLButtonElement).style.color = '#10B981'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#10B981' } }}
+            onMouseLeave={e => { if (!saved) { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-dim)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)' } }}
+          >
+            {saving ? '...' : saved ? 'Saved ✓' : 'Save'}
+          </button>
+          <button
+            onClick={() => router.push('/')}
+            style={btnStyle}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--accent)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'color-mix(in srgb, var(--accent) 40%, transparent)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-dim)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)' }}
+          >
+            Exit
+          </button>
         </div>
       </div>
 
       {/* Split screen */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative', zIndex: 1 }}>
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative', zIndex: 1, alignItems: 'stretch' }}>
 
-        {/* LEFT — Your alternate timeline */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRight: '1px solid var(--border-color)' }}>
+        {/* LEFT — Real history */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}>
+          <div style={{ padding: '14px 22px 10px', borderBottom: '1px solid var(--border-color)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--accent)' }}>REAL HISTORY</span>
+            {event?.year && (
+              <span style={{ padding: '2px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>
+                {event.year}
+              </span>
+            )}
+          </div>
+
+          <div style={{ flex: 1, overflowY: 'auto', padding: '20px 22px' }}>
+            <div style={{ height: 130, borderRadius: 10, overflow: 'hidden', marginBottom: 18, position: 'relative' }}>
+              <img
+                src={eventImage}
+                alt={event?.title || 'Historical event'}
+                referrerPolicy="no-referrer"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.45) saturate(0.4)' }}
+                onError={e => { (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${sessionId}/800/400` }}
+              />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(8,8,16,0.85))' }} />
+              <div style={{ position: 'absolute', bottom: 10, left: 12, fontSize: 11, color: 'var(--text-dim)', fontWeight: 500 }}>
+                {event?.title || startingEvent} · {event?.year || ''}
+              </div>
+            </div>
+
+            <p style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 14, lineHeight: 1.8, color: 'var(--text-dim)', marginBottom: 18, fontStyle: 'italic' }}>
+              {event?.fullDesc || 'Real history as it happened.'}
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {realFacts.map((fact, i) => {
+                const key = `real-${i}`
+                const isExp = expandedFact === key
+                return (
+                  <div key={i}
+                    onClick={() => setExpandedFact(isExp ? null : key)}
+                    style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 10, background: 'var(--card-bg)', border: `1px solid ${isExp ? 'color-mix(in srgb, var(--accent) 25%, transparent)' : 'var(--border-color)'}`, cursor: 'pointer', transition: 'all 0.18s' }}
+                    onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = 'color-mix(in srgb, var(--accent) 4%, transparent)'}
+                    onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'var(--card-bg)'}
+                  >
+                    <div style={{ flexShrink: 0, marginTop: 5 }}>
+                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)' }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.5 }}>{fact}</div>
+                      {isExp && (
+                        <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 7, lineHeight: 1.65, paddingTop: 7, borderTop: '1px solid var(--border-color)', animation: 'fadeIn 0.2s ease' }}>
+                          This is what actually happened in recorded history.
+                        </div>
+                      )}
+                    </div>
+                    <button style={{ flexShrink: 0, width: 18, height: 18, borderRadius: '50%', border: `1px solid ${isExp ? 'var(--accent)' : 'var(--border-color)'}`, background: isExp ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent', color: isExp ? 'var(--accent)' : 'var(--text-dim)', fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', transform: isExp ? 'rotate(180deg)' : 'rotate(0)' }}>
+                      ▾
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* CENTER — Divergence % */}
+        <div style={{ width: 72, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative', height: '100%' }}>
+          <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1, background: 'var(--border-color)', transform: 'translateX(-50%)' }} />
+          <AnimatePresence>
+            {divergence > 0 && (
+              <motion.div
+                key={divergence}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                style={{ zIndex: 1, background: 'var(--bg)', padding: '10px 4px', textAlign: 'center' }}
+              >
+                <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--accent)', lineHeight: 1 }}>{divergence}%</div>
+                <div style={{ fontSize: 8, color: 'var(--text-dim)', letterSpacing: '0.08em', marginTop: 3 }}>DIVERGED</div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* RIGHT — Your alternate timeline */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}>
           <div style={{ padding: '14px 22px 10px', borderBottom: '1px solid var(--border-color)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--accent)' }}>YOUR TIMELINE</span>
             {currentYear && (
@@ -262,87 +374,6 @@ export default function DivergePage() {
             )}
           </div>
         </div>
-
-        {/* CENTER — Divergence % */}
-        <div style={{ width: 72, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative' }}>
-          <div style={{ position: 'absolute', top: 0, bottom: 0, width: 1, background: 'var(--border-color)' }} />
-          <AnimatePresence>
-            {divergence > 0 && (
-              <motion.div
-                key={divergence}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                style={{ zIndex: 1, background: 'var(--bg)', padding: '10px 4px', textAlign: 'center' }}
-              >
-                <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--accent)', lineHeight: 1 }}>{divergence}%</div>
-                <div style={{ fontSize: 8, color: 'var(--text-dim)', letterSpacing: '0.08em', marginTop: 3 }}>DIVERGED</div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* RIGHT — Real history */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div style={{ padding: '14px 22px 10px', borderBottom: '1px solid var(--border-color)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--accent)' }}>REAL HISTORY</span>
-            {event?.year && (
-              <span style={{ padding: '2px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>
-                {event.year}
-              </span>
-            )}
-          </div>
-
-          <div style={{ flex: 1, overflowY: 'auto', padding: '20px 22px' }}>
-            <div style={{ height: 130, borderRadius: 10, overflow: 'hidden', marginBottom: 18, position: 'relative' }}>
-              <img
-                src={eventImage}
-                alt={event?.title || 'Historical event'}
-                referrerPolicy="no-referrer"
-                style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.45) saturate(0.4)' }}
-                onError={e => { (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${sessionId}/800/400` }}
-              />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(8,8,16,0.85))' }} />
-              <div style={{ position: 'absolute', bottom: 10, left: 12, fontSize: 11, color: 'var(--text-dim)', fontWeight: 500 }}>
-                {event?.title || startingEvent} · {event?.year || ''}
-              </div>
-            </div>
-
-            <p style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 14, lineHeight: 1.8, color: 'var(--text-dim)', marginBottom: 18, fontStyle: 'italic' }}>
-              {event?.fullDesc || 'Real history as it happened.'}
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {realFacts.map((fact, i) => {
-                const key = `real-${i}`
-                const isExp = expandedFact === key
-                return (
-                  <div key={i}
-                    onClick={() => setExpandedFact(isExp ? null : key)}
-                    style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 10, background: 'var(--card-bg)', border: `1px solid ${isExp ? 'color-mix(in srgb, var(--accent) 25%, transparent)' : 'var(--border-color)'}`, cursor: 'pointer', transition: 'all 0.18s' }}
-                    onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = 'color-mix(in srgb, var(--accent) 4%, transparent)'}
-                    onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'var(--card-bg)'}
-                  >
-                    <div style={{ flexShrink: 0, marginTop: 5 }}>
-                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)' }} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.5 }}>{fact}</div>
-                      {isExp && (
-                        <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 7, lineHeight: 1.65, paddingTop: 7, borderTop: '1px solid var(--border-color)', animation: 'fadeIn 0.2s ease' }}>
-                          This is what actually happened in recorded history.
-                        </div>
-                      )}
-                    </div>
-                    <button style={{ flexShrink: 0, width: 18, height: 18, borderRadius: '50%', border: `1px solid ${isExp ? 'var(--accent)' : 'var(--border-color)'}`, background: isExp ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent', color: isExp ? 'var(--accent)' : 'var(--text-dim)', fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', transform: isExp ? 'rotate(180deg)' : 'rotate(0)' }}>
-                      ▾
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Narration */}
@@ -355,8 +386,11 @@ export default function DivergePage() {
       )}
 
       {/* Timeline dots */}
-      <div style={{ padding: '10px 24px', borderTop: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', flexShrink: 0, position: 'relative', zIndex: 1 }}>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', overflowX: 'auto' }}>
+      <div style={{ padding: '10px 24px', borderTop: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', flexShrink: 0, position: 'relative', zIndex: 1, background: 'var(--nav-bg)', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+          <StarBackground />
+        </div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', overflowX: 'auto', position: 'relative', zIndex: 1 }}>
           <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--text-dim)', border: '2px solid var(--border-color)', flexShrink: 0, cursor: 'pointer' }} />
           {whatIfs.map((entry, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
@@ -369,14 +403,17 @@ export default function DivergePage() {
             </div>
           ))}
         </div>
-        <button onClick={handleSummary} style={{ marginLeft: 12, padding: '5px 12px', borderRadius: 7, border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', background: 'color-mix(in srgb, var(--accent) 7%, transparent)', color: 'var(--accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit' }}>
-          View Summary →
+        <button onClick={handleSummary} style={{ marginLeft: 12, padding: '5px 12px', borderRadius: 7, border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', background: 'color-mix(in srgb, var(--accent) 7%, transparent)', color: 'var(--accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit', position: 'relative', zIndex: 1 }}>
+          View Summary
         </button>
       </div>
 
       {/* Input */}
-      <div style={{ padding: '12px 24px 16px', background: 'var(--nav-bg)', flexShrink: 0, borderTop: '1px solid var(--border-color)', position: 'relative', zIndex: 1 }}>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+      <div style={{ padding: '12px 24px 16px', background: 'var(--nav-bg)', flexShrink: 0, borderTop: '1px solid var(--border-color)', position: 'relative', zIndex: 1, overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+          <StarBackground />
+        </div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', position: 'relative', zIndex: 1 }}>
           <input
             ref={inputRef}
             value={currentInput}
@@ -398,7 +435,7 @@ export default function DivergePage() {
             }
           </button>
         </div>
-        <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5, textAlign: 'center' }}>
+        <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5, textAlign: 'center', position: 'relative', zIndex: 1 }}>
           Press Enter to ask · Shift+Enter for new line
         </div>
       </div>
@@ -467,6 +504,284 @@ export default function DivergePage() {
         )}
       </AnimatePresence>
 
+      {/* AI Settings modal */}
+      <AnimatePresence>
+        {showAISettings && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+            onClick={() => setShowAISettings(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 10 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+              style={{ background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 20, padding: '28px 32px', maxWidth: 480, width: '100%', maxHeight: '85vh', overflowY: 'auto', position: 'relative' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowAISettings(false)}
+                style={{ position: 'absolute', top: 16, left: 16, background: 'var(--card-bg)', border: 'none', color: 'var(--text-dim)', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                ×
+              </button>
+              <div style={{ textAlign: 'center', marginTop: 12, marginBottom: 8 }}>
+                <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)' }}>AI Settings</div>
+                <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>Changes save automatically.</div>
+              </div>
+
+              <div style={{ marginTop: 24, padding: '40px 20px', textAlign: 'center', color: 'var(--text-dim)', fontSize: 13, border: '1px dashed var(--border-color)', borderRadius: 12 }}>
+                AI customization options coming here next — tone, plausibility strictness, and response style controls.
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* AI Settings modal */}
+      <AnimatePresence>
+        {showAISettings && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, backdropFilter: 'blur(8px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+            onClick={() => setShowAISettings(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 10 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+              style={{ background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 20, padding: '28px 32px', maxWidth: 460, width: '100%', maxHeight: '85vh', overflowY: 'auto', position: 'relative' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowAISettings(false)}
+                style={{ position: 'absolute', top: 16, left: 16, background: 'var(--card-bg)', border: 'none', color: 'var(--text-dim)', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                ×
+              </button>
+
+              <div style={{ textAlign: 'center', marginTop: 12, marginBottom: 24 }}>
+                <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)' }}>AI Settings</div>
+                <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>Changes save automatically.</div>
+              </div>
+
+              {/* Response length */}
+              <div style={{ marginBottom: 22 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Response Length</div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {['concise', 'detailed'].map(val => (
+                    <button
+                      key={val}
+                      onClick={() => updateSettings({ ai_response_style: val })}
+                      style={{
+                        flex: 1, padding: '9px', borderRadius: 9, cursor: 'pointer', fontFamily: 'inherit', textTransform: 'capitalize',
+                        border: `1px solid ${settings?.ai_response_style === val ? 'var(--accent)' : 'var(--border-color)'}`,
+                        background: settings?.ai_response_style === val ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--card-bg)',
+                        color: settings?.ai_response_style === val ? 'var(--accent)' : 'var(--text-dim)',
+                        fontSize: 13, fontWeight: settings?.ai_response_style === val ? 700 : 400,
+                      }}
+                    >
+                      {val}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Plausibility */}
+              <div style={{ marginBottom: 22 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Plausibility</div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {[
+                    { val: 'realistic', label: 'Realistic' },
+                    { val: 'speculative', label: 'Speculative' },
+                  ].map(opt => (
+                    <button
+                      key={opt.val}
+                      onClick={() => updateSettings({ ai_plausibility: opt.val })}
+                      style={{
+                        flex: 1, padding: '9px', borderRadius: 9, cursor: 'pointer', fontFamily: 'inherit',
+                        border: `1px solid ${settings?.ai_plausibility === opt.val ? 'var(--accent)' : 'var(--border-color)'}`,
+                        background: settings?.ai_plausibility === opt.val ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--card-bg)',
+                        color: settings?.ai_plausibility === opt.val ? 'var(--accent)' : 'var(--text-dim)',
+                        fontSize: 13, fontWeight: settings?.ai_plausibility === opt.val ? 700 : 400,
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tone */}
+              <div style={{ marginBottom: 26 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Tone</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {[
+                    { val: 'historian', label: 'Neutral Historian', desc: 'Balanced, factual, measured' },
+                    { val: 'dramatic', label: 'Dramatic Narrator', desc: 'Vivid, cinematic storytelling' },
+                    { val: 'academic', label: 'Academic', desc: 'Formal, citation-minded, precise' },
+                  ].map(opt => (
+                    <button
+                      key={opt.val}
+                      onClick={() => updateSettings({ ai_tone: opt.val })}
+                      style={{
+                        padding: '10px 12px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                        border: `1px solid ${settings?.ai_tone === opt.val ? 'var(--accent)' : 'var(--border-color)'}`,
+                        background: settings?.ai_tone === opt.val ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'var(--card-bg)',
+                      }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: 600, color: settings?.ai_tone === opt.val ? 'var(--accent)' : 'var(--text)' }}>{opt.label}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>{opt.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Toggles */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <AIToggle
+                  label="Show confidence level"
+                  value={settings?.show_confidence_level ?? true}
+                  onChange={() => updateSettings({ show_confidence_level: !(settings?.show_confidence_level ?? true) })}
+                />
+                <AIToggle
+                  label="Show historian's note"
+                  value={settings?.show_historians_note ?? true}
+                  onChange={() => updateSettings({ show_historians_note: !(settings?.show_historians_note ?? true) })}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* AI Settings modal */}
+      <AnimatePresence>
+        {showAISettings && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+            onClick={() => setShowAISettings(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 10 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+              style={{ background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 20, padding: '28px 32px', maxWidth: 460, width: '100%', maxHeight: '85vh', overflowY: 'auto', position: 'relative' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowAISettings(false)}
+                style={{ position: 'absolute', top: 16, left: 16, background: 'var(--card-bg)', border: 'none', color: 'var(--text-dim)', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                ×
+              </button>
+
+              <div style={{ textAlign: 'center', marginTop: 12, marginBottom: 24 }}>
+                <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)' }}>AI Settings</div>
+                <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>Changes save automatically.</div>
+              </div>
+
+              {/* Response length */}
+              <div style={{ marginBottom: 22 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Response Length</div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {['concise', 'detailed'].map(val => (
+                    <button
+                      key={val}
+                      onClick={() => updateSettings({ ai_response_style: val })}
+                      style={{
+                        flex: 1, padding: '9px', borderRadius: 9, cursor: 'pointer', fontFamily: 'inherit', textTransform: 'capitalize',
+                        border: `1px solid ${settings?.ai_response_style === val ? 'var(--accent)' : 'var(--border-color)'}`,
+                        background: settings?.ai_response_style === val ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--card-bg)',
+                        color: settings?.ai_response_style === val ? 'var(--accent)' : 'var(--text-dim)',
+                        fontSize: 13, fontWeight: settings?.ai_response_style === val ? 700 : 400,
+                      }}
+                    >
+                      {val}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Plausibility */}
+              <div style={{ marginBottom: 22 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Plausibility</div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {[
+                    { val: 'realistic', label: 'Realistic' },
+                    { val: 'speculative', label: 'Speculative' },
+                  ].map(opt => (
+                    <button
+                      key={opt.val}
+                      onClick={() => updateSettings({ ai_plausibility: opt.val })}
+                      style={{
+                        flex: 1, padding: '9px', borderRadius: 9, cursor: 'pointer', fontFamily: 'inherit',
+                        border: `1px solid ${settings?.ai_plausibility === opt.val ? 'var(--accent)' : 'var(--border-color)'}`,
+                        background: settings?.ai_plausibility === opt.val ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--card-bg)',
+                        color: settings?.ai_plausibility === opt.val ? 'var(--accent)' : 'var(--text-dim)',
+                        fontSize: 13, fontWeight: settings?.ai_plausibility === opt.val ? 700 : 400,
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tone */}
+              <div style={{ marginBottom: 26 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Tone</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {[
+                    { val: 'historian', label: 'Neutral Historian', desc: 'Balanced, factual, measured' },
+                    { val: 'dramatic', label: 'Dramatic Narrator', desc: 'Vivid, cinematic storytelling' },
+                    { val: 'academic', label: 'Academic', desc: 'Formal, citation-minded, precise' },
+                  ].map(opt => (
+                    <button
+                      key={opt.val}
+                      onClick={() => updateSettings({ ai_tone: opt.val })}
+                      style={{
+                        padding: '10px 12px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                        border: `1px solid ${settings?.ai_tone === opt.val ? 'var(--accent)' : 'var(--border-color)'}`,
+                        background: settings?.ai_tone === opt.val ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'var(--card-bg)',
+                      }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: 600, color: settings?.ai_tone === opt.val ? 'var(--accent)' : 'var(--text)' }}>{opt.label}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>{opt.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Toggles */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <AIToggle
+                  label="Show confidence level"
+                  value={settings?.show_confidence_level ?? true}
+                  onChange={() => updateSettings({ show_confidence_level: !(settings?.show_confidence_level ?? true) })}
+                />
+                <AIToggle
+                  label="Show historian's note"
+                  value={settings?.show_historians_note ?? true}
+                  onChange={() => updateSettings({ show_historians_note: !(settings?.show_historians_note ?? true) })}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <style>{`
         @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
         @keyframes spin { to { transform:rotate(360deg); } }
@@ -485,4 +800,26 @@ const btnStyle: React.CSSProperties = {
   color: 'var(--text-dim)',
   fontSize: 13, fontWeight: 500, cursor: 'pointer',
   fontFamily: 'inherit',
+}
+
+function AIToggle({ label, value, onChange }: { label: string; value: boolean; onChange: () => void }) {
+  return (
+    <div
+      onClick={onChange}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', cursor: 'pointer' }}
+    >
+      <span style={{ fontSize: 13, color: 'var(--text)' }}>{label}</span>
+      <div style={{
+        width: 40, height: 22, borderRadius: 99, flexShrink: 0,
+        background: value ? 'var(--accent)' : 'var(--border-color)',
+        position: 'relative', transition: 'background 0.2s',
+      }}>
+        <div style={{
+          position: 'absolute', top: 2, left: value ? 20 : 2,
+          width: 18, height: 18, borderRadius: '50%', background: '#fff',
+          transition: 'left 0.2s',
+        }} />
+      </div>
+    </div>
+  )
 }

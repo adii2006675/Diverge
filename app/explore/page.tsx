@@ -1,7 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 import Nav from '@/components/Nav'
 import StarBackground from '@/components/StarBackground'
 import { HISTORICAL_EVENTS, ERAS } from '@/lib/events'
@@ -24,17 +24,27 @@ const FALLBACK_IMAGES: Record<string, string> = {
   'great-depression-1929': '/events/great-depression-1929.jpg',
 }
 
+const PLACEHOLDER_LONG_DESC = 'This is placeholder expanded description text standing in for the real one hundred to three hundred character version that will eventually replace it here soon enough for testing purposes today.'
+
 export default function ExplorePage() {
   const router = useRouter()
   const [selectedEra, setSelectedEra] = useState('All')
   const [yearMin, setYearMin] = useState(1400)
   const [yearMax, setYearMax] = useState(2026)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const filtered = HISTORICAL_EVENTS.filter(e => {
     const eraMatch = selectedEra === 'All' || e.era === selectedEra
     const yearMatch = e.year >= yearMin && e.year <= yearMax
     return eraMatch && yearMatch
   })
+
+  const expandedEvent = filtered.find(e => e.id === expandedId) || HISTORICAL_EVENTS.find(e => e.id === expandedId)
+
+  useEffect(() => {
+    document.body.style.overflow = expandedId ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [expandedId])
 
   return (
     <main style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
@@ -113,27 +123,28 @@ export default function ExplorePage() {
             {filtered.map((event, idx) => (
               <motion.div
                 key={event.id}
+                layoutId={`card-${event.id}`}
                 className="event-card"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35, delay: idx * 0.05, ease: 'easeOut' }}
                 whileHover={{ y: -7.5 }}
-                transition={{ duration: 0.15, ease: 'easeOut' }}
                 style={{
                   borderRadius: 16, border: '1px solid var(--border-color)',
                   background: 'var(--bg)', overflow: 'hidden',
                   cursor: 'pointer', position: 'relative', zIndex: 1, isolation: 'isolate',
                 }}
+                onClick={() => setExpandedId(event.id)}
               >
                 <div style={{ position: 'absolute', inset: 0, background: 'var(--card-bg)', zIndex: 0 }} />
-                <CardBorderTrace radius={16} startOffset={90} />
+                <CardBorderTrace radius={16} />
                 <div style={{ position: 'relative', zIndex: 1 }}>
                   <div style={{ height: 130, overflow: 'hidden', position: 'relative', background: 'var(--card-bg)' }}>
                     <img
                       src={FALLBACK_IMAGES[event.id] || `https://picsum.photos/seed/${event.id}/800/400`}
                       alt={event.title}
                       referrerPolicy="no-referrer"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.5)' }}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                     <div style={{ position: 'absolute', top: 10, left: 12 }}>
                       <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', background: 'var(--bg)', padding: '2px 7px', borderRadius: 4 }}>
@@ -145,7 +156,7 @@ export default function ExplorePage() {
                     <div style={{ fontSize: 'var(--font-scale)', fontWeight: 700, marginBottom: 5, color: 'var(--text)' }}>{event.title}</div>
                     <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', lineHeight: 1.6, marginBottom: 12 }}>{event.shortDesc}</div>
                     <button
-                      onClick={() => router.push(`/diverge/${event.id}`)}
+                      onClick={e => { e.stopPropagation(); router.push(`/diverge/${event.id}`) }}
                       style={{
                         width: '100%', padding: '8px', borderRadius: 8,
                         border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)', background: 'color-mix(in srgb, var(--accent) 7%, transparent)',
@@ -155,7 +166,7 @@ export default function ExplorePage() {
                       onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'color-mix(in srgb, var(--accent) 16%, transparent)'}
                       onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'color-mix(in srgb, var(--accent) 7%, transparent)'}
                     >
-                      Explore →
+                      Explore
                     </button>
                   </div>
                 </div>
@@ -164,6 +175,79 @@ export default function ExplorePage() {
           </div>
         )}
       </div>
+
+      {/* Expanded modal */}
+      <AnimatePresence>
+        {expandedEvent && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              onClick={() => setExpandedId(null)}
+              style={{
+                position: 'fixed', inset: 0, zIndex: 100,
+                background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
+              }}
+            />
+            <div style={{ position: 'fixed', inset: 0, zIndex: 101, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, pointerEvents: 'none' }}>
+              <motion.div
+                layoutId={`card-${expandedEvent.id}`}
+                className="event-card always-trace"
+                transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
+                style={{
+                  borderRadius: 20, border: '1px solid var(--border-color)',
+                  background: 'var(--bg)', overflow: 'hidden',
+                  position: 'relative', isolation: 'isolate',
+                  maxWidth: 520, width: '100%', maxHeight: '85vh', overflowY: 'auto',
+                  pointerEvents: 'auto',
+                }}
+              >
+                <div style={{ position: 'absolute', inset: 0, background: 'var(--card-bg)', zIndex: 0 }} />
+                <CardBorderTrace radius={20} />
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  <div style={{ height: 220, overflow: 'hidden', position: 'relative', background: 'var(--card-bg)' }}>
+                    <img
+                      src={FALLBACK_IMAGES[expandedEvent.id] || `https://picsum.photos/seed/${expandedEvent.id}/800/400`}
+                      alt={expandedEvent.title}
+                      referrerPolicy="no-referrer"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <div style={{ position: 'absolute', top: 14, left: 16 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', background: 'var(--bg)', padding: '3px 9px', borderRadius: 5 }}>
+                        {expandedEvent.era.toUpperCase()} · {expandedEvent.year < 0 ? `${Math.abs(expandedEvent.year)} BC` : expandedEvent.year}
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ padding: '20px 24px 24px' }}>
+                    <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 12, color: 'var(--text)' }}>{expandedEvent.title}</div>
+                    <div style={{ fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: 24 }}>
+                      {PLACEHOLDER_LONG_DESC}
+                    </div>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button
+                        onClick={() => setExpandedId(null)}
+                        style={{ flex: 1, padding: '12px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-dim)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}
+                        onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)'}
+                        onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)'}
+                      >
+                        Back
+                      </button>
+                      <button
+                        onClick={() => router.push(`/diverge/${expandedEvent.id}`)}
+                        style={{ flex: 1, padding: '12px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+                      >
+                        Diverge
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </>
+        )}
+      </AnimatePresence>
     </main>
   )
 }

@@ -12,6 +12,8 @@ type UserSettings = {
   default_era: string
   accent_color: string
   font_size: string
+  ai_plausibility: string
+  ai_tone: string
 }
 
 type Profile = {
@@ -131,6 +133,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         default_era: data.default_era || 'All',
         accent_color: data.accent_color || 'orange',
         font_size: data.font_size || 'medium',
+        ai_plausibility: data.ai_plausibility || 'realistic',
+        ai_tone: data.ai_tone || 'historian',
       }
       setSettings(merged)
       applyThemeToDOM(merged.theme, merged.accent_color, merged.font_size)
@@ -145,6 +149,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         default_era: 'All',
         accent_color: 'orange',
         font_size: 'medium',
+        ai_plausibility: 'realistic',
+        ai_tone: 'historian',
       }
       await supabase.from('user_settings').insert(defaults)
       setSettings(defaults)
