@@ -33,7 +33,19 @@ export default function Nav({ active }: { active?: string }) {
         {/* Left — wordmark */}
         <div
           onClick={() => router.push('/')}
-          style={{ fontSize: 17, fontWeight: 900, letterSpacing: '0.18em', textTransform: 'uppercase', cursor: 'pointer', color: 'var(--text)', minWidth: 100 }}
+          style={{
+            fontSize: 17, fontWeight: 900, letterSpacing: '0.18em', textTransform: 'uppercase', cursor: 'pointer', minWidth: 100,
+            backgroundImage: 'linear-gradient(to right, var(--accent) 50%, var(--text) 50%)',
+            backgroundSize: '200% 100%',
+            backgroundPosition: 'right bottom',
+            WebkitBackgroundClip: 'text',
+            backgroundClip: 'text',
+            color: 'transparent',
+            display: 'inline-block',
+            transition: 'background-position 0.4s ease, transform 0.25s ease',
+          }}
+          onMouseEnter={e => { const el = e.currentTarget as HTMLDivElement; el.style.backgroundPosition = 'left bottom'; el.style.transform = 'scale(1.08)' }}
+          onMouseLeave={e => { const el = e.currentTarget as HTMLDivElement; el.style.backgroundPosition = 'right bottom'; el.style.transform = 'scale(1)' }}
         >
           DIVERGE
         </div>
@@ -57,22 +69,20 @@ export default function Nav({ active }: { active?: string }) {
               {label}
             </button>
           ))}
-          {user && (
-            <button
-              onClick={() => router.push('/sessions')}
-              style={{
-                padding: '8px 16px', borderRadius: 8, border: 'none',
-                background: active === 'sessions' ? 'color-mix(in srgb, var(--accent) 20%, transparent)' : 'transparent',
-                color: active === 'sessions' ? 'var(--accent)' : 'var(--text-dim)',
-                fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)'}
-              onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.color = active === 'sessions' ? 'var(--text)' : 'var(--text-dim)'}
-            >
-              Sessions
-            </button>
-          )}
+          <button
+            onClick={() => router.push('/sessions')}
+            style={{
+              padding: '8px 16px', borderRadius: 8, border: 'none',
+              background: active === 'sessions' ? 'color-mix(in srgb, var(--accent) 20%, transparent)' : 'transparent',
+              color: active === 'sessions' ? 'var(--accent)' : 'var(--text-dim)',
+              fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)'}
+            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.color = active === 'sessions' ? 'var(--text)' : 'var(--text-dim)'}
+          >
+            Sessions
+          </button>
         </div>
 
         {/* Right — auth */}

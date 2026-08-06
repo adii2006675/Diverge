@@ -90,7 +90,7 @@ function applyThemeToDOM(theme: string, accentKey: string, fontSize: string) {
   const scale = FONT_SCALES[fontSize] || FONT_SCALES.medium
 
   root.style.setProperty('--bg', themeVars.bg)
-  root.style.setProperty('--star-color', themeVars.star)
+  root.style.setProperty('--star-color', accent)
   root.style.setProperty('--text', themeVars.text)
   root.style.setProperty('--text-dim', themeVars.textDim)
   root.style.setProperty('--nav-bg', themeVars.navBg)

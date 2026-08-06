@@ -1,8 +1,11 @@
 export default function CardBorderTrace({
   radius = 16,
+  inset = 1.5,
 }: {
   radius?: number
+  inset?: number
 }) {
+  const insetRadius = Math.max(radius - inset, 0)
   return (
     <svg
       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2 }}
@@ -10,11 +13,11 @@ export default function CardBorderTrace({
     >
       <rect
         className="card-trace-right"
-        x="1" y="1" width="calc(100% - 2px)" height="calc(100% - 2px)"
-        rx={radius} ry={radius}
+        x={inset} y={inset} width={`calc(100% - ${inset * 2}px)`} height={`calc(100% - ${inset * 2}px)`}
+        rx={insetRadius} ry={insetRadius}
         fill="none"
         stroke="var(--accent)"
-        strokeWidth="2"
+        strokeWidth="3"
         pathLength="1"
         strokeDasharray="0 1"
         strokeDashoffset="0.368"
@@ -22,11 +25,11 @@ export default function CardBorderTrace({
       />
       <rect
         className="card-trace-left"
-        x="1" y="1" width="calc(100% - 2px)" height="calc(100% - 2px)"
-        rx={radius} ry={radius}
+        x={inset} y={inset} width={`calc(100% - ${inset * 2}px)`} height={`calc(100% - ${inset * 2}px)`}
+        rx={insetRadius} ry={insetRadius}
         fill="none"
         stroke="var(--accent)"
-        strokeWidth="2"
+        strokeWidth="3"
         pathLength="1"
         strokeDasharray="0 1"
         strokeDashoffset="0.375"

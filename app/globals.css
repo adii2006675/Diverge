@@ -4,6 +4,14 @@
   box-sizing: border-box;
 }
 
+html {
+  scrollbar-gutter: stable both-edges;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
 body {
   background: var(--bg, #080810);
   color: var(--text, #ffffff);

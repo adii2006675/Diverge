@@ -51,11 +51,6 @@ export default function StarBackground() {
     let lastGlobalSlot = getGlobalSlot()
 
     function getSize() {
-      const parent = canvas.parentElement
-      if (parent) {
-        const rect = parent.getBoundingClientRect()
-        return { width: Math.max(rect.width, 1), height: Math.max(rect.height, 1) }
-      }
       return { width: window.innerWidth, height: window.innerHeight }
     }
 
@@ -64,11 +59,11 @@ export default function StarBackground() {
       canvas.width = width
       canvas.height = height
       const density = (width * height) / (1920 * 1080)
-      const starCount = Math.max(20, Math.round(120 * density))
+      const starCount = Math.max(40, Math.round(260 * density))
       stars = Array.from({ length: starCount }, () => ({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        r: Math.random() * 1.2 + 0.3,
+        r: Math.random() * 1.6 + 0.6,
         vx: (Math.random() - 0.5) * 0.15,
         vy: (Math.random() - 0.5) * 0.15,
         alpha: Math.random() * 0.6 + 0.2,

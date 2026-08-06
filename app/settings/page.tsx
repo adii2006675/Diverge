@@ -1,7 +1,6 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
-import StarBackground from '@/components/StarBackground'
 import Nav from '@/components/Nav'
 
 const THEMES = ['light', 'dark']
@@ -33,7 +32,7 @@ export default function SettingsPage() {
   const { user, settings, updateSettings, loading } = useAuth()
 
   if (loading) return (
-    <main style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <main style={{ minHeight: '100vh', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--border-color)', borderTopColor: 'var(--accent)', animation: 'spin 0.8s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </main>
@@ -50,8 +49,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
-      <StarBackground />
+    <main style={{ minHeight: '100vh', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
       <Nav active="settings" />
 
       <div style={{ position: 'relative', zIndex: 1, maxWidth: 640, margin: '0 auto', padding: '140px 24px 60px' }}>

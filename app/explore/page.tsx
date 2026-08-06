@@ -1,9 +1,9 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
 import Nav from '@/components/Nav'
-import StarBackground from '@/components/StarBackground'
 import { HISTORICAL_EVENTS, ERAS } from '@/lib/events'
 import DualSlider from '@/components/DualSlider'
 import CardBorderTrace from '@/components/CardBorderTrace'
@@ -42,13 +42,16 @@ export default function ExplorePage() {
   const expandedEvent = filtered.find(e => e.id === expandedId) || HISTORICAL_EVENTS.find(e => e.id === expandedId)
 
   useEffect(() => {
-    document.body.style.overflow = expandedId ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
+    if (expandedId) {
+      document.body.classList.add('modal-open')
+    } else {
+      document.body.classList.remove('modal-open')
+    }
+    return () => { document.body.classList.remove('modal-open') }
   }, [expandedId])
 
   return (
-    <main style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
-      <StarBackground />
+    <main style={{ minHeight: '100vh', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
       <Nav active="explore" />
 
       {/* Hero */}
@@ -84,6 +87,8 @@ export default function ExplorePage() {
                 color: selectedEra === era ? 'var(--accent)' : 'var(--text-dim)',
                 fontSize: 'var(--font-scale)', fontWeight: 500, transition: 'all 0.18s',
               }}
+              onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.fontSize = 'calc(var(--font-scale) * 1.08)'; el.style.color = selectedEra === era ? 'var(--accent)' : 'var(--text)' }}
+              onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.fontSize = 'var(--font-scale)'; el.style.color = selectedEra === era ? 'var(--accent)' : 'var(--text-dim)' }}
             >
               {era}
             </button>
@@ -136,10 +141,9 @@ export default function ExplorePage() {
                 }}
                 onClick={() => setExpandedId(event.id)}
               >
-                <div style={{ position: 'absolute', inset: 0, background: 'var(--card-bg)', zIndex: 0 }} />
                 <CardBorderTrace radius={16} />
                 <div style={{ position: 'relative', zIndex: 1 }}>
-                  <div style={{ height: 130, overflow: 'hidden', position: 'relative', background: 'var(--card-bg)' }}>
+                  <div style={{ height: 130, overflow: 'hidden', position: 'relative', background: 'var(--bg)' }}>
                     <img
                       src={FALLBACK_IMAGES[event.id] || `https://picsum.photos/seed/${event.id}/800/400`}
                       alt={event.title}

@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
 import Nav from '@/components/Nav'
-import StarBackground from '@/components/StarBackground'
 import { HISTORICAL_EVENTS } from '@/lib/events'
 import { useAuth } from '@/context/AuthContext'
 import CardBorderTrace from '@/components/CardBorderTrace'
@@ -58,8 +57,7 @@ export default function LandingPage() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', position: 'relative', overflowX: 'hidden', fontFamily: 'Inter, system-ui, sans-serif' }}>
-      <StarBackground />
+    <main style={{ minHeight: '100vh', background: 'transparent', color: 'var(--text)', position: 'relative', overflowX: 'hidden', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <Nav active="home" />
 
       {/* Hero */}
@@ -156,11 +154,11 @@ export default function LandingPage() {
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: idx * 0.07, ease: 'easeOut' }}
               whileHover={{ y: -10 }}
-              style={{ borderRadius: 16, border: '1px solid var(--border-color)', background: 'var(--card-bg)', overflow: 'hidden', cursor: 'pointer', position: 'relative', zIndex: 1, isolation: 'isolate', marginBottom: 10 }}
+              style={{ borderRadius: 16, border: '1px solid var(--border-color)', background: 'var(--bg)', overflow: 'hidden', cursor: 'pointer', position: 'relative', zIndex: 1, isolation: 'isolate', marginBottom: 10 }}
               onClick={() => setExpandedId(event.id)}
             >
               <CardBorderTrace radius={16} />
-              <div style={{ height: 140, overflow: 'hidden', position: 'relative', background: 'var(--card-bg)' }}>
+              <div style={{ height: 140, overflow: 'hidden', position: 'relative', background: 'var(--bg)' }}>
                 <img
                   src={FALLBACK_IMAGES[event.id] || `https://picsum.photos/seed/${event.id}/800/400`}
                   alt={event.title}
@@ -168,7 +166,7 @@ export default function LandingPage() {
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
                 <div style={{ position: 'absolute', top: 12, left: 14 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', background: 'rgba(0,0,0,0.55)', padding: '3px 8px', borderRadius: 4 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', background: 'var(--bg)', padding: '3px 8px', borderRadius: 4 }}>
                     {event.era.toUpperCase()} · {event.year}
                   </span>
                 </div>

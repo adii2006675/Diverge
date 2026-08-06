@@ -1,9 +1,8 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { HISTORICAL_EVENTS } from '@/lib/events'
 import { WhatIfEntry, WhatIfResponse, WorldMood } from '@/types'
-import StarBackground from '@/components/StarBackground'
 import { useAuth } from '@/context/AuthContext'
 import { motion, AnimatePresence } from 'motion/react'
 import { supabase } from '@/lib/supabase'
@@ -49,7 +48,9 @@ export default function DivergePage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const { settings, user, updateSettings } = useAuth()
+  const { settings, user, profile, updateSettings, signOut } = useAuth()
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const hasAutoSubmitted = useRef(false)
 
   const currentEntry = whatIfs[activeTimelineIdx] || null
   const currentResponse = currentEntry?.response || null
@@ -60,6 +61,14 @@ export default function DivergePage() {
   const currentParagraph = currentResponse?.paragraph || ''
   const realFacts = event?.realFacts || []
   const startingEvent = event ? `${event.title} — ${event.year}` : customQ || 'Custom starting point'
+
+  useEffect(() => {
+    if (customQ && !event && !hasAutoSubmitted.current) {
+      hasAutoSubmitted.current = true
+      setCurrentInput(customQ)
+      setTimeout(() => handleAsk(), 0)
+    }
+  }, [])
 
   const uncertaintyColor = currentResponse?.uncertaintyLevel === 'LOW'
     ? '#10B981'
@@ -161,14 +170,11 @@ export default function DivergePage() {
   const eventImage = FALLBACK_IMAGES[sessionId] || `https://picsum.photos/seed/${sessionId}/800/400`
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
 
       {/* Top bar */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '12px 24px', borderBottom: '1px solid var(--border-color)', flexShrink: 0, background: 'var(--nav-bg)', position: 'relative', zIndex: 10 }}>
-        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-          <StarBackground />
-        </div>
-        <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: '0.15em', cursor: 'pointer', textTransform: 'uppercase', color: 'var(--text)', position: 'relative', zIndex: 1, justifySelf: 'start' }} onClick={() => router.push('/')}>DIVERGE</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '18px 40px', borderBottom: '1px solid var(--border-color)', flexShrink: 0, background: 'var(--nav-bg)', position: 'relative', zIndex: 10 }}>
+        <div style={{ fontSize: 17, fontWeight: 900, letterSpacing: '0.15em', cursor: 'pointer', textTransform: 'uppercase', color: 'var(--text)', position: 'relative', zIndex: 1, justifySelf: 'start' }} onClick={() => router.push('/')}>DIVERGE</div>
         <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 600, position: 'relative', zIndex: 1, justifySelf: 'center', whiteSpace: 'nowrap' }}>
           {startingEvent}
         </div>
@@ -182,15 +188,6 @@ export default function DivergePage() {
             AI
           </button>
           <button
-            onClick={handleManualSave}
-            disabled={saving || whatIfs.length === 0}
-            style={{ ...btnStyle, background: saved ? '#10B981' : 'var(--card-bg)', color: saved ? '#fff' : 'var(--text-dim)', border: saved ? 'none' : '1px solid var(--border-color)', minWidth: 70, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            onMouseEnter={e => { if (!saved) { (e.currentTarget as HTMLButtonElement).style.color = '#10B981'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#10B981' } }}
-            onMouseLeave={e => { if (!saved) { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-dim)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)' } }}
-          >
-            {saving ? '...' : saved ? 'Saved ✓' : 'Save'}
-          </button>
-          <button
             onClick={() => router.push('/')}
             style={btnStyle}
             onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--accent)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'color-mix(in srgb, var(--accent) 40%, transparent)' }}
@@ -198,8 +195,59 @@ export default function DivergePage() {
           >
             Exit
           </button>
+          {whatIfs.length > 0 && (
+            <button
+              onClick={handleManualSave}
+              disabled={saving}
+              style={{ ...btnStyle, background: saved ? '#10B981' : 'var(--card-bg)', color: saved ? '#fff' : 'var(--text-dim)', border: saved ? 'none' : '1px solid var(--border-color)', minWidth: 70, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              onMouseEnter={e => { if (!saved) { (e.currentTarget as HTMLButtonElement).style.color = '#10B981'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#10B981' } }}
+              onMouseLeave={e => { if (!saved) { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-dim)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)' } }}
+            >
+              {saving ? '...' : saved ? 'Saved ✓' : 'Save'}
+            </button>
+          )}
+          {user && (
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid var(--border-color)', background: 'color-mix(in srgb, var(--accent) 20%, transparent)', color: 'var(--text)', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)'}
+                onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)'}
+              >
+                {profile?.username?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?'}
+              </button>
+              {showProfileMenu && (
+                <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '8px', minWidth: 200, zIndex: 300 }}>
+                  <div style={{ padding: '8px 12px 12px', borderBottom: '1px solid var(--border-color)', marginBottom: 6 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{profile?.username || 'User'}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>{user.email}</div>
+                  </div>
+                  {[
+                    { label: 'Profile', action: () => router.push('/profile') },
+                    { label: 'Settings', action: () => router.push('/settings') },
+                  ].map(item => (
+                    <button key={item.label} onClick={() => { item.action(); setShowProfileMenu(false) }}
+                      style={{ display: 'block', width: '100%', padding: '8px 12px', borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--text-dim)', fontSize: 13, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                      onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'var(--card-bg)'}
+                      onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
+                    >{item.label}</button>
+                  ))}
+                  <div style={{ borderTop: '1px solid var(--border-color)', marginTop: 6, paddingTop: 6 }}>
+                    <button
+                      onClick={async () => { await signOut(); router.push('/'); setShowProfileMenu(false) }}
+                      style={{ display: 'block', width: '100%', padding: '8px 12px', borderRadius: 8, border: 'none', background: 'transparent', color: '#EF4444', fontSize: 13, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                      onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.08)'}
+                      onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      </div>
+        </div>
 
       {/* Split screen */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative', zIndex: 1, alignItems: 'stretch' }}>
@@ -207,7 +255,7 @@ export default function DivergePage() {
         {/* LEFT — Real history */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}>
           <div style={{ padding: '14px 22px 10px', borderBottom: '1px solid var(--border-color)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--accent)' }}>REAL HISTORY</span>
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--accent)' }}>REAL TIMELINE</span>
             {event?.year && (
               <span style={{ padding: '2px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>
                 {event.year}
@@ -276,7 +324,7 @@ export default function DivergePage() {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                style={{ zIndex: 1, background: 'var(--bg)', padding: '10px 4px', textAlign: 'center' }}
+                style={{ zIndex: 1, background: 'transparent', padding: '10px 4px', textAlign: 'center' }}
               >
                 <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--accent)', lineHeight: 1 }}>{divergence}%</div>
                 <div style={{ fontSize: 8, color: 'var(--text-dim)', letterSpacing: '0.08em', marginTop: 3 }}>DIVERGED</div>
@@ -288,7 +336,7 @@ export default function DivergePage() {
         {/* RIGHT — Your alternate timeline */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}>
           <div style={{ padding: '14px 22px 10px', borderBottom: '1px solid var(--border-color)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--accent)' }}>YOUR TIMELINE</span>
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--accent)' }}>DIVERGED TIMELINE</span>
             {currentYear && (
               <span style={{ padding: '2px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>
                 {currentYear}
@@ -314,7 +362,34 @@ export default function DivergePage() {
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', padding: '20px 22px' }}>
-            {!currentResponse ? (
+            {loading ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-dim)', textAlign: 'center', gap: 18 }}>
+                <div style={{ position: 'relative', width: 56, height: 56 }}>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                    style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid transparent', borderTopColor: 'var(--accent)', borderRightColor: 'color-mix(in srgb, var(--accent) 30%, transparent)' }}
+                  />
+                  <motion.div
+                    animate={{ rotate: -360 }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+                    style={{ position: 'absolute', inset: 8, borderRadius: '50%', border: '2px solid transparent', borderBottomColor: 'var(--accent)', opacity: 0.6 }}
+                  />
+                  <motion.div
+                    animate={{ scale: [1, 1.15, 1], opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+                    style={{ position: 'absolute', inset: 20, borderRadius: '50%', background: 'var(--accent)' }}
+                  />
+                </div>
+                <motion.div
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{ fontSize: 14 }}
+                >
+                  Diverging history...
+                </motion.div>
+              </div>
+            ) : !currentResponse ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-dim)', textAlign: 'center', gap: 10 }}>
                 <div style={{ fontSize: 36 }}>🌍</div>
                 <div style={{ fontSize: 14 }}>Ask your first "what if" below to begin</div>
@@ -387,9 +462,6 @@ export default function DivergePage() {
 
       {/* Timeline dots */}
       <div style={{ padding: '10px 24px', borderTop: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', flexShrink: 0, position: 'relative', zIndex: 1, background: 'var(--nav-bg)', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-          <StarBackground />
-        </div>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', overflowX: 'auto', position: 'relative', zIndex: 1 }}>
           <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--text-dim)', border: '2px solid var(--border-color)', flexShrink: 0, cursor: 'pointer' }} />
           {whatIfs.map((entry, i) => (
@@ -410,9 +482,6 @@ export default function DivergePage() {
 
       {/* Input */}
       <div style={{ padding: '12px 24px 16px', background: 'var(--nav-bg)', flexShrink: 0, borderTop: '1px solid var(--border-color)', position: 'relative', zIndex: 1, overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-          <StarBackground />
-        </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', position: 'relative', zIndex: 1 }}>
           <input
             ref={inputRef}
@@ -511,165 +580,7 @@ export default function DivergePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
-            onClick={() => setShowAISettings(false)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.94, y: 16 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 10 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 30 }}
-              style={{ background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 20, padding: '28px 32px', maxWidth: 480, width: '100%', maxHeight: '85vh', overflowY: 'auto', position: 'relative' }}
-              onClick={e => e.stopPropagation()}
-            >
-              <button
-                onClick={() => setShowAISettings(false)}
-                style={{ position: 'absolute', top: 16, left: 16, background: 'var(--card-bg)', border: 'none', color: 'var(--text-dim)', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                ×
-              </button>
-              <div style={{ textAlign: 'center', marginTop: 12, marginBottom: 8 }}>
-                <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)' }}>AI Settings</div>
-                <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>Changes save automatically.</div>
-              </div>
-
-              <div style={{ marginTop: 24, padding: '40px 20px', textAlign: 'center', color: 'var(--text-dim)', fontSize: 13, border: '1px dashed var(--border-color)', borderRadius: 12 }}>
-                AI customization options coming here next — tone, plausibility strictness, and response style controls.
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* AI Settings modal */}
-      <AnimatePresence>
-        {showAISettings && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
             style={{ position: 'fixed', inset: 0, backdropFilter: 'blur(8px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
-            onClick={() => setShowAISettings(false)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.94, y: 16 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 10 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 30 }}
-              style={{ background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 20, padding: '28px 32px', maxWidth: 460, width: '100%', maxHeight: '85vh', overflowY: 'auto', position: 'relative' }}
-              onClick={e => e.stopPropagation()}
-            >
-              <button
-                onClick={() => setShowAISettings(false)}
-                style={{ position: 'absolute', top: 16, left: 16, background: 'var(--card-bg)', border: 'none', color: 'var(--text-dim)', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                ×
-              </button>
-
-              <div style={{ textAlign: 'center', marginTop: 12, marginBottom: 24 }}>
-                <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)' }}>AI Settings</div>
-                <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>Changes save automatically.</div>
-              </div>
-
-              {/* Response length */}
-              <div style={{ marginBottom: 22 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Response Length</div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {['concise', 'detailed'].map(val => (
-                    <button
-                      key={val}
-                      onClick={() => updateSettings({ ai_response_style: val })}
-                      style={{
-                        flex: 1, padding: '9px', borderRadius: 9, cursor: 'pointer', fontFamily: 'inherit', textTransform: 'capitalize',
-                        border: `1px solid ${settings?.ai_response_style === val ? 'var(--accent)' : 'var(--border-color)'}`,
-                        background: settings?.ai_response_style === val ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--card-bg)',
-                        color: settings?.ai_response_style === val ? 'var(--accent)' : 'var(--text-dim)',
-                        fontSize: 13, fontWeight: settings?.ai_response_style === val ? 700 : 400,
-                      }}
-                    >
-                      {val}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Plausibility */}
-              <div style={{ marginBottom: 22 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Plausibility</div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {[
-                    { val: 'realistic', label: 'Realistic' },
-                    { val: 'speculative', label: 'Speculative' },
-                  ].map(opt => (
-                    <button
-                      key={opt.val}
-                      onClick={() => updateSettings({ ai_plausibility: opt.val })}
-                      style={{
-                        flex: 1, padding: '9px', borderRadius: 9, cursor: 'pointer', fontFamily: 'inherit',
-                        border: `1px solid ${settings?.ai_plausibility === opt.val ? 'var(--accent)' : 'var(--border-color)'}`,
-                        background: settings?.ai_plausibility === opt.val ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--card-bg)',
-                        color: settings?.ai_plausibility === opt.val ? 'var(--accent)' : 'var(--text-dim)',
-                        fontSize: 13, fontWeight: settings?.ai_plausibility === opt.val ? 700 : 400,
-                      }}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Tone */}
-              <div style={{ marginBottom: 26 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Tone</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {[
-                    { val: 'historian', label: 'Neutral Historian', desc: 'Balanced, factual, measured' },
-                    { val: 'dramatic', label: 'Dramatic Narrator', desc: 'Vivid, cinematic storytelling' },
-                    { val: 'academic', label: 'Academic', desc: 'Formal, citation-minded, precise' },
-                  ].map(opt => (
-                    <button
-                      key={opt.val}
-                      onClick={() => updateSettings({ ai_tone: opt.val })}
-                      style={{
-                        padding: '10px 12px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
-                        border: `1px solid ${settings?.ai_tone === opt.val ? 'var(--accent)' : 'var(--border-color)'}`,
-                        background: settings?.ai_tone === opt.val ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'var(--card-bg)',
-                      }}
-                    >
-                      <div style={{ fontSize: 13, fontWeight: 600, color: settings?.ai_tone === opt.val ? 'var(--accent)' : 'var(--text)' }}>{opt.label}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>{opt.desc}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Toggles */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <AIToggle
-                  label="Show confidence level"
-                  value={settings?.show_confidence_level ?? true}
-                  onChange={() => updateSettings({ show_confidence_level: !(settings?.show_confidence_level ?? true) })}
-                />
-                <AIToggle
-                  label="Show historian's note"
-                  value={settings?.show_historians_note ?? true}
-                  onChange={() => updateSettings({ show_historians_note: !(settings?.show_historians_note ?? true) })}
-                />
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* AI Settings modal */}
-      <AnimatePresence>
-        {showAISettings && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
             onClick={() => setShowAISettings(false)}
           >
             <motion.div
