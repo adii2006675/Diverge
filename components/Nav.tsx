@@ -100,12 +100,16 @@ export default function Nav({ active }: { active?: string }) {
               <div style={{ position: 'relative' }}>
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid var(--border-color)', background: 'color-mix(in srgb, var(--accent) 20%, transparent)', color: 'var(--text)', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
+                  style={{
+                    width: 36, height: 36, borderRadius: '50%', border: '1px solid var(--border-color)',
+                    background: profile?.avatar_url ? `url(${profile.avatar_url}) center/cover` : 'color-mix(in srgb, var(--accent) 20%, transparent)',
+                    color: 'var(--text)', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s',
+                  }}
                   onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)'}
                   onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)'}
                   title="Profile"
                 >
-                  {profile?.username?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?'}
+                  {!profile?.avatar_url && (profile?.username?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?')}
                 </button>
 
                 {showUserMenu && (

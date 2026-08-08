@@ -17,6 +17,9 @@ export default function ProfilePage() {
   const [passwordError, setPasswordError] = useState('')
   const [passwordSaved, setPasswordSaved] = useState(false)
   const [savingPassword, setSavingPassword] = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [avatarHover, setAvatarHover] = useState(false)
+  const [showPasswordInfo, setShowPasswordInfo] = useState(false)
 
   useEffect(() => {
     if (profile?.username) setUsername(profile.username)
@@ -43,10 +46,55 @@ export default function ProfilePage() {
     setTimeout(() => setSaved(false), 2500)
   }
 
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    console.log('handleAvatarChange fired', e.target.files)
+    const file = e.target.files?.[0]
+    if (!file || !user) return
+    console.log('uploading file:', file.name, 'for user:', user.id)
+
+    setUploadingAvatar(true)
+    try {
+      const ext = file.name.split('.').pop()
+      const filePath = `${user.id}/avatar.${ext}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath)
+
+      const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`
+      await updateProfile({ avatar_url: cacheBustedUrl })
+    } catch (err) {
+      console.error('Avatar upload failed:', err)
+    }
+    setUploadingAvatar(false)
+  }
+
+  async function handleAvatarReset() {
+    if (!user) return
+    setUploadingAvatar(true)
+    try {
+      await updateProfile({ avatar_url: null })
+    } catch (err) {
+      console.error('Avatar reset failed:', err)
+    }
+    setUploadingAvatar(false)
+  }
+
   async function handleChangePassword() {
     setPasswordError('')
-    if (newPassword.length < 6) {
-      setPasswordError('Password must be at least 6 characters')
+    const meetsLength = newPassword.length >= 8 && newPassword.length <= 16
+    const hasUpper = /[A-Z]/.test(newPassword)
+    const hasLower = /[a-z]/.test(newPassword)
+    const hasNumber = /[0-9]/.test(newPassword)
+    const hasSpecial = /[^A-Za-z0-9]/.test(newPassword)
+    if (!meetsLength || !hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+      setPasswordError('Password must be 8-16 characters with 1 uppercase, 1 lowercase, 1 number, and 1 special character')
       return
     }
     if (newPassword !== confirmPassword) {
@@ -78,8 +126,52 @@ export default function ProfilePage() {
 
         {/* Avatar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 40, padding: '20px 24px', borderRadius: 16, border: '1px solid var(--border-color)', background: 'var(--card-bg)' }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'color-mix(in srgb, var(--accent) 25%, transparent)', border: '2px solid color-mix(in srgb, var(--accent) 40%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--font-scale)', fontWeight: 800, color: 'var(--accent)', flexShrink: 0 }}>
-            {initials}
+          <div
+            onMouseEnter={() => setAvatarHover(true)}
+            onMouseLeave={() => setAvatarHover(false)}
+            style={{ position: 'relative', width: 64, height: 64, borderRadius: '50%', flexShrink: 0 }}
+          >
+            <div style={{
+              width: 64, height: 64, borderRadius: '50%',
+              background: profile?.avatar_url ? `url(${profile.avatar_url}) center/cover` : 'color-mix(in srgb, var(--accent) 25%, transparent)',
+              border: '2px solid color-mix(in srgb, var(--accent) 40%, transparent)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 'var(--font-scale)', fontWeight: 800, color: 'var(--accent)',
+            }}>
+              {!profile?.avatar_url && initials}
+            </div>
+            {(avatarHover || uploadingAvatar) && (
+              <div style={{
+                position: 'absolute', inset: 0, borderRadius: '50%',
+                background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              }}>
+                {uploadingAvatar ? (
+                  <div style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.8s linear infinite' }} />
+                ) : (
+                  <>
+                    <label style={{ cursor: 'pointer', display: 'flex', position: 'relative', zIndex: 5 }} title="Change photo">
+                      <input type="file" accept="image/*" onChange={handleAvatarChange} disabled={uploadingAvatar} style={{ position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden' }} />
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" style={{ width: 16, height: 16, pointerEvents: 'none' }}>
+                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+                      </svg>
+                    </label>
+                    {profile?.avatar_url && (
+                      <button
+                        onClick={handleAvatarReset}
+                        disabled={uploadingAvatar}
+                        style={{ cursor: 'pointer', display: 'flex', background: 'none', border: 'none', padding: 0 }}
+                        title="Reset to default"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" style={{ width: 16, height: 16 }}>
+                          <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
+                          <path d="M3 3v5h5"></path>
+                        </svg>
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </div>
           <div>
             <div style={{ fontSize: 'var(--font-scale)', fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{profile?.username || 'User'}</div>
@@ -128,8 +220,38 @@ export default function ProfilePage() {
 
         {/* Change password */}
         <div style={{ marginBottom: 40 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 12 }}>
-            Change Password
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>
+              Change Password
+            </div>
+            <div
+              style={{ position: 'relative', display: 'flex' }}
+              onMouseEnter={() => setShowPasswordInfo(true)}
+              onMouseLeave={() => setShowPasswordInfo(false)}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" strokeWidth="2" style={{ width: 14, height: 14, cursor: 'help' }}>
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="17" x2="12" y2="11"></line>
+                <circle cx="12" cy="8" r="0.5" fill="var(--text-dim)"></circle>
+              </svg>
+              {showPasswordInfo && (
+                <div style={{
+                  position: 'absolute', left: 0, top: 'calc(100% + 8px)', zIndex: 10,
+                  background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 8,
+                  padding: '10px 12px', width: 220, fontSize: 11, fontWeight: 400, textTransform: 'none',
+                  letterSpacing: 'normal', color: 'var(--text-dim)', lineHeight: 1.6,
+                }}>
+                  <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Minimum requirements</div>
+                  <ul style={{ margin: 0, paddingLeft: 16 }}>
+                    <li>8-16 characters</li>
+                    <li>1 uppercase</li>
+                    <li>1 lowercase</li>
+                    <li>1 number</li>
+                    <li>1 special character</li>
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <input

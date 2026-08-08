@@ -174,18 +174,53 @@ export default function DivergePage() {
 
       {/* Top bar */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '18px 40px', borderBottom: '1px solid var(--border-color)', flexShrink: 0, background: 'var(--nav-bg)', position: 'relative', zIndex: 10 }}>
-        <div style={{ fontSize: 17, fontWeight: 900, letterSpacing: '0.15em', cursor: 'pointer', textTransform: 'uppercase', color: 'var(--text)', position: 'relative', zIndex: 1, justifySelf: 'start' }} onClick={() => router.push('/')}>DIVERGE</div>
+        <div
+          onClick={() => router.push('/')}
+          style={{
+            fontSize: 17, fontWeight: 900, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: 'pointer',
+            position: 'relative', zIndex: 1, justifySelf: 'start', display: 'inline-block',
+            backgroundImage: 'linear-gradient(to right, var(--accent) 50%, var(--text) 50%)',
+            backgroundSize: '200% 100%',
+            backgroundPosition: 'right bottom',
+            WebkitBackgroundClip: 'text',
+            backgroundClip: 'text',
+            color: 'transparent',
+            transition: 'background-position 0.4s ease, transform 0.25s ease',
+          }}
+          onMouseEnter={e => { const el = e.currentTarget as HTMLDivElement; el.style.backgroundPosition = 'left bottom'; el.style.transform = 'scale(1.08)' }}
+          onMouseLeave={e => { const el = e.currentTarget as HTMLDivElement; el.style.backgroundPosition = 'right bottom'; el.style.transform = 'scale(1)' }}
+        >
+          DIVERGE
+        </div>
         <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 600, position: 'relative', zIndex: 1, justifySelf: 'center', whiteSpace: 'nowrap' }}>
           {startingEvent}
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', position: 'relative', zIndex: 1, justifySelf: 'end' }}>
           <button
             onClick={() => setShowAISettings(true)}
-            style={{ ...btnStyle, padding: "7px 12px", fontWeight: 700 }}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--accent)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-dim)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)' }}
+            style={{ ...btnStyle, padding: "7px 12px", fontWeight: 700, position: 'relative', width: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onMouseEnter={e => {
+              const btn = e.currentTarget as HTMLButtonElement
+              btn.style.color = 'var(--accent)'; btn.style.borderColor = 'var(--accent)'
+              const label = btn.querySelector('.ai-label') as HTMLElement
+              const gear = btn.querySelector('.ai-gear') as HTMLElement
+              if (label) label.style.opacity = '0'
+              if (gear) { gear.style.opacity = '1'; gear.style.transform = 'rotate(180deg)' }
+            }}
+            onMouseLeave={e => {
+              const btn = e.currentTarget as HTMLButtonElement
+              btn.style.color = 'var(--text-dim)'; btn.style.borderColor = 'var(--border-color)'
+              const label = btn.querySelector('.ai-label') as HTMLElement
+              const gear = btn.querySelector('.ai-gear') as HTMLElement
+              if (label) label.style.opacity = '1'
+              if (gear) { gear.style.opacity = '0'; gear.style.transform = 'rotate(0deg)' }
+            }}
           >
-            AI
+            <span className="ai-label" style={{ transition: 'opacity 0.15s' }}>AI</span>
+            <svg className="ai-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ position: 'absolute', width: 16, height: 16, opacity: 0, transition: 'opacity 0.15s, transform 0.4s ease' }}>
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
           </button>
           <button
             onClick={() => router.push('/')}
@@ -210,11 +245,15 @@ export default function DivergePage() {
             <div style={{ position: 'relative' }}>
               <button
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
-                style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid var(--border-color)', background: 'color-mix(in srgb, var(--accent) 20%, transparent)', color: 'var(--text)', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{
+                  width: 36, height: 36, borderRadius: '50%', border: '1px solid var(--border-color)',
+                  background: profile?.avatar_url ? `url(${profile.avatar_url}) center/cover` : 'color-mix(in srgb, var(--accent) 20%, transparent)',
+                  color: 'var(--text)', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
                 onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)'}
                 onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)'}
               >
-                {profile?.username?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?'}
+                {!profile?.avatar_url && (profile?.username?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?')}
               </button>
               {showProfileMenu && (
                 <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '8px', minWidth: 200, zIndex: 300 }}>
@@ -250,11 +289,13 @@ export default function DivergePage() {
         </div>
 
       {/* Split screen */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative', zIndex: 1, alignItems: 'stretch' }}>
+      <div style={{ display: 'flex', flex: 1, flexDirection: 'column', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
+        <div style={{ borderBottom: '1px solid var(--border-color)', flexShrink: 0 }} />
+        <div style={{ display: 'flex', flex: 1, overflow: 'hidden', alignItems: 'stretch' }}>
 
         {/* LEFT — Real history */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}>
-          <div style={{ padding: '14px 22px 10px', borderBottom: '1px solid var(--border-color)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ padding: '14px 22px 10px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--accent)' }}>REAL TIMELINE</span>
             {event?.year && (
               <span style={{ padding: '2px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>
@@ -335,7 +376,7 @@ export default function DivergePage() {
 
         {/* RIGHT — Your alternate timeline */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}>
-          <div style={{ padding: '14px 22px 10px', borderBottom: '1px solid var(--border-color)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ padding: '14px 22px 10px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--accent)' }}>DIVERGED TIMELINE</span>
             {currentYear && (
               <span style={{ padding: '2px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>
@@ -448,6 +489,7 @@ export default function DivergePage() {
               </motion.div>
             )}
           </div>
+        </div>
         </div>
       </div>
 
