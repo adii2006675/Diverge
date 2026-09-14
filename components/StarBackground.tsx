@@ -12,8 +12,9 @@ export default function StarBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+    const canvasEl = canvasRef.current
+    if (!canvasEl) return
+    const canvas: HTMLCanvasElement = canvasEl
     const ctx = canvas.getContext('2d')!
     let animId: number
 

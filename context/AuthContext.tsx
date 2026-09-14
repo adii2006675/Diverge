@@ -14,6 +14,25 @@ type UserSettings = {
   font_size: string
   ai_plausibility: string
   ai_tone: string
+  ai_reading_level: string
+  show_divergence_score: boolean
+  show_comparison: boolean
+}
+
+const DEFAULT_SETTINGS: UserSettings = {
+  theme: 'dark',
+  language: 'English',
+  ai_response_style: 'medium',
+  show_confidence_level: true,
+  show_historians_note: true,
+  default_era: 'All',
+  accent_color: 'orange',
+  font_size: 'medium',
+  ai_plausibility: 'realistic',
+  ai_tone: 'historian',
+  ai_reading_level: 'medium',
+  show_divergence_score: true,
+  show_comparison: true,
 }
 
 type Profile = {
@@ -26,7 +45,7 @@ type Profile = {
 type AuthContextType = {
   user: User | null
   profile: Profile | null
-  settings: UserSettings | null
+  settings: UserSettings
   loading: boolean
   signOut: () => Promise<void>
   updateSettings: (updates: Partial<UserSettings>) => Promise<void>
@@ -37,7 +56,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
-  settings: null,
+  settings: DEFAULT_SETTINGS,
   loading: true,
   signOut: async () => {},
   updateSettings: async () => {},
@@ -104,7 +123,7 @@ function applyThemeToDOM(theme: string, accentKey: string, fontSize: string) {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [settings, setSettings] = useState<UserSettings | null>(null)
+  const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS)
   const [loading, setLoading] = useState(true)
 
   async function fetchProfile(userId: string) {
@@ -127,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const merged = {
         theme: data.theme === 'dim' ? 'dark' : (data.theme || 'dark'),
         language: data.language || 'English',
-        ai_response_style: data.ai_response_style || 'detailed',
+        ai_response_style: data.ai_response_style || 'medium',
         show_confidence_level: data.show_confidence_level ?? true,
         show_historians_note: data.show_historians_note ?? true,
         default_era: data.default_era || 'All',
@@ -135,23 +154,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         font_size: data.font_size || 'medium',
         ai_plausibility: data.ai_plausibility || 'realistic',
         ai_tone: data.ai_tone || 'historian',
+        ai_reading_level: data.ai_reading_level || 'medium',
+        show_divergence_score: data.show_divergence_score ?? true,
+        show_comparison: data.show_comparison ?? true,
       }
       setSettings(merged)
       applyThemeToDOM(merged.theme, merged.accent_color, merged.font_size)
     } else {
-      const defaults = {
-        id: userId,
-        theme: 'dark',
-        language: 'English',
-        ai_response_style: 'detailed',
-        show_confidence_level: true,
-        show_historians_note: true,
-        default_era: 'All',
-        accent_color: 'orange',
-        font_size: 'medium',
-        ai_plausibility: 'realistic',
-        ai_tone: 'historian',
-      }
+      const defaults = { id: userId, ...DEFAULT_SETTINGS }
       await supabase.from('user_settings').insert(defaults)
       setSettings(defaults)
       applyThemeToDOM(defaults.theme, defaults.accent_color, defaults.font_size)
@@ -166,15 +176,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut()
     setUser(null)
     setProfile(null)
-    setSettings(null)
+    setSettings(DEFAULT_SETTINGS)
     applyThemeToDOM('dark', 'orange', 'medium')
   }
 
   async function updateSettings(updates: Partial<UserSettings>) {
-    if (!user) return
-    const newSettings = { ...settings, ...updates } as UserSettings
+    const newSettings = { ...settings, ...updates }
     setSettings(newSettings)
     applyThemeToDOM(newSettings.theme, newSettings.accent_color, newSettings.font_size)
+    if (!user) return
     await supabase
       .from('user_settings')
       .update({ ...updates, updated_at: new Date().toISOString() })
@@ -183,12 +193,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function updateProfile(updates: Partial<Profile>) {
     if (!user) return
+    const previous = profile
     const newProfile = { ...profile, ...updates } as Profile
     setProfile(newProfile)
-    await supabase
+    const { error } = await supabase
       .from('profiles')
       .update(updates)
       .eq('id', user.id)
+    if (error) {
+      setProfile(previous)
+      throw error
+    }
   }
 
   useEffect(() => {
@@ -210,7 +225,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         fetchSettings(session.user.id)
       } else {
         setProfile(null)
-        setSettings(null)
+        setSettings(DEFAULT_SETTINGS)
         applyThemeToDOM('dark', 'orange', 'medium')
       }
     })

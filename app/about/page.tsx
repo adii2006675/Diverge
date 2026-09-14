@@ -73,11 +73,11 @@ export default function AboutPage() {
           </motion.h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {[
-              { step: '01', title: 'Pick a moment', desc: 'Choose any event from human history — or type your own starting point.' },
-              { step: '02', title: 'Ask what if', desc: 'Type any change you want to make. The AI reasons through what would actually happen next, based on real historical knowledge.' },
-              { step: '03', title: 'Watch it diverge', desc: 'The split screen shows real history on the right and your alternate timeline on the left, updating with every question.' },
-              { step: '04', title: 'Keep going', desc: 'Chain follow-up what ifs. Each one builds on the last, creating a coherent alternate world.' },
-              { step: '05', title: 'Get your summary', desc: "When you're done, a full comparison shows how different your world is from ours — across population, technology, power, and more." },
+              { step: '01', title: 'Pick a moment', desc: 'Choose any event from human history, or create your own starting point.' },
+              { step: '02', title: 'Ask what if', desc: 'Type any change you want to see. The AI reasons through what would actually happen next, based on real historical knowledge and patterns.' },
+              { step: '03', title: 'Watch it diverge', desc: 'The split screen shows real history on the right and your alternate timeline on the left, updating with every question you ask.' },
+              { step: '04', title: 'Keep going', desc: 'Keep following up with what ifs. Each question builds on the last, creating a coherent alternate world.' },
+              { step: '05', title: 'Get your summary', desc: "When you're done, a full summary shows how your alternate world is from the one we live in today across population, technology, economy, etc." },
             ].map((item, i) => (
               <motion.div
                 key={item.step}
@@ -119,7 +119,7 @@ export default function AboutPage() {
         >
           <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 12 }}>Accuracy disclaimer</h2>
           <p style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.75, color: 'var(--text-dim)' }}>
-            Diverge is powered by AI reasoning from historical knowledge, not a verified academic database. Responses are grounded in real history but should be treated as informed speculation rather than fact. History is contested and complex — the AI acknowledges uncertainty where it exists.
+            For historical context, Diverge pulls directly from reliable sources within its own database, however the real history responses are still drafted through AI. The diverged timeline, on the other hand, is full AI speculation modified with extensive prompting and reasoning to produce an accurate alternative history. History itself is complex, and the AI acknowledges uncertainty where it exists.
           </p>
         </motion.div>
 
@@ -133,7 +133,7 @@ export default function AboutPage() {
         >
           <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 12 }}>Built by</h2>
           <p style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.75, color: 'var(--text-dim)', marginBottom: 20 }}>
-            Diverge was built by Adi Sharma, a CS student at the University of Delaware. It uses the Claude API by Anthropic for AI responses, Next.js for the frontend, and Supabase for session storage.
+            Diverge was built by Adi Sharma, a sophomore CS student at the University of Delaware. The app took roughly 2 months to build and is around 15,000 lines of code. The tech stack includes Claude API for AI responses, Next.js for the frontend, and Supabase for the backend.
           </p>
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>

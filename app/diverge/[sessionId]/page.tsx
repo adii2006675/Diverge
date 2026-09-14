@@ -2,16 +2,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { HISTORICAL_EVENTS } from '@/lib/events'
-import { WhatIfEntry, WhatIfResponse, WorldMood } from '@/types'
+import { WhatIfEntry, WhatIfResponse } from '@/types'
 import { useAuth } from '@/context/AuthContext'
 import { motion, AnimatePresence } from 'motion/react'
 import { supabase } from '@/lib/supabase'
-
-const MOOD_COLORS: Record<string, string> = {
-  STABLE: '#10B981', TENSE: '#F59E0B', CRITICAL: '#EF4444',
-  'AT WAR': '#EF4444', CATASTROPHIC: '#7C3AED',
-  REBUILDING: '#06B6D4', FLOURISHING: '#10B981',
-}
+import { normalizeWhatIfs, RealTimelineData } from '@/lib/sessionData'
 
 const FALLBACK_IMAGES: Record<string, string> = {
   'jfk-1963': 'https://images.unsplash.com/photo-1569428034239-f9565e32e224?w=800&q=80',
@@ -26,6 +21,10 @@ const FALLBACK_IMAGES: Record<string, string> = {
   'soviet-1991': 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&q=80',
 }
 
+function sourceSearchUrl(query: string) {
+  return `https://www.britannica.com/search?query=${encodeURIComponent(query)}`
+}
+
 export default function DivergePage() {
   const params = useParams()
   const searchParams = useSearchParams()
@@ -38,7 +37,11 @@ export default function DivergePage() {
   const [whatIfs, setWhatIfs] = useState<WhatIfEntry[]>([])
   const [currentInput, setCurrentInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [realTimeline, setRealTimeline] = useState<RealTimelineData | null>(null)
+  const [loadingReal, setLoadingReal] = useState(false)
+  const [askError, setAskError] = useState('')
   const [expandedFact, setExpandedFact] = useState<string | null>(null)
+  const [focusedFact, setFocusedFact] = useState<{ text: string; source: 'real' | 'diverged' } | null>(null)
   const [showSummary, setShowSummary] = useState(false)
   const [summary, setSummary] = useState<any>(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
@@ -51,33 +54,98 @@ export default function DivergePage() {
   const { settings, user, profile, updateSettings, signOut } = useAuth()
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const hasAutoSubmitted = useRef(false)
+  const didResumeRef = useRef(false)
+  const resumeId = searchParams.get('resume')
+  const shouldShowSummaryOnLoad = searchParams.get('summary') === '1'
 
   const currentEntry = whatIfs[activeTimelineIdx] || null
   const currentResponse = currentEntry?.response || null
   const divergence = currentResponse?.divergenceScore || 0
-  const mood = (currentResponse?.worldMood || 'STABLE') as WorldMood
-  const currentYear = currentResponse?.year || (event?.year?.toString() || '?')
+  const confidence = currentResponse?.confidenceScore || 0
   const currentFacts = currentResponse?.keyFacts || []
   const currentParagraph = currentResponse?.paragraph || ''
-  const realFacts = event?.realFacts || []
+  const displayYear = event?.year?.toString() || realTimeline?.year
+  const divergedYear = currentResponse?.year && currentResponse.year.length <= 12 ? currentResponse.year : null
+  const displayDesc = event?.fullDesc || realTimeline?.fullDesc || (loadingReal ? '' : 'Real history as it happened.')
+  const realFacts = event?.realFacts || realTimeline?.realFacts || []
   const startingEvent = event ? `${event.title} — ${event.year}` : customQ || 'Custom starting point'
 
-  useEffect(() => {
-    if (customQ && !event && !hasAutoSubmitted.current) {
-      hasAutoSubmitted.current = true
-      setCurrentInput(customQ)
-      setTimeout(() => handleAsk(), 0)
+  const stateRef = useRef({ whatIfs, activeTimelineIdx, realTimeline, summary, currentSessionId, user, startingEvent })
+  stateRef.current = { whatIfs, activeTimelineIdx, realTimeline, summary, currentSessionId, user, startingEvent }
+
+  async function persistSession(overrides?: Partial<typeof stateRef.current>) {
+    const s = { ...stateRef.current, ...overrides }
+    if (!s.user || s.whatIfs.length === 0) return
+    const payload = { entries: s.whatIfs, activeTimelineIdx: s.activeTimelineIdx, realTimeline: s.realTimeline, summary: s.summary }
+    const sessionData = {
+      user_id: s.user.id,
+      event_id: sessionId,
+      event_title: s.startingEvent,
+      what_ifs: payload,
+      divergence_score: s.whatIfs[s.activeTimelineIdx]?.response?.divergenceScore || 0,
+      updated_at: new Date().toISOString(),
     }
+    if (s.currentSessionId) {
+      await supabase.from('sessions').update(sessionData).eq('id', s.currentSessionId)
+    } else {
+      const { data: saved } = await supabase.from('sessions').insert(sessionData).select().single()
+      if (saved) setCurrentSessionId(saved.id)
+    }
+  }
+
+  useEffect(() => {
+    if (!resumeId || didResumeRef.current) return
+    didResumeRef.current = true
+    ;(async () => {
+      const { data } = await supabase.from('sessions').select('*').eq('id', resumeId).single()
+      if (!data) return
+      const normalized = normalizeWhatIfs(data.what_ifs)
+      setWhatIfs(normalized.entries)
+      setActiveTimelineIdx(normalized.activeTimelineIdx)
+      setCurrentSessionId(resumeId)
+      if (normalized.realTimeline) setRealTimeline(normalized.realTimeline)
+      if (normalized.summary) setSummary(normalized.summary)
+      if (shouldShowSummaryOnLoad && normalized.summary) setShowSummary(true)
+    })()
   }, [])
 
-  const uncertaintyColor = currentResponse?.uncertaintyLevel === 'LOW'
+  useEffect(() => {
+    if (!customQ || event || resumeId || hasAutoSubmitted.current) return
+    hasAutoSubmitted.current = true
+    setCurrentInput(customQ)
+    setLoadingReal(true)
+    fetch('/api/real-history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        topic: customQ,
+        readingLevel: settings.ai_reading_level,
+        tone: settings.ai_tone,
+        aiStyle: settings.ai_response_style,
+      })
+    })
+      .then(res => res.json())
+      .then(data => setRealTimeline(data))
+      .catch(err => console.error('Real history fetch failed:', err))
+      .finally(() => setLoadingReal(false))
+  }, [])
+
+  // Autosave every 5 minutes for logged-in users with an active session.
+  useEffect(() => {
+    if (!user) return
+    const id = setInterval(() => { persistSession() }, 5 * 60 * 1000)
+    return () => clearInterval(id)
+  }, [user])
+
+  const confidenceColor = confidence >= 70
     ? '#10B981'
-    : currentResponse?.uncertaintyLevel === 'HIGH'
-      ? '#EF4444'
-      : '#F59E0B'
+    : confidence >= 40
+      ? '#F59E0B'
+      : '#EF4444'
 
   async function handleAsk() {
     if (!currentInput.trim() || loading) return
+    setAskError('')
     setLoading(true)
     const question = currentInput.trim()
     setCurrentInput('')
@@ -91,33 +159,28 @@ export default function DivergePage() {
       const res = await fetch('/api/diverge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ startingEvent, previousWhatIfs, currentWorldState, newQuestion: question, realFacts, aiStyle: settings?.ai_response_style || 'detailed' })
+        body: JSON.stringify({
+          startingEvent, previousWhatIfs, currentWorldState, newQuestion: question, realFacts,
+          aiStyle: settings.ai_response_style,
+          tone: settings.ai_tone,
+          plausibility: settings.ai_plausibility,
+          readingLevel: settings.ai_reading_level,
+          focusPoint: focusedFact?.text || null,
+        })
       })
 
       const data: WhatIfResponse = await res.json()
+      if (!res.ok) throw new Error((data as any)?.error || 'Failed to generate response')
       const newEntry: WhatIfEntry = { question, response: data, timestamp: Date.now() }
       const newWhatIfs = [...whatIfs, newEntry]
       setWhatIfs(newWhatIfs)
       setActiveTimelineIdx(newWhatIfs.length - 1)
 
-      if (user) {
-        const sessionData = {
-          user_id: user.id,
-          event_id: sessionId,
-          event_title: startingEvent,
-          what_ifs: newWhatIfs.map(w => ({ question: w.question })),
-          divergence_score: data.divergenceScore || 0,
-          updated_at: new Date().toISOString(),
-        }
-        if (currentSessionId) {
-          await supabase.from('sessions').update(sessionData).eq('id', currentSessionId)
-        } else {
-          const { data: saved } = await supabase.from('sessions').insert(sessionData).select().single()
-          if (saved) setCurrentSessionId(saved.id)
-        }
-      }
+      await persistSession({ whatIfs: newWhatIfs, activeTimelineIdx: newWhatIfs.length - 1 })
     } catch (err) {
       console.error(err)
+      setCurrentInput(question)
+      setAskError('Could not generate a response. Please try again.')
     }
     setLoading(false)
   }
@@ -126,20 +189,7 @@ export default function DivergePage() {
     if (!user || whatIfs.length === 0 || saving) return
     setSaving(true)
     try {
-      const sessionData = {
-        user_id: user.id,
-        event_id: sessionId,
-        event_title: startingEvent,
-        what_ifs: whatIfs.map(w => ({ question: w.question })),
-        divergence_score: currentResponse?.divergenceScore || 0,
-        updated_at: new Date().toISOString(),
-      }
-      if (currentSessionId) {
-        await supabase.from('sessions').update(sessionData).eq('id', currentSessionId)
-      } else {
-        const { data: savedRow } = await supabase.from('sessions').insert(sessionData).select().single()
-        if (savedRow) setCurrentSessionId(savedRow.id)
-      }
+      await persistSession()
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch (err) {
@@ -162,12 +212,14 @@ export default function DivergePage() {
           finalWorldState: currentResponse?.keyFacts.join('. ') || ''
         })
       })
-      setSummary(await res.json())
+      const summaryData = await res.json()
+      setSummary(summaryData)
+      await persistSession({ summary: summaryData })
     } catch (err) { console.error(err) }
     setSummaryLoading(false)
   }
 
-  const eventImage = FALLBACK_IMAGES[sessionId] || `https://picsum.photos/seed/${sessionId}/800/400`
+  const eventImage = FALLBACK_IMAGES[sessionId] || realTimeline?.imageUrl || `https://picsum.photos/seed/${sessionId}/800/400`
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
@@ -289,7 +341,7 @@ export default function DivergePage() {
         </div>
 
       {/* Split screen */}
-      <div style={{ display: 'flex', flex: 1, flexDirection: 'column', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
+      <div style={{ display: 'flex', flex: 1, flexDirection: 'column', overflow: 'hidden', position: 'relative', zIndex: 1, background: 'var(--bg)' }}>
         <div style={{ borderBottom: '1px solid var(--border-color)', flexShrink: 0 }} />
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden', alignItems: 'stretch' }}>
 
@@ -297,42 +349,53 @@ export default function DivergePage() {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}>
           <div style={{ padding: '14px 22px 10px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--accent)' }}>REAL TIMELINE</span>
-            {event?.year && (
+            {displayYear && (
               <span style={{ padding: '2px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>
-                {event.year}
+                {displayYear}
               </span>
             )}
           </div>
 
+          {loadingReal ? (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-dim)', gap: 14 }}>
+              <div style={{ width: 30, height: 30, borderRadius: '50%', border: '2px solid var(--border-color)', borderTopColor: 'var(--accent)', animation: 'spin 0.8s linear infinite' }} />
+              <div style={{ fontSize: 13 }}>Looking up what really happened...</div>
+            </div>
+          ) : (
           <div style={{ flex: 1, overflowY: 'auto', padding: '20px 22px' }}>
             <div style={{ height: 130, borderRadius: 10, overflow: 'hidden', marginBottom: 18, position: 'relative' }}>
               <img
                 src={eventImage}
-                alt={event?.title || 'Historical event'}
+                alt={event?.title || realTimeline?.title || 'Historical event'}
                 referrerPolicy="no-referrer"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.45) saturate(0.4)' }}
                 onError={e => { (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${sessionId}/800/400` }}
               />
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(8,8,16,0.85))' }} />
               <div style={{ position: 'absolute', bottom: 10, left: 12, fontSize: 11, color: 'var(--text-dim)', fontWeight: 500 }}>
-                {event?.title || startingEvent} · {event?.year || ''}
+                {event?.title || realTimeline?.title || startingEvent} · {displayYear || ''}
               </div>
             </div>
 
             <p style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 14, lineHeight: 1.8, color: 'var(--text-dim)', marginBottom: 18, fontStyle: 'italic' }}>
-              {event?.fullDesc || 'Real history as it happened.'}
+              {displayDesc}
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {realFacts.map((fact, i) => {
                 const key = `real-${i}`
                 const isExp = expandedFact === key
+                const isFocused = focusedFact?.text === fact
                 return (
                   <div key={i}
-                    onClick={() => setExpandedFact(isExp ? null : key)}
-                    style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 10, background: 'var(--card-bg)', border: `1px solid ${isExp ? 'color-mix(in srgb, var(--accent) 25%, transparent)' : 'var(--border-color)'}`, cursor: 'pointer', transition: 'all 0.18s' }}
-                    onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = 'color-mix(in srgb, var(--accent) 4%, transparent)'}
-                    onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'var(--card-bg)'}
+                    onClick={() => {
+                      if (isExp) setFocusedFact(isFocused ? null : { text: fact, source: 'real' })
+                      else setExpandedFact(key)
+                    }}
+                    title={isExp ? 'Click again to explore this thread further' : undefined}
+                    style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 10, background: isFocused ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'var(--card-bg)', border: `1px solid ${isFocused ? 'var(--accent)' : isExp ? 'color-mix(in srgb, var(--accent) 25%, transparent)' : 'var(--border-color)'}`, cursor: 'pointer', transition: 'all 0.18s' }}
+                    onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = isFocused ? 'color-mix(in srgb, var(--accent) 14%, transparent)' : 'color-mix(in srgb, var(--accent) 4%, transparent)'}
+                    onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = isFocused ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'var(--card-bg)'}
                   >
                     <div style={{ flexShrink: 0, marginTop: 5 }}>
                       <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)' }} />
@@ -341,94 +404,128 @@ export default function DivergePage() {
                       <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.5 }}>{fact}</div>
                       {isExp && (
                         <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 7, lineHeight: 1.65, paddingTop: 7, borderTop: '1px solid var(--border-color)', animation: 'fadeIn 0.2s ease' }}>
-                          This is what actually happened in recorded history.
+                          {isFocused ? (
+                            'Exploring this thread — your next question will dig deeper into this specifically. Click again to stop.'
+                          ) : (
+                            <>
+                              <a
+                                href={sourceSearchUrl(fact)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={e => e.stopPropagation()}
+                                style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}
+                                onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.textDecoration = 'underline'}
+                                onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.textDecoration = 'none'}
+                              >
+                                Source: Britannica ↗
+                              </a>
+                              {' '}Click again to dive deeper.
+                            </>
+                          )}
                         </div>
                       )}
                     </div>
-                    <button style={{ flexShrink: 0, width: 18, height: 18, borderRadius: '50%', border: `1px solid ${isExp ? 'var(--accent)' : 'var(--border-color)'}`, background: isExp ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent', color: isExp ? 'var(--accent)' : 'var(--text-dim)', fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', transform: isExp ? 'rotate(180deg)' : 'rotate(0)' }}>
-                      ▾
+                    <button style={{ flexShrink: 0, width: 18, height: 18, borderRadius: '50%', border: `1px solid ${isFocused ? 'var(--accent)' : isExp ? 'var(--accent)' : 'var(--border-color)'}`, background: isFocused ? 'var(--accent)' : isExp ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent', color: isFocused ? '#fff' : isExp ? 'var(--accent)' : 'var(--text-dim)', fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', transform: isExp && !isFocused ? 'rotate(180deg)' : 'rotate(0)' }}>
+                      {isFocused ? '◎' : '▾'}
                     </button>
                   </div>
                 )
               })}
             </div>
           </div>
+          )}
         </div>
 
-        {/* CENTER — Divergence % */}
-        <div style={{ width: 72, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative', height: '100%' }}>
+        {/* CENTER — divider */}
+        <div style={{ width: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative', height: '100%' }}>
           <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1, background: 'var(--border-color)', transform: 'translateX(-50%)' }} />
-          <AnimatePresence>
-            {divergence > 0 && (
-              <motion.div
-                key={divergence}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                style={{ zIndex: 1, background: 'transparent', padding: '10px 4px', textAlign: 'center' }}
-              >
-                <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--accent)', lineHeight: 1 }}>{divergence}%</div>
-                <div style={{ fontSize: 8, color: 'var(--text-dim)', letterSpacing: '0.08em', marginTop: 3 }}>DIVERGED</div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
 
         {/* RIGHT — Your alternate timeline */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}>
           <div style={{ padding: '14px 22px 10px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--accent)' }}>DIVERGED TIMELINE</span>
-            {currentYear && (
-              <span style={{ padding: '2px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>
-                {currentYear}
+            {divergedYear && (
+              <span style={{ padding: '2px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', fontSize: 11, fontWeight: 700, color: 'var(--accent)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 90 }}>
+                {divergedYear}
               </span>
             )}
             <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
-              {currentResponse?.uncertaintyLevel && settings?.show_confidence_level !== false && (
-                <span style={{
-                  padding: '2px 9px', borderRadius: 999, fontSize: 10, fontWeight: 700,
-                  background: `${uncertaintyColor}18`,
-                  border: `1px solid ${uncertaintyColor}44`,
-                  color: uncertaintyColor,
-                }}>
-                  {currentResponse.uncertaintyLevel} CONFIDENCE
-                </span>
-              )}
-              {mood && (
-                <span style={{ padding: '2px 9px', borderRadius: 999, background: `${MOOD_COLORS[mood] || '#fff'}18`, border: `1px solid ${MOOD_COLORS[mood] || '#fff'}44`, fontSize: 10, fontWeight: 700, color: MOOD_COLORS[mood] || '#fff' }}>
-                  {mood}
-                </span>
-              )}
+              <AnimatePresence>
+                {divergence > 0 && settings.show_divergence_score !== false && (
+                  <motion.span
+                    key={`div-${divergence}`}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                    style={{ padding: '2px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}
+                  >
+                    {divergence}% DIVERGED
+                  </motion.span>
+                )}
+              </AnimatePresence>
+              <AnimatePresence>
+                {confidence > 0 && settings.show_confidence_level !== false && (
+                  <motion.span
+                    key={`conf-${confidence}`}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                    style={{ padding: '2px 9px', borderRadius: 999, background: `${confidenceColor}18`, border: `1px solid ${confidenceColor}44`, fontSize: 11, fontWeight: 700, color: confidenceColor }}
+                  >
+                    {confidence}% CONFIDENT
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', padding: '20px 22px' }}>
             {loading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-dim)', textAlign: 'center', gap: 18 }}>
-                <div style={{ position: 'relative', width: 56, height: 56 }}>
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                    style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid transparent', borderTopColor: 'var(--accent)', borderRightColor: 'color-mix(in srgb, var(--accent) 30%, transparent)' }}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                <svg width="120" height="80" viewBox="0 0 120 80" style={{ overflow: 'visible' }}>
+                  <motion.circle
+                    cx="10" cy="40" r="2.5" fill="var(--accent)"
+                    animate={{ opacity: [0.3, 0.9, 0.3] }}
+                    transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
                   />
-                  <motion.div
-                    animate={{ rotate: -360 }}
-                    transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-                    style={{ position: 'absolute', inset: 8, borderRadius: '50%', border: '2px solid transparent', borderBottomColor: 'var(--accent)', opacity: 0.6 }}
+                  <motion.path
+                    d="M10 40 L50 40"
+                    stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" fill="none"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 0.6, repeat: Infinity, repeatType: 'loop', repeatDelay: 0.9, ease: 'easeInOut' }}
                   />
-                  <motion.div
-                    animate={{ scale: [1, 1.15, 1], opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-                    style={{ position: 'absolute', inset: 20, borderRadius: '50%', background: 'var(--accent)' }}
+                  <motion.path
+                    d="M50 40 L100 15"
+                    stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity={0.75}
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 0.5, delay: 0.6, repeat: Infinity, repeatType: 'loop', repeatDelay: 1, ease: 'easeInOut' }}
                   />
-                </div>
-                <motion.div
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-                  style={{ fontSize: 14 }}
-                >
-                  Diverging history...
-                </motion.div>
+                  <motion.path
+                    d="M50 40 L100 65"
+                    stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity={0.75}
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 0.5, delay: 0.6, repeat: Infinity, repeatType: 'loop', repeatDelay: 1, ease: 'easeInOut' }}
+                  />
+                  <motion.circle
+                    cx="50" cy="40" r="3.5" fill="var(--accent)"
+                    animate={{ scale: [0, 1.3, 1], opacity: [0, 1, 1] }}
+                    transition={{ duration: 0.3, delay: 0.55, repeat: Infinity, repeatDelay: 1.2 }}
+                  />
+                  <motion.circle
+                    cx="100" cy="15" r="3" fill="var(--accent)" style={{ filter: 'drop-shadow(0 0 4px var(--accent))' }}
+                    animate={{ scale: [0, 1.4, 1], opacity: [0, 1, 0.85] }}
+                    transition={{ duration: 0.3, delay: 1.1, repeat: Infinity, repeatDelay: 1.2 }}
+                  />
+                  <motion.circle
+                    cx="100" cy="65" r="3" fill="var(--accent)" style={{ filter: 'drop-shadow(0 0 4px var(--accent))' }}
+                    animate={{ scale: [0, 1.4, 1], opacity: [0, 1, 0.85] }}
+                    transition={{ duration: 0.3, delay: 1.1, repeat: Infinity, repeatDelay: 1.2 }}
+                  />
+                </svg>
               </div>
             ) : !currentResponse ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-dim)', textAlign: 'center', gap: 10 }}>
@@ -450,15 +547,20 @@ export default function DivergePage() {
                   {currentFacts.map((fact, i) => {
                     const key = `alt-${activeTimelineIdx}-${i}`
                     const isExp = expandedFact === key
+                    const isFocused = focusedFact?.text === fact
                     return (
                       <motion.div key={i}
                         initial={{ opacity: 0, x: -8 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.3, delay: i * 0.06 }}
-                        onClick={() => setExpandedFact(isExp ? null : key)}
-                        style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 10, background: isExp ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : 'var(--card-bg)', border: `1px solid ${isExp ? 'color-mix(in srgb, var(--accent) 25%, transparent)' : 'var(--border-color)'}`, cursor: 'pointer', transition: 'all 0.18s' }}
-                        onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = 'color-mix(in srgb, var(--accent) 5%, transparent)'}
-                        onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = isExp ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : 'var(--card-bg)'}
+                        onClick={() => {
+                          if (isExp) setFocusedFact(isFocused ? null : { text: fact, source: 'diverged' })
+                          else setExpandedFact(key)
+                        }}
+                        title={isExp ? 'Click again to explore this thread further' : undefined}
+                        style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 10, background: isFocused ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : isExp ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : 'var(--card-bg)', border: `1px solid ${isFocused ? 'var(--accent)' : isExp ? 'color-mix(in srgb, var(--accent) 25%, transparent)' : 'var(--border-color)'}`, cursor: 'pointer', transition: 'all 0.18s' }}
+                        onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = isFocused ? 'color-mix(in srgb, var(--accent) 16%, transparent)' : 'color-mix(in srgb, var(--accent) 5%, transparent)'}
+                        onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = isFocused ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : isExp ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : 'var(--card-bg)'}
                       >
                         <div style={{ flexShrink: 0, marginTop: 5 }}>
                           <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', boxShadow: isExp ? '0 0 6px var(--accent)' : 'none' }} />
@@ -468,24 +570,20 @@ export default function DivergePage() {
                           {isExp && currentResponse.factExplanations?.[i] && (
                             <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 7, lineHeight: 1.65, paddingTop: 7, borderTop: '1px solid var(--border-color)', animation: 'fadeIn 0.2s ease' }}>
                               {currentResponse.factExplanations[i]}
+                              <div style={{ marginTop: 6, color: 'var(--accent)', fontWeight: 600 }}>
+                                {isFocused ? 'Exploring this thread — your next question will dig deeper into this specifically. Click again to stop.' : 'Click again to dig deeper into this thread.'}
+                              </div>
                             </div>
                           )}
                         </div>
-                        <button style={{ flexShrink: 0, width: 18, height: 18, borderRadius: '50%', border: `1px solid ${isExp ? 'var(--accent)' : 'var(--border-color)'}`, background: isExp ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent', color: isExp ? 'var(--accent)' : 'var(--text-dim)', fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', transform: isExp ? 'rotate(180deg)' : 'rotate(0)' }}>
-                          ▾
+                        <button style={{ flexShrink: 0, width: 18, height: 18, borderRadius: '50%', border: `1px solid ${isFocused ? 'var(--accent)' : isExp ? 'var(--accent)' : 'var(--border-color)'}`, background: isFocused ? 'var(--accent)' : isExp ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent', color: isFocused ? '#fff' : isExp ? 'var(--accent)' : 'var(--text-dim)', fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', transform: isExp && !isFocused ? 'rotate(180deg)' : 'rotate(0)' }}>
+                          {isFocused ? '◎' : '▾'}
                         </button>
                       </motion.div>
                     )
                   })}
                 </div>
 
-                {/* Reliability notes */}
-                {currentResponse.reliabilityNotes && settings?.show_historians_note !== false && (
-                  <div style={{ marginTop: 14, padding: '10px 12px', borderRadius: 10, background: 'color-mix(in srgb, var(--accent) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 15%, transparent)' }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', marginBottom: 4 }}>HISTORIAN'S NOTE</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-dim)', lineHeight: 1.65 }}>{currentResponse.reliabilityNotes}</div>
-                  </div>
-                )}
               </motion.div>
             )}
           </div>
@@ -493,12 +591,35 @@ export default function DivergePage() {
         </div>
       </div>
 
-      {/* Narration */}
-      {currentResponse?.narration && (
-        <div style={{ padding: '14px 40px', borderTop: '1px solid var(--border-color)', background: 'var(--card-bg)', flexShrink: 0, position: 'relative', zIndex: 1 }}>
-          <p style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 13, lineHeight: 1.8, color: 'var(--text-dim)', margin: 0, fontStyle: 'italic', textAlign: 'center', maxWidth: 860, marginInline: 'auto' }}>
-            {currentResponse.narration}
-          </p>
+      {/* Comparison */}
+      {currentResponse && settings.show_comparison !== false && currentResponse.comparison?.length > 0 && (
+        <div style={{ padding: '12px 40px', background: 'transparent', flexShrink: 0, position: 'relative', zIndex: 1 }}>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.14em', color: 'var(--text-dim)', textAlign: 'center', marginBottom: 8, opacity: 0.7 }}>WHAT CHANGED</div>
+          <div style={{ display: 'flex', gap: 10, maxWidth: 1000, marginInline: 'auto', overflowX: 'auto' }}>
+            {currentResponse.comparison.map((c, i) => (
+              <motion.div
+                key={`${activeTimelineIdx}-${i}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: i * 0.1, ease: 'easeOut' }}
+                whileHover={{ y: -3, borderColor: 'var(--accent)' }}
+                style={{ flex: '1 1 0', minWidth: 210, borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--bg)', overflow: 'hidden', cursor: 'default' }}
+              >
+                <div style={{ height: 2, background: 'linear-gradient(to right, var(--accent), color-mix(in srgb, var(--accent) 20%, transparent))' }} />
+                <div style={{ padding: '9px 12px 11px' }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--accent)', marginBottom: 7, textTransform: 'uppercase' }}>{c.category}</div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-dim)', opacity: 0.6, marginTop: 1, flexShrink: 0, width: 14 }}>◦</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-dim)', lineHeight: 1.5 }}>{c.real}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 5 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', marginTop: 1, flexShrink: 0, width: 14 }}>→</span>
+                    <span style={{ fontSize: 11, color: 'var(--text)', lineHeight: 1.5, fontWeight: 500 }}>{c.diverged}</span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -524,6 +645,21 @@ export default function DivergePage() {
 
       {/* Input */}
       <div style={{ padding: '12px 24px 16px', background: 'var(--nav-bg)', flexShrink: 0, borderTop: '1px solid var(--border-color)', position: 'relative', zIndex: 1, overflow: 'hidden' }}>
+        {focusedFact && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, padding: '7px 12px', borderRadius: 8, background: 'color-mix(in srgb, var(--accent) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)', position: 'relative', zIndex: 1 }}>
+            <span style={{ color: 'var(--accent)', fontSize: 12, flexShrink: 0 }}>◎</span>
+            <span style={{ fontSize: 12, color: 'var(--text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              Exploring: {focusedFact.text}
+            </span>
+            <button
+              onClick={() => setFocusedFact(null)}
+              style={{ flexShrink: 0, background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1 }}
+              title="Stop exploring this thread"
+            >
+              ×
+            </button>
+          </div>
+        )}
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', position: 'relative', zIndex: 1 }}>
           <input
             ref={inputRef}
@@ -546,8 +682,8 @@ export default function DivergePage() {
             }
           </button>
         </div>
-        <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-          Press Enter to ask · Shift+Enter for new line
+        <div style={{ fontSize: 11, color: askError ? '#EF4444' : 'var(--text-dim)', marginTop: 5, textAlign: 'center', position: 'relative', zIndex: 1 }}>
+          {askError || 'Press Enter to ask · Shift+Enter for new line'}
         </div>
       </div>
 
@@ -649,7 +785,7 @@ export default function DivergePage() {
               <div style={{ marginBottom: 22 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Response Length</div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  {['concise', 'detailed'].map(val => (
+                  {['short', 'medium', 'long'].map(val => (
                     <button
                       key={val}
                       onClick={() => updateSettings({ ai_response_style: val })}
@@ -667,13 +803,39 @@ export default function DivergePage() {
                 </div>
               </div>
 
+              {/* Reading level */}
+              <div style={{ marginBottom: 22 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Reading Level</div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {[
+                    { val: 'simple', label: 'Simple' },
+                    { val: 'medium', label: 'Moderate' },
+                    { val: 'complex', label: 'Complex' },
+                  ].map(opt => (
+                    <button
+                      key={opt.val}
+                      onClick={() => updateSettings({ ai_reading_level: opt.val })}
+                      style={{
+                        flex: 1, padding: '9px', borderRadius: 9, cursor: 'pointer', fontFamily: 'inherit',
+                        border: `1px solid ${settings.ai_reading_level === opt.val ? 'var(--accent)' : 'var(--border-color)'}`,
+                        background: settings.ai_reading_level === opt.val ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--card-bg)',
+                        color: settings.ai_reading_level === opt.val ? 'var(--accent)' : 'var(--text-dim)',
+                        fontSize: 13, fontWeight: settings.ai_reading_level === opt.val ? 700 : 400,
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Plausibility */}
               <div style={{ marginBottom: 22 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Plausibility</div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   {[
-                    { val: 'realistic', label: 'Realistic' },
-                    { val: 'speculative', label: 'Speculative' },
+                    { val: 'realistic', label: 'Realistic & Accurate' },
+                    { val: 'speculative', label: 'Creative & Speculative' },
                   ].map(opt => (
                     <button
                       key={opt.val}
@@ -720,14 +882,19 @@ export default function DivergePage() {
               {/* Toggles */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <AIToggle
-                  label="Show confidence level"
+                  label="Show Diverge"
+                  value={settings?.show_divergence_score ?? true}
+                  onChange={() => updateSettings({ show_divergence_score: !(settings?.show_divergence_score ?? true) })}
+                />
+                <AIToggle
+                  label="Show Confidence"
                   value={settings?.show_confidence_level ?? true}
                   onChange={() => updateSettings({ show_confidence_level: !(settings?.show_confidence_level ?? true) })}
                 />
                 <AIToggle
-                  label="Show historian's note"
-                  value={settings?.show_historians_note ?? true}
-                  onChange={() => updateSettings({ show_historians_note: !(settings?.show_historians_note ?? true) })}
+                  label="Show real vs. diverged comparison"
+                  value={settings?.show_comparison ?? true}
+                  onChange={() => updateSettings({ show_comparison: !(settings?.show_comparison ?? true) })}
                 />
               </div>
             </motion.div>

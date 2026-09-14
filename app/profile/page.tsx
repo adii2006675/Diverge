@@ -19,39 +19,42 @@ export default function ProfilePage() {
   const [savingPassword, setSavingPassword] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [avatarHover, setAvatarHover] = useState(false)
+  const [avatarError, setAvatarError] = useState('')
   const [showPasswordInfo, setShowPasswordInfo] = useState(false)
 
   useEffect(() => {
     if (profile?.username) setUsername(profile.username)
   }, [profile])
 
-  if (loading) return (
+  useEffect(() => {
+    if (!loading && !user) router.push('/auth')
+  }, [loading, user, router])
+
+  if (loading || !user) return (
     <main style={{ minHeight: '100vh', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--border-color)', borderTopColor: 'var(--accent)', animation: 'spin 0.8s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </main>
   )
 
-  if (!user) {
-    router.push('/auth')
-    return null
-  }
-
   async function handleSaveProfile() {
     if (!username.trim()) return
     setSaving(true)
-    await updateProfile({ username: username.trim() })
+    try {
+      await updateProfile({ username: username.trim() })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } catch (err) {
+      console.error('Profile save failed:', err)
+    }
     setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
   }
 
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
-    console.log('handleAvatarChange fired', e.target.files)
     const file = e.target.files?.[0]
     if (!file || !user) return
-    console.log('uploading file:', file.name, 'for user:', user.id)
 
+    setAvatarError('')
     setUploadingAvatar(true)
     try {
       const ext = file.name.split('.').pop()
@@ -71,17 +74,21 @@ export default function ProfilePage() {
       await updateProfile({ avatar_url: cacheBustedUrl })
     } catch (err) {
       console.error('Avatar upload failed:', err)
+      setAvatarError('Could not save photo. Please try again.')
     }
     setUploadingAvatar(false)
+    e.target.value = ''
   }
 
   async function handleAvatarReset() {
     if (!user) return
+    setAvatarError('')
     setUploadingAvatar(true)
     try {
       await updateProfile({ avatar_url: null })
     } catch (err) {
       console.error('Avatar reset failed:', err)
+      setAvatarError('Could not reset photo. Please try again.')
     }
     setUploadingAvatar(false)
   }
@@ -140,42 +147,49 @@ export default function ProfilePage() {
             }}>
               {!profile?.avatar_url && initials}
             </div>
-            {(avatarHover || uploadingAvatar) && (
-              <div style={{
-                position: 'absolute', inset: 0, borderRadius: '50%',
-                background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-              }}>
-                {uploadingAvatar ? (
-                  <div style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.8s linear infinite' }} />
-                ) : (
-                  <>
-                    <label style={{ cursor: 'pointer', display: 'flex', position: 'relative', zIndex: 5 }} title="Change photo">
-                      <input type="file" accept="image/*" onChange={handleAvatarChange} disabled={uploadingAvatar} style={{ position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden' }} />
-                      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" style={{ width: 16, height: 16, pointerEvents: 'none' }}>
-                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+            {/* Always mounted so the hidden file input survives the native
+                file-picker dialog stealing hover/focus; only its visibility
+                is toggled, never its presence in the DOM. */}
+            <div style={{
+              position: 'absolute', inset: 0, borderRadius: '50%',
+              background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              opacity: (avatarHover || uploadingAvatar) ? 1 : 0,
+              pointerEvents: (avatarHover || uploadingAvatar) ? 'auto' : 'none',
+              transition: 'opacity 0.15s',
+            }}>
+              {uploadingAvatar ? (
+                <div style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.8s linear infinite' }} />
+              ) : (
+                <>
+                  <label style={{ cursor: 'pointer', display: 'flex', position: 'relative', zIndex: 5 }} title="Change photo">
+                    <input type="file" accept="image/*" onChange={handleAvatarChange} disabled={uploadingAvatar} style={{ position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden' }} />
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" style={{ width: 16, height: 16, pointerEvents: 'none' }}>
+                      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+                    </svg>
+                  </label>
+                  {profile?.avatar_url && (
+                    <button
+                      onClick={handleAvatarReset}
+                      disabled={uploadingAvatar}
+                      style={{ cursor: 'pointer', display: 'flex', background: 'none', border: 'none', padding: 0 }}
+                      title="Reset to default"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" style={{ width: 16, height: 16 }}>
+                        <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
+                        <path d="M3 3v5h5"></path>
                       </svg>
-                    </label>
-                    {profile?.avatar_url && (
-                      <button
-                        onClick={handleAvatarReset}
-                        disabled={uploadingAvatar}
-                        style={{ cursor: 'pointer', display: 'flex', background: 'none', border: 'none', padding: 0 }}
-                        title="Reset to default"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" style={{ width: 16, height: 16 }}>
-                          <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
-                          <path d="M3 3v5h5"></path>
-                        </svg>
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
           <div>
             <div style={{ fontSize: 'var(--font-scale)', fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{profile?.username || 'User'}</div>
             <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)' }}>{user.email}</div>
+            {avatarError && (
+              <div style={{ fontSize: 12, color: '#F43F5E', marginTop: 4 }}>{avatarError}</div>
+            )}
             <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', marginTop: 4, opacity: 0.7 }}>
               Member since {new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </div>

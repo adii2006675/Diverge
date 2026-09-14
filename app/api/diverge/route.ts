@@ -3,6 +3,36 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const client = new Anthropic()
 
+// The model doesn't always follow the "no em dashes" house style rule, so enforce it in code too.
+function stripEmDashes<T>(value: T): T {
+  if (typeof value === 'string') {
+    return value.replace(/\s*—\s*/g, ', ').replace(/,\s*,/g, ',') as unknown as T
+  }
+  if (Array.isArray(value)) {
+    return value.map(stripEmDashes) as unknown as T
+  }
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(value)) out[k] = stripEmDashes(v)
+    return out as T
+  }
+  return value
+}
+
+const FACT_TEMPLATES = [
+  "Fact %d: if [the change] continues, [consequence] follows, use real names/institutions/numbers where documentable",
+  "Fact %d: flag any speculation with 'most likely' or 'historians would debate', and name the time horizon",
+  "Fact %d: focus on political, economic, military, or social consequences, tied to a specific year or span",
+  "Fact %d: include one thing that would NOT change, to show historical honesty",
+  "Fact %d: trace a downstream, compounding effect further out in time from an earlier fact",
+  "Fact %d: consider international or geopolitical ripple effects, with a concrete timeframe",
+  "Fact %d: consider technological or cultural ripple effects, with a concrete timeframe",
+]
+
+function buildFactPlaceholders(count: number) {
+  return Array.from({ length: count }, (_, i) => `"${FACT_TEMPLATES[i % FACT_TEMPLATES.length].replace('%d', String(i + 1))}"`).join(',\n    ')
+}
+
 const SYSTEM_PROMPT = `You are DIVERGE-HISTORIAN, a specialized AI built exclusively for alternate history analysis. You have deep expertise across all eras of human history — political, economic, military, social, scientific, and cultural.
 
 YOUR SOLE PURPOSE:
@@ -83,7 +113,16 @@ TONE AND STYLE:
 - Be intellectually honest about uncertainty
 - Do not sensationalize or dramatize unnecessarily
 - Do not lecture or moralize
-- Be direct and specific`
+- Be direct and specific
+
+HOUSE WRITING STYLE (apply to every text field in your output):
+- Write in active voice.
+- Keep sentences direct and concrete. Mix short, medium, and long sentences for rhythm instead of a uniform pace.
+- Use plain, practical language. Cut clichés and jargon in favor of specific, clear terms.
+- State things directly. When the evidence supports a clear conclusion, say it plainly instead of hedging with "might" or "could."
+- Never use em dashes. Use commas, periods, or parentheses instead.
+- Avoid semicolons. Use periods or commas instead.
+- Do not use hashtags, emojis, or asterisks anywhere in your output.`
 
 export async function POST(req: NextRequest) {
   try {
@@ -93,7 +132,11 @@ export async function POST(req: NextRequest) {
       currentWorldState,
       newQuestion,
       realFacts,
-      aiStyle
+      aiStyle,
+      tone,
+      plausibility,
+      readingLevel,
+      focusPoint
     } = await req.json()
 
     const previousContext = previousWhatIfs.length > 0
@@ -104,15 +147,48 @@ Current state of the alternate world based on all changes so far:
 ${currentWorldState}`
       : 'This is the first divergence from real history in this session.'
 
-    const styleInstruction = aiStyle === 'concise'
-      ? 'RESPONSE STYLE: Be brief and punchy. Short paragraph, tight facts. No unnecessary words.'
-      : aiStyle === 'academic'
-      ? 'RESPONSE STYLE: Use formal academic tone. Cite mechanisms, hedge appropriately, use phrases like "historical evidence suggests" and "scholars debate".'
-      : aiStyle === 'storytelling'
-      ? 'RESPONSE STYLE: Write cinematically. Make it feel like a documentary narration. Vivid, specific, emotionally resonant.'
-      : 'RESPONSE STYLE: Detailed and thorough. Full context, rich explanation, comprehensive facts.'
+    const factCount = aiStyle === 'short' || aiStyle === 'concise'
+      ? 3
+      : aiStyle === 'long' || aiStyle === 'detailed'
+      ? 7
+      : 5
+
+    const lengthInstruction = factCount === 3
+      ? 'LENGTH: Short. Include EXACTLY 3 items in keyFacts (and exactly 3 matching items in factExplanations, one per fact). Each keyFacts item must be about 15-20 words, one tight sentence. No unnecessary words.'
+      : factCount === 7
+      ? 'LENGTH: Long. Include EXACTLY 7 items in keyFacts (and exactly 7 matching items in factExplanations, one per fact). Each keyFacts item must be about 35-40 words, with fuller context and richer explanation.'
+      : 'LENGTH: Medium. Include EXACTLY 5 items in keyFacts (and exactly 5 matching items in factExplanations, one per fact). Each keyFacts item must be about 25-30 words.'
+
+    const toneInstruction = tone === 'dramatic'
+      ? 'TONE: Dramatic Narrator — vivid, cinematic storytelling.'
+      : tone === 'academic'
+      ? 'TONE: Academic — formal, citation-minded, precise. Use phrases like "historical evidence suggests" and "scholars debate".'
+      : 'TONE: Neutral Historian — balanced, factual, measured.'
+
+    const readingLevelInstruction = readingLevel === 'simple'
+      ? 'READING LEVEL: Simple — write for a 5th-grade reading level, like explaining to a curious 10-year-old. Very short sentences, everyday words only, explain any necessary term in-line the moment you use it. No jargon.'
+      : readingLevel === 'complex'
+      ? 'READING LEVEL: Complex — college level. Advanced vocabulary, longer and more sophisticated sentence structure, assume a well-read adult audience comfortable with technical and academic language.'
+      : 'READING LEVEL: Moderate — write for an 11th-grade reading level. Clear, moderately varied sentence structure, common vocabulary with occasional precise terms that a high school junior would understand.'
+
+    const plausibilityInstruction = plausibility === 'speculative'
+      ? 'PLAUSIBILITY: Creative & Speculative — you may explore bigger, more novel, less-certain ripple effects than a cautious historian would. Still ground everything in real historical mechanisms, but do not be afraid of larger, more imaginative consequences. This should generally push divergenceScore higher than a conservative reading of the same change would.'
+      : 'PLAUSIBILITY: Realistic & Accurate — stay conservative. Only include consequences you can defend with real historical mechanisms and precedent. When in doubt, favor the more restrained outcome.'
+
+    const styleInstruction = `${lengthInstruction}\n${toneInstruction}\n${readingLevelInstruction}\n${plausibilityInstruction}`
+
+    const today = new Date()
+    const todayLabel = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    const presentDayContext = `PRESENT-DAY CONTEXT:
+Today's real-world date is ${todayLabel}. When a what-if scenario involves an ongoing trend, technology, or economic condition rather than a single past event, reason forward realistically all the way to today and beyond. Do not freeze your analysis at the year the original anchor event occurred. Incorporate what has plausibly happened in the intervening years up to now, including major recent developments relevant to the scenario (for example, how AI-driven demand has reshaped chip and memory markets, or other current economic conditions), when they logically connect to the question.`
+
+    const focusInstruction = focusPoint
+      ? `\n\nPRIORITY FOCUS — the user clicked to drill deeper into this specific thread: "${focusPoint}". Center your reasoning on how THIS specific consequence develops further, rather than a general continuation of the whole timeline.`
+      : ''
 
     const prompt = `${styleInstruction}
+
+${presentDayContext}
 
 STARTING HISTORICAL EVENT: ${startingEvent}
 
@@ -121,7 +197,7 @@ ${realFacts.map((f: string, i: number) => `${i + 1}. ${f}`).join('\n')}
 
 ${previousContext}
 
-THE USER'S QUESTION: "${newQuestion}"
+THE USER'S QUESTION: "${newQuestion}"${focusInstruction}
 
 FIRST — TOPIC CHECK:
 Is this question related to history or a historical what-if? If not, output a refusal JSON as described in your instructions.
@@ -138,30 +214,28 @@ Step 5 — Honest uncertainty: Where are you genuinely unsure? Flag it.
 SCALE CHECK:
 If this is a very large-scale what-if (Industrial Revolution, Roman Empire, invention of agriculture, etc.) — acknowledge the complexity, reframe it as a more specific and modelable version, and be honest about the limits of prediction at civilizational scale.
 
+BULLET STRUCTURE — apply this to every item in keyFacts:
+Do not state a static, disconnected fact. Chain cause to effect to a concrete time horizon, in the shape: "If [the change/condition] continues or holds, [specific consequence] happens, which by [a specific year or timeframe] leads to [downstream effect]." Every keyFacts item should make clear WHAT changes, WHY it changes (the causal mechanism), and WHEN the consequence plays out or compounds further. This matters most for open-ended or ongoing scenarios (for example "what if COVID was still happening" or "what if this trend continues") — reason forward through time explicitly with real, specific years or time spans, rather than describing a frozen snapshot.
+
 NOW OUTPUT ONLY THIS JSON — no markdown, no backticks, no text outside the JSON:
 {
   "paragraph": "2-3 sentences describing the immediate consequence. Cinematic and grounded. Real names, real places, real causal logic. If refusing, explain why here.",
-  "narration": "2-3 sentences written like a historian reflecting on this moment from the future. Different voice and perspective from paragraph above. Honest about what is known vs speculated.",
   "keyFacts": [
-    "Specific documented or reasonably predicted fact 1 about the alternate world",
-    "Fact 2 — use real names, institutions, numbers where documentable",
-    "Fact 3 — flag any speculation with 'most likely' or 'historians would debate'",
-    "Fact 4 — focus on political, economic, military, or social consequences",
-    "Fact 5 — include at least one thing that would NOT change to show historical honesty"
+    ${buildFactPlaceholders(factCount)}
   ],
   "factExplanations": [
-    "Historical reasoning for fact 1 — cite real mechanisms, forces, or precedents",
-    "Historical reasoning for fact 2",
-    "Historical reasoning for fact 3",
-    "Historical reasoning for fact 4",
-    "Historical reasoning for fact 5"
+    ${Array.from({ length: factCount }, (_, i) => `"Historical reasoning for fact ${i + 1}, citing real mechanisms, forces, or precedents"`).join(',\n    ')}
   ],
-  "reliabilityNotes": "One sentence flagging where your response is highly certain vs where it is educated speculation. Be honest.",
   "worldMood": "exactly one of: STABLE, TENSE, CRITICAL, AT WAR, CATASTROPHIC, REBUILDING, FLOURISHING",
   "divergenceScore": <integer 1-100. Start low for small changes. Compound upward for each additional what-if. A world where one small decision changed is maybe 15-25. A world where WW2 never happened is 70+. A world without the Industrial Revolution is 95+>,
   "mapChanges": "Specific description of which nations, empires, or regions gain or lose power and why",
-  "year": "The effective year the alternate world has reached in its development — may be ahead or behind real history depending on consequences",
-  "uncertaintyLevel": "LOW, MEDIUM, or HIGH — how confident are you in these predictions based on historical evidence"
+  "year": "The effective year the alternate world has reached, kept short (e.g. '1550' or '2031') — never a full sentence. May be ahead or behind real history depending on consequences.",
+  "confidenceScore": <integer 1-100 — how confident you are in these specific predictions, calibrated as: 90-100 = directly follows a documented historical mechanism, 60-89 = well-supported historical inference with strong precedent, 30-59 = plausible but genuinely speculative, 1-29 = highly uncertain guesswork. Be honest and use the full range — do not default to the middle.>,
+  "comparison": [
+    { "category": "Short category name (e.g. 'Technology', 'Politics', 'Economy')", "real": "What actually happened in real history, kept to about 12 words", "diverged": "What happens instead in this alternate timeline, kept to about 12 words" },
+    { "category": "A second, different category", "real": "...", "diverged": "..." },
+    { "category": "A third, different category", "real": "...", "diverged": "..." }
+  ]
 }`
 
     const response = await client.messages.create({
@@ -173,7 +247,7 @@ NOW OUTPUT ONLY THIS JSON — no markdown, no backticks, no text outside the JSO
     })
 
     const text = response.content[0].type === 'text' ? response.content[0].text : ''
-    const clean = text.replace(/```json|```/g, '').trim()
+    const clean = text.replace(/```json|```/g, '').replace(/,(\s*[\]}])/g, '$1').trim()
 
     let data
     try {
@@ -188,7 +262,7 @@ NOW OUTPUT ONLY THIS JSON — no markdown, no backticks, no text outside the JSO
       }
     }
 
-    return NextResponse.json(data)
+    return NextResponse.json(stripEmDashes(data))
   } catch (err) {
     console.error('Diverge API error:', err)
     return NextResponse.json(

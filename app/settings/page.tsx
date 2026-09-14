@@ -1,4 +1,5 @@
 'use client'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import Nav from '@/components/Nav'
@@ -20,30 +21,42 @@ const FONT_SIZES = [
   { value: 'medium', label: 'Medium' },
   { value: 'large', label: 'Large' },
 ]
-const AI_STYLES = [
-  { value: 'detailed', label: 'Detailed', desc: 'Full historical analysis with deep context' },
-  { value: 'concise', label: 'Concise', desc: 'Short punchy responses, key facts only' },
-  { value: 'academic', label: 'Academic', desc: 'Formal tone with citations and hedging' },
-  { value: 'storytelling', label: 'Storytelling', desc: 'Narrative driven, cinematic and vivid' },
+const RESPONSE_LENGTHS = [
+  { value: 'short', label: 'Short', desc: '3 key facts, tight and punchy' },
+  { value: 'medium', label: 'Medium', desc: '5 key facts, balanced detail' },
+  { value: 'long', label: 'Long', desc: '7 key facts, full context and depth' },
+]
+const READING_LEVELS = [
+  { value: 'simple', label: 'Simple', desc: '7th-grade reading level, plain everyday words' },
+  { value: 'medium', label: 'Moderate', desc: 'High-school reading level, clear and balanced' },
+  { value: 'complex', label: 'Complex', desc: 'Advanced vocabulary for a well-read audience' },
+]
+const TONES = [
+  { value: 'historian', label: 'Neutral Historian', desc: 'Balanced, factual, measured' },
+  { value: 'dramatic', label: 'Dramatic Narrator', desc: 'Vivid, cinematic storytelling' },
+  { value: 'academic', label: 'Academic', desc: 'Formal, citation-minded, precise' },
+]
+const PLAUSIBILITY = [
+  { value: 'realistic', label: 'Realistic & Accurate', desc: 'Conservative — only well-grounded consequences' },
+  { value: 'speculative', label: 'Creative & Speculative', desc: 'Willing to explore bigger, more novel outcomes' },
 ]
 
 export default function SettingsPage() {
   const router = useRouter()
   const { user, settings, updateSettings, loading } = useAuth()
 
-  if (loading) return (
+  useEffect(() => {
+    if (!loading && !user) router.push('/auth')
+  }, [loading, user, router])
+
+  if (loading || !user) return (
     <main style={{ minHeight: '100vh', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--border-color)', borderTopColor: 'var(--accent)', animation: 'spin 0.8s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </main>
   )
 
-  if (!user) {
-    router.push('/auth')
-    return null
-  }
-
-  async function handleToggle(key: 'show_confidence_level' | 'show_historians_note') {
+  async function handleToggle(key: 'show_confidence_level' | 'show_divergence_score' | 'show_comparison') {
     if (!settings) return
     await updateSettings({ [key]: !settings[key] })
   }
@@ -151,23 +164,89 @@ export default function SettingsPage() {
           </div>
         </Section>
 
-        <Section title="AI Response Style">
+        <Section title="Response Length">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {AI_STYLES.map(style => (
+            {RESPONSE_LENGTHS.map(opt => (
               <button
-                key={style.value}
-                onClick={() => updateSettings({ ai_response_style: style.value })}
+                key={opt.value}
+                onClick={() => updateSettings({ ai_response_style: opt.value })}
                 style={{
                   padding: '12px 16px', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit',
-                  border: `1px solid ${settings?.ai_response_style === style.value ? 'var(--accent)' : 'var(--border-color)'}`,
-                  background: settings?.ai_response_style === style.value ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'var(--card-bg)',
+                  border: `1px solid ${settings?.ai_response_style === opt.value ? 'var(--accent)' : 'var(--border-color)'}`,
+                  background: settings?.ai_response_style === opt.value ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'var(--card-bg)',
                   textAlign: 'left', transition: 'all 0.18s',
                 }}
               >
-                <div style={{ fontSize: 'var(--font-scale)', fontWeight: 600, color: settings?.ai_response_style === style.value ? 'var(--accent)' : 'var(--text)', marginBottom: 2 }}>
-                  {style.label}
+                <div style={{ fontSize: 'var(--font-scale)', fontWeight: 600, color: settings?.ai_response_style === opt.value ? 'var(--accent)' : 'var(--text)', marginBottom: 2 }}>
+                  {opt.label}
                 </div>
-                <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)' }}>{style.desc}</div>
+                <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)' }}>{opt.desc}</div>
+              </button>
+            ))}
+          </div>
+        </Section>
+
+        <Section title="Reading Level">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {READING_LEVELS.map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => updateSettings({ ai_reading_level: opt.value })}
+                style={{
+                  padding: '12px 16px', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit',
+                  border: `1px solid ${settings?.ai_reading_level === opt.value ? 'var(--accent)' : 'var(--border-color)'}`,
+                  background: settings?.ai_reading_level === opt.value ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'var(--card-bg)',
+                  textAlign: 'left', transition: 'all 0.18s',
+                }}
+              >
+                <div style={{ fontSize: 'var(--font-scale)', fontWeight: 600, color: settings?.ai_reading_level === opt.value ? 'var(--accent)' : 'var(--text)', marginBottom: 2 }}>
+                  {opt.label}
+                </div>
+                <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)' }}>{opt.desc}</div>
+              </button>
+            ))}
+          </div>
+        </Section>
+
+        <Section title="Tone">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {TONES.map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => updateSettings({ ai_tone: opt.value })}
+                style={{
+                  padding: '12px 16px', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit',
+                  border: `1px solid ${settings?.ai_tone === opt.value ? 'var(--accent)' : 'var(--border-color)'}`,
+                  background: settings?.ai_tone === opt.value ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'var(--card-bg)',
+                  textAlign: 'left', transition: 'all 0.18s',
+                }}
+              >
+                <div style={{ fontSize: 'var(--font-scale)', fontWeight: 600, color: settings?.ai_tone === opt.value ? 'var(--accent)' : 'var(--text)', marginBottom: 2 }}>
+                  {opt.label}
+                </div>
+                <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)' }}>{opt.desc}</div>
+              </button>
+            ))}
+          </div>
+        </Section>
+
+        <Section title="Plausibility">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {PLAUSIBILITY.map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => updateSettings({ ai_plausibility: opt.value })}
+                style={{
+                  padding: '12px 16px', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit',
+                  border: `1px solid ${settings?.ai_plausibility === opt.value ? 'var(--accent)' : 'var(--border-color)'}`,
+                  background: settings?.ai_plausibility === opt.value ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'var(--card-bg)',
+                  textAlign: 'left', transition: 'all 0.18s',
+                }}
+              >
+                <div style={{ fontSize: 'var(--font-scale)', fontWeight: 600, color: settings?.ai_plausibility === opt.value ? 'var(--accent)' : 'var(--text)', marginBottom: 2 }}>
+                  {opt.label}
+                </div>
+                <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)' }}>{opt.desc}</div>
               </button>
             ))}
           </div>
@@ -176,16 +255,22 @@ export default function SettingsPage() {
         <Section title="Display Options">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <Toggle
-              label="Show confidence level"
-              desc="Display LOW / MEDIUM / HIGH confidence badge on AI responses"
+              label="Show Diverge"
+              desc="Display how far the alternate timeline has drifted from real history"
+              value={settings?.show_divergence_score ?? true}
+              onChange={() => handleToggle('show_divergence_score')}
+            />
+            <Toggle
+              label="Show Confidence"
+              desc="Display how confident the AI is in its predictions"
               value={settings?.show_confidence_level ?? true}
               onChange={() => handleToggle('show_confidence_level')}
             />
             <Toggle
-              label="Show historian's note"
-              desc="Display the reliability note at the bottom of each response"
-              value={settings?.show_historians_note ?? true}
-              onChange={() => handleToggle('show_historians_note')}
+              label="Show real vs. diverged comparison"
+              desc="Display a side-by-side comparison between real history and your alternate timeline"
+              value={settings?.show_comparison ?? true}
+              onChange={() => handleToggle('show_comparison')}
             />
           </div>
         </Section>

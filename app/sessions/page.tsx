@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
 import CardBorderTrace from '@/components/CardBorderTrace'
 import { motion, AnimatePresence } from 'motion/react'
+import { normalizeWhatIfs } from '@/lib/sessionData'
 
 type Session = {
   id: string
@@ -91,6 +92,15 @@ export default function SessionsPage() {
     return new Date(dateStr).toLocaleDateString('en-US', {
       month: 'short', day: 'numeric', year: 'numeric'
     })
+  }
+
+  function resumeUrl(session: Session, showSummary?: boolean) {
+    const isCustom = session.event_id === 'custom'
+    const params = new URLSearchParams()
+    if (isCustom) params.set('q', session.event_title || '')
+    params.set('resume', session.id)
+    if (showSummary) params.set('summary', '1')
+    return `/diverge/${session.event_id}?${params.toString()}`
   }
 
   const filteredSorted = useMemo(() => {
@@ -181,6 +191,7 @@ export default function SessionsPage() {
             {filteredSorted.map(session => {
               const isExpanded = expandedSession === session.id
               const isRenaming = renamingId === session.id
+              const normalized = normalizeWhatIfs(session.what_ifs)
               return (
                 <motion.div
                   key={session.id}
@@ -237,6 +248,16 @@ export default function SessionsPage() {
                           onClick={e => e.stopPropagation()}
                           style={{ position: 'absolute', left: '100%', marginLeft: 25, top: -16, background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 10, padding: 6, minWidth: 140, zIndex: 50 }}
                         >
+                          {normalized.summary && (
+                            <button
+                              onClick={() => { setOpenMenuId(null); router.push(resumeUrl(session, true)) }}
+                              style={{ display: 'block', width: '100%', padding: '8px 10px', borderRadius: 7, border: 'none', background: 'transparent', color: 'var(--accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                              onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'var(--card-bg)'}
+                              onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
+                            >
+                              View Summary
+                            </button>
+                          )}
                           <button
                             onClick={() => { setRenamingId(session.id); setRenameValue(session.event_title || ''); setOpenMenuId(null) }}
                             style={{ display: 'block', width: '100%', padding: '8px 10px', borderRadius: 7, border: 'none', background: 'transparent', color: 'var(--text-dim)', fontSize: 13, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
@@ -269,15 +290,15 @@ export default function SessionsPage() {
                   {isExpanded && (
                     <div style={{ position: 'relative', zIndex: 1, padding: '0 18px 16px', borderTop: '1px solid var(--border-color)', paddingTop: 14 }}>
                       <div style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 10 }}>
-                        {session.what_ifs?.length || 0} what-if{session.what_ifs?.length !== 1 ? 's' : ''} explored
+                        {normalized.entries.length} what-if{normalized.entries.length !== 1 ? 's' : ''} explored
                       </div>
-                      {session.what_ifs?.slice(0, 5).map((w: any, i: number) => (
-                        <div key={i} style={{ fontSize: 12, color: 'var(--text-dim)', padding: '5px 0', borderBottom: i < Math.min(session.what_ifs.length, 5) - 1 ? '1px solid var(--border-color)' : 'none' }}>
+                      {normalized.entries.slice(0, 5).map((w: any, i: number) => (
+                        <div key={i} style={{ fontSize: 12, color: 'var(--text-dim)', padding: '5px 0', borderBottom: i < Math.min(normalized.entries.length, 5) - 1 ? '1px solid var(--border-color)' : 'none' }}>
                           {i + 1}. {w.question || w}
                         </div>
                       ))}
                       <button
-                        onClick={e => { e.stopPropagation(); router.push(`/diverge/${session.event_id}`) }}
+                        onClick={e => { e.stopPropagation(); router.push(resumeUrl(session)) }}
                         style={{ marginTop: 12, width: '100%', padding: '9px', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)', background: 'transparent', color: 'var(--accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
                         onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.12)'}
                         onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}

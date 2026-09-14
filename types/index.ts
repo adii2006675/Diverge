@@ -2,15 +2,14 @@ export type WorldMood = 'STABLE' | 'TENSE' | 'CRITICAL' | 'AT WAR' | 'CATASTROPH
 
 export type WhatIfResponse = {
   paragraph: string
-  narration: string
   keyFacts: string[]
   factExplanations: string[]
-  reliabilityNotes: string
   worldMood: WorldMood
   divergenceScore: number
   mapChanges: string
   year: string
-  uncertaintyLevel: 'LOW' | 'MEDIUM' | 'HIGH'
+  confidenceScore: number
+  comparison: { category: string; real: string; diverged: string }[]
 }
 
 export type WhatIfEntry = {
