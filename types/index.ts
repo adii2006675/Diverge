@@ -8,7 +8,6 @@ export type WhatIfResponse = {
   reliabilityNotes: string
   worldMood: WorldMood
   divergenceScore: number
-  mapChanges: string
   year: string
   uncertaintyLevel: 'LOW' | 'MEDIUM' | 'HIGH'
 }

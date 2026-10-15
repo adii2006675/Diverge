@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
 import { motion } from 'motion/react'
@@ -12,7 +13,7 @@ export default function AboutPage() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
+    <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
       <Nav active="about" />
 
       <div className="font-scale-wrapper" style={{ position: 'relative', zIndex: 1, maxWidth: 680, margin: '0 auto', padding: '120px 24px 80px' }}>
@@ -141,6 +142,12 @@ export default function AboutPage() {
             <a href="https://www.linkedin.com/in/adisharma06/" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-dim)', fontSize: 14, textDecoration: 'none', transition: 'all 0.2s' }} onMouseEnter={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.borderColor = '#0A66C2'; el.style.transform = 'scale(1.06)'; const span = el.querySelector('span') as HTMLSpanElement; span.style.backgroundImage = 'linear-gradient(45deg, #0A66C2, #ffffff)'; span.style.webkitBackgroundClip = 'text'; span.style.backgroundClip = 'text'; span.style.color = 'transparent' }} onMouseLeave={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.borderColor = 'var(--border-color)'; el.style.transform = 'scale(1)'; const span = el.querySelector('span') as HTMLSpanElement; span.style.backgroundImage = 'none'; span.style.color = 'var(--text-dim)' }}><span style={{ transition: 'color 0.2s' }}>LinkedIn</span></a>
             <a href="https://www.instagram.com/adii.sharma__/" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-dim)', fontSize: 14, textDecoration: 'none', transition: 'all 0.2s' }} onMouseEnter={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.borderColor = '#d62976'; el.style.transform = 'scale(1.06)'; const span = el.querySelector('span') as HTMLSpanElement; span.style.backgroundImage = 'linear-gradient(45deg, #4f5bd5, #962fbf, #d62976, #fa7e1e, #feda75)'; span.style.webkitBackgroundClip = 'text'; span.style.backgroundClip = 'text'; span.style.color = 'transparent' }} onMouseLeave={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.borderColor = 'var(--border-color)'; el.style.transform = 'scale(1)'; const span = el.querySelector('span') as HTMLSpanElement; span.style.backgroundImage = 'none'; span.style.color = 'var(--text-dim)' }}><span style={{ transition: 'color 0.2s' }}>Instagram</span></a>
             <a href="https://adii2006675.github.io" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-dim)', fontSize: 14, textDecoration: 'none', transition: 'all 0.2s' }} onMouseEnter={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.color = 'var(--accent)'; el.style.borderColor = 'var(--accent)'; el.style.transform = 'scale(1.06)' }} onMouseLeave={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.color = 'var(--text-dim)'; el.style.borderColor = 'var(--border-color)'; el.style.transform = 'scale(1)' }}>Portfolio</a>
+          </div>
+
+          <div style={{ textAlign: 'center', marginTop: 28 }}>
+            <Link href="/credits" style={{ fontSize: 13, color: 'var(--text-dim)', textDecoration: 'underline', textUnderlineOffset: 4 }}>
+              Image credits
+            </Link>
           </div>
         </motion.div>
       </div>

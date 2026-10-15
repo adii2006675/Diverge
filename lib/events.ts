@@ -943,4 +943,11 @@ export const ANCIENT_EVENTS: HistoricalEvent[] = [
   },
   ]
 
-export const ERAS = ['All', 'Medieval', 'Renaissance', 'Industrial', 'WWI/WWII', 'Cold War', 'Modern']
+export const ERAS = ['All', 'Ancient', 'Medieval', 'Renaissance', 'Industrial', 'WWI/WWII', 'Cold War', 'Modern']
+
+// Every event the app knows about: the main list plus the ancient events.
+export const ALL_EVENTS: HistoricalEvent[] = [...HISTORICAL_EVENTS, ...ANCIENT_EVENTS]
+
+export function formatEventYear(year: number): string {
+  return year < 0 ? `${Math.abs(year)} BC` : String(year)
+}

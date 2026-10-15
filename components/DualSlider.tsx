@@ -8,20 +8,28 @@ interface Props {
   valueMax: number
   onChangeMin: (val: number) => void
   onChangeMax: (val: number) => void
+  /** Optional non-linear scale: toPct maps a year to 0-100, fromPct maps 0-1 back to a year. */
+  toPct?: (year: number) => number
+  fromPct?: (p: number) => number
+  /** Years to label under the track. Defaults to six evenly spaced ticks. */
+  ticks?: number[]
+  /** How to print a year, for example "500 BC". */
+  format?: (year: number) => string
 }
 
-export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, onChangeMax }: Props) {
+export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, onChangeMax, toPct, fromPct, ticks: tickYears, format }: Props) {
   const trackRef = useRef<HTMLDivElement>(null)
   const dragging = useRef<'min' | 'max' | null>(null)
 
-  const pct = (val: number) => ((val - min) / (max - min)) * 100
+  const pct = (val: number) => (toPct ? toPct(val) : ((val - min) / (max - min)) * 100)
+  const fmt = (val: number) => (format ? format(val) : String(val))
 
   const valFromClientX = useCallback((clientX: number) => {
     if (!trackRef.current) return null
     const rect = trackRef.current.getBoundingClientRect()
     const p = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
-    return Math.round(min + p * (max - min))
-  }, [min, max])
+    return Math.round(fromPct ? fromPct(p) : min + p * (max - min))
+  }, [min, max, fromPct])
 
   function startDrag(e: React.MouseEvent, handle: 'min' | 'max') {
     e.preventDefault()
@@ -58,17 +66,19 @@ export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, 
     const year = Math.round(min + (i / (numTicks - 1)) * (max - min))
     return { year, pct: (i / (numTicks - 1)) * 100 }
   })
-  const ticks = rawTicks.map(t => {
-    if (t.year === 1776) return { ...t, year: 1775 }
-    if (t.year === 1901) return { ...t, year: 1900 }
-    return t
-  })
+  const ticks = tickYears
+    ? tickYears.map(year => ({ year, pct: pct(year) }))
+    : rawTicks.map(t => {
+        if (t.year === 1776) return { ...t, year: 1775 }
+        if (t.year === 1901) return { ...t, year: 1900 }
+        return t
+      })
 
   return (
     <div>
       <div style={{ position: 'relative', minHeight: 24, marginBottom: 8 }}>
-        <span style={{ position: 'absolute', left: 0, transform: 'translateX(-50%)', fontSize: 'var(--font-scale)', color: 'var(--text-dim)', fontWeight: 600, whiteSpace: 'nowrap' }}>{valueMin}</span>
-        <span style={{ position: 'absolute', right: 0, transform: 'translateX(50%)', fontSize: 'var(--font-scale)', color: 'var(--text-dim)', fontWeight: 600, whiteSpace: 'nowrap' }}>{valueMax}</span>
+        <span style={{ position: 'absolute', left: 0, transform: 'translateX(-50%)', fontSize: 'var(--font-scale)', color: 'var(--text-dim)', fontWeight: 600, whiteSpace: 'nowrap' }}>{fmt(valueMin)}</span>
+        <span style={{ position: 'absolute', right: 0, transform: 'translateX(50%)', fontSize: 'var(--font-scale)', color: 'var(--text-dim)', fontWeight: 600, whiteSpace: 'nowrap' }}>{fmt(valueMax)}</span>
       </div>
 
       <div
@@ -119,7 +129,7 @@ export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, 
         {ticks.map(t => (
           <div key={t.year} style={{ position: 'absolute', left: `${t.pct}%`, transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
             <div style={{ width: 1, height: 6, background: 'var(--border-color)', flexShrink: 0 }} />
-            <span style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', opacity: 0.6, whiteSpace: 'nowrap' }}>{t.year}</span>
+            <span style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', opacity: 0.6, whiteSpace: 'nowrap' }}>{fmt(t.year)}</span>
           </div>
         ))}
       </div>
