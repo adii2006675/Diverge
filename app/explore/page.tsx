@@ -3,27 +3,51 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
 import Nav from '@/components/Nav'
-import { HISTORICAL_EVENTS, ERAS } from '@/lib/events'
+import { ALL_EVENTS, ERAS, formatEventYear } from '@/lib/events'
 import DualSlider from '@/components/DualSlider'
 import CardBorderTrace from '@/components/CardBorderTrace'
 import EventImage from '@/components/EventImage'
 
-const PLACEHOLDER_LONG_DESC = 'This is placeholder expanded description text standing in for the real one hundred to three hundred character version that will eventually replace it here soon enough for testing purposes today.'
+// The year slider covers 2600 BC to 2026. It is not linear: the ancient world gets 15% of the track and
+// the Middle Ages another 23%, so the modern centuries (most of the events) still have room to separate.
+const YEAR_MIN = -2600
+const YEAR_MAX = 2026
+const SCALE_BREAKS: [number, number][] = [[YEAR_MIN, 0], [0, 15], [1400, 38], [YEAR_MAX, 100]]
+const SLIDER_TICKS = [-2600, -500, 1400, 1650, 1900, 2026]
+
+function yearToPct(year: number): number {
+  for (let i = 1; i < SCALE_BREAKS.length; i++) {
+    const [y0, p0] = SCALE_BREAKS[i - 1]
+    const [y1, p1] = SCALE_BREAKS[i]
+    if (year <= y1) return p0 + ((year - y0) / (y1 - y0)) * (p1 - p0)
+  }
+  return 100
+}
+
+function pctToYear(p: number): number {
+  const pct = p * 100
+  for (let i = 1; i < SCALE_BREAKS.length; i++) {
+    const [y0, p0] = SCALE_BREAKS[i - 1]
+    const [y1, p1] = SCALE_BREAKS[i]
+    if (pct <= p1) return y0 + ((pct - p0) / (p1 - p0)) * (y1 - y0)
+  }
+  return YEAR_MAX
+}
 
 export default function ExplorePage() {
   const router = useRouter()
   const [selectedEra, setSelectedEra] = useState('All')
-  const [yearMin, setYearMin] = useState(1400)
-  const [yearMax, setYearMax] = useState(2026)
+  const [yearMin, setYearMin] = useState(YEAR_MIN)
+  const [yearMax, setYearMax] = useState(YEAR_MAX)
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
-  const filtered = HISTORICAL_EVENTS.filter(e => {
+  const filtered = ALL_EVENTS.filter(e => {
     const eraMatch = selectedEra === 'All' || e.era === selectedEra
     const yearMatch = e.year >= yearMin && e.year <= yearMax
     return eraMatch && yearMatch
   })
 
-  const expandedEvent = filtered.find(e => e.id === expandedId) || HISTORICAL_EVENTS.find(e => e.id === expandedId)
+  const expandedEvent = filtered.find(e => e.id === expandedId) || ALL_EVENTS.find(e => e.id === expandedId)
 
   useEffect(() => {
     if (expandedId) {
@@ -87,8 +111,12 @@ export default function ExplorePage() {
           style={{ width: '100%', maxWidth: 700, margin: '0 auto' }}
         >
           <DualSlider
-            min={1400}
-            max={2026}
+            min={YEAR_MIN}
+            max={YEAR_MAX}
+            toPct={yearToPct}
+            fromPct={pctToYear}
+            ticks={SLIDER_TICKS}
+            format={formatEventYear}
             valueMin={yearMin}
             valueMax={yearMax}
             onChangeMin={setYearMin}
@@ -131,7 +159,7 @@ export default function ExplorePage() {
                     <EventImage key={event.id} id={event.id} title={event.title} year={event.year} loading="lazy" />
                     <div style={{ position: 'absolute', top: 10, left: 12 }}>
                       <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', background: 'var(--bg)', padding: '2px 7px', borderRadius: 4 }}>
-                        {event.era.toUpperCase()} · {event.year < 0 ? `${Math.abs(event.year)} BC` : event.year}
+                        {event.era.toUpperCase()} · {formatEventYear(event.year)}
                       </span>
                     </div>
                   </div>
@@ -194,14 +222,14 @@ export default function ExplorePage() {
                     <EventImage key={expandedEvent.id} id={expandedEvent.id} title={expandedEvent.title} year={expandedEvent.year} />
                     <div style={{ position: 'absolute', top: 14, left: 16 }}>
                       <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', background: 'var(--bg)', padding: '3px 9px', borderRadius: 5 }}>
-                        {expandedEvent.era.toUpperCase()} · {expandedEvent.year < 0 ? `${Math.abs(expandedEvent.year)} BC` : expandedEvent.year}
+                        {expandedEvent.era.toUpperCase()} · {formatEventYear(expandedEvent.year)}
                       </span>
                     </div>
                   </div>
                   <div style={{ padding: '20px 24px 24px' }}>
                     <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 12, color: 'var(--text)' }}>{expandedEvent.title}</div>
                     <div style={{ fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: 24 }}>
-                      {PLACEHOLDER_LONG_DESC}
+                      {expandedEvent.fullDesc}
                     </div>
                     <div style={{ display: 'flex', gap: 10 }}>
                       <button

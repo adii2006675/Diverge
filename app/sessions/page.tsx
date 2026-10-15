@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
 import CardBorderTrace from '@/components/CardBorderTrace'
 import EventImage from '@/components/EventImage'
-import { HISTORICAL_EVENTS } from '@/lib/events'
+import { ALL_EVENTS } from '@/lib/events'
 import { motion, AnimatePresence } from 'motion/react'
 
 type Session = {
@@ -204,7 +204,7 @@ export default function SessionsPage() {
                         key={session.event_id}
                         id={session.event_id}
                         title={session.event_title || ''}
-                        year={HISTORICAL_EVENTS.find(e => e.id === session.event_id)?.year}
+                        year={ALL_EVENTS.find(e => e.id === session.event_id)?.year}
                         compact
                         loading="lazy"
                       />

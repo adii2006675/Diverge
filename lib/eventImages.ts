@@ -21,7 +21,7 @@ const EVENT_IMAGES: Record<string, string> = {
   'genghis-khan-1206': '/events/genghis-khan-1206.jpg',
   'financial-crisis-2008': '/events/financial-crisis-2008.jpg',
   'iphone-2007': '/events/iphone-2007.jpg',
-  'covid-2020': '/events/covid-2020.jpg',
+  'covid-2020': '/events/covid-2020.png',
   'internet-1991': '/events/internet-1991.jpg',
   'wright-brothers-1903': '/events/wright-brothers-1903.jpg',
   'transatlantic-slave-trade-1619': '/events/transatlantic-slave-trade-1619.jpg',

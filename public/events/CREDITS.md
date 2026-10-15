@@ -3,20 +3,19 @@
 Images in this folder are shown on the event cards and the diverge page.
 
 - Sources are Wikimedia Commons files, downloaded at 960px wide on 2026-10-15 through Commons' `Special:FilePath`. Each row links to the file's Commons page, which has the full author, source and licence details.
-- Licence names come from the Commons metadata at download time. CC BY and CC BY-SA images need attribution when shown publicly; the app does not display credits yet, so add an "Image credits" link before any public release.
-- The six images marked **project-provided** were already in the repository. Their source and licence were not recorded, so verify them before any public release.
+- Licence names come from the Commons metadata at download time. CC BY and CC BY-SA images need attribution when shown publicly. This file is rendered at `/credits` in the app and linked from the About page.
 
 | Event id | Image | Author / credit | Licence | Commons page |
 | --- | --- | --- | --- | --- |
 | jfk-1963 | jfk-1963.jpg | Cecil W. Stoughton | Public domain | [John F. Kennedy, White House color photo portrait.jpg](https://commons.wikimedia.org/wiki/File:John_F._Kennedy,_White_House_color_photo_portrait.jpg) |
 | ww2-1939 | ww2-1939.jpg | Heinrich Hoffmann | CC BY-SA 3.0 de | [Adolf Hitler Berghof-1936.jpg](https://commons.wikimedia.org/wiki/File:Adolf_Hitler_Berghof-1936.jpg) |
 | berlin-wall-1989 | berlin-wall-1989.jpg | Noir | CC BY-SA 3.0 | [Berlinermauer.jpg](https://commons.wikimedia.org/wiki/File:Berlinermauer.jpg) |
-| 9-11-2001 | 9-11-2001.jpg | **project-provided** | Not recorded | n/a |
+| 9-11-2001 | 9-11-2001.jpg | Flickr user Michael Foran | CC BY 2.0 | [WTC smoking on 9-11.jpeg](https://commons.wikimedia.org/wiki/File:WTC_smoking_on_9-11.jpeg) |
 | cuban-missile-1962 | cuban-missile-1962.jpg | Cecil Stoughton, White House | Public domain | [EXCOMM meeting, Cuban Missile Crisis, 29 October 1962.jpg](https://commons.wikimedia.org/wiki/File:EXCOMM_meeting,_Cuban_Missile_Crisis,_29_October_1962.jpg) |
 | lincoln-1865 | lincoln-1865.jpg | Alexander Gardner | Public domain | [Abraham Lincoln O-77 matte collodion print.jpg](https://commons.wikimedia.org/wiki/File:Abraham_Lincoln_O-77_matte_collodion_print.jpg) |
-| titanic-1912 | titanic-1912.jpg | **project-provided** | Not recorded | n/a |
+| titanic-1912 | titanic-1912.jpg | Francis Godolphin Osbourne Stuart | Public domain | [RMS Titanic 3.jpg](https://commons.wikimedia.org/wiki/File:RMS_Titanic_3.jpg) |
 | moon-1969 | moon-1969.jpg | Neil Armstrong | Public domain | [Aldrin Apollo 11 original.jpg](https://commons.wikimedia.org/wiki/File:Aldrin_Apollo_11_original.jpg) |
-| ww1-1914 | ww1-1914.jpg | **project-provided** | Not recorded | n/a |
+| ww1-1914 | ww1-1914.jpg | Ernest Brooks | Public domain | [The Australian Imperial Force on the Western Front, 1916-191](https://commons.wikimedia.org/wiki/File:The_Australian_Imperial_Force_on_the_Western_Front,_1916-1918._Q578.jpg) |
 | soviet-1991 | soviet-1991.jpg | ITAR-TASS | CC BY 4.0 | [Boris Yeltsin 22 August 1991-1.jpg](https://commons.wikimedia.org/wiki/File:Boris_Yeltsin_22_August_1991-1.jpg) |
 | gutenberg-1440 | gutenberg-1440.jpg | http://www.sru.edu/depts/cisba/compsci/dailey/217students/sgm8660/Final/ | Public domain | [Gutenberg.jpg](https://commons.wikimedia.org/wiki/File:Gutenberg.jpg) |
 | columbus-1492 | columbus-1492.jpg | John Vanderlyn | Public domain | [John Vanderlyn - Columbus Landing at Guanahani, 1492 - WGA24](https://commons.wikimedia.org/wiki/File:John_Vanderlyn_-_Columbus_Landing_at_Guanahani,_1492_-_WGA24269.jpg) |
@@ -29,21 +28,21 @@ Images in this folder are shown on the event cards and the diverge page.
 | genghis-khan-1206 | genghis-khan-1206.jpg | Unknown authorUnknown author | Public domain | [YuanEmperorAlbumGenghisPortrait.jpg](https://commons.wikimedia.org/wiki/File:YuanEmperorAlbumGenghisPortrait.jpg) |
 | financial-crisis-2008 | financial-crisis-2008.jpg | David Shankbone | CC BY-SA 3.0 | [Lehman Brothers Times Square by David Shankbone.jpg](https://commons.wikimedia.org/wiki/File:Lehman_Brothers_Times_Square_by_David_Shankbone.jpg) |
 | iphone-2007 | iphone-2007.jpg | Blake Patterson | CC BY 2.0 | [Steve Jobs presents iPhone (cropped).jpg](https://commons.wikimedia.org/wiki/File:Steve_Jobs_presents_iPhone_(cropped).jpg) |
-| covid-2020 | covid-2020.jpg | **project-provided** | Not recorded | n/a |
+| covid-2020 | covid-2020.png | CDC/ Alissa Eckert, MS; Dan Higgins, MAM | Public domain | [SARS-CoV-2 (CDC-23311).png](https://commons.wikimedia.org/wiki/File:SARS-CoV-2_(CDC-23311).png) |
 | internet-1991 | internet-1991.jpg | User:Coolcaesar at en.wikipedia | CC BY-SA 3.0 | [First Web Server.jpg](https://commons.wikimedia.org/wiki/File:First_Web_Server.jpg) |
 | wright-brothers-1903 | wright-brothers-1903.jpg | John T. Daniels | Public domain | [First flight2.jpg](https://commons.wikimedia.org/wiki/File:First_flight2.jpg) |
 | transatlantic-slave-trade-1619 | transatlantic-slave-trade-1619.jpg | Printed by James Phillips, George Yard, Lombard Street, London | Public domain | [Brookes slave ship, British Library (cropped).jpg](https://commons.wikimedia.org/wiki/File:Brookes_slave_ship,_British_Library_(cropped).jpg) |
 | womens-suffrage-1920 | womens-suffrage-1920.jpg | This image is available from the United States Library of Congress's Prints and Photograph | Public domain | [Emmett D. Boyle of Nevada 160070v.jpg](https://commons.wikimedia.org/wiki/File:Emmett_D._Boyle_of_Nevada_160070v.jpg) |
 | hiroshima-1945 | hiroshima-1945.jpg | George R. Caron | Public domain | [Atomic cloud over Hiroshima.jpg](https://commons.wikimedia.org/wiki/File:Atomic_cloud_over_Hiroshima.jpg) |
 | israel-founded-1948 | israel-founded-1948.jpg | Rudi Weissenstein | Public domain | [Declaration of State of Israel 1948.jpg](https://commons.wikimedia.org/wiki/File:Declaration_of_State_of_Israel_1948.jpg) |
-| mlk-march-1963 | mlk-march-1963.jpg | **project-provided** | Not recorded | n/a |
+| mlk-march-1963 | mlk-march-1963.jpg | Unknown - AFP | Public domain | [Martin Luther King Jr. during the famous "I have a dream" sp](https://commons.wikimedia.org/wiki/File:Martin_Luther_King_Jr._during_the_famous_%22I_have_a_dream%22_speech.jpg) |
 | blm-2013 | blm-2013.jpg | Elvert Barnes | CC BY-SA 2.0 | [Black lives matter protest, washington DC.jpg](https://commons.wikimedia.org/wiki/File:Black_lives_matter_protest,_washington_DC.jpg) |
 | berlin-olympics-1936 | berlin-olympics-1936.jpg | Los Angeles Daily News | CC BY 4.0 | [Jesse Owens pictured in a broad jump midair.jpg](https://commons.wikimedia.org/wiki/File:Jesse_Owens_pictured_in_a_broad_jump_midair.jpg) |
 | india-independence-1947 | india-independence-1947.jpg | Unknown authorUnknown author | Public domain | [Indian Independence Day at the Red Fort (cropped).jpg](https://commons.wikimedia.org/wiki/File:Indian_Independence_Day_at_the_Red_Fort_(cropped).jpg) |
 | apartheid-ends-1994 | apartheid-ends-1994.jpg | South Africa The Good News | CC BY 2.0 | [Nelson Mandela-2008 (edit).jpg](https://commons.wikimedia.org/wiki/File:Nelson_Mandela-2008_(edit).jpg) |
 | chernobyl-1986 | chernobyl-1986.jpg | Adam Jones from Kelowna, BC, Canada | CC BY-SA 2.0 | [Chernobyl Reactor 4 - Where Disaster Occurred - Chernobyl Ex](https://commons.wikimedia.org/wiki/File:Chernobyl_Reactor_4_-_Where_Disaster_Occurred_-_Chernobyl_Exclusion_Zone_-_Northern_Ukraine_-_03_(27031434071).jpg) |
 | boston-tea-party-1773 | boston-tea-party-1773.jpg | Nathaniel Currier | Public domain | [Boston Tea Party Currier colored.jpg](https://commons.wikimedia.org/wiki/File:Boston_Tea_Party_Currier_colored.jpg) |
-| great-depression-1929 | great-depression-1929.jpg | **project-provided** | Not recorded | n/a |
+| great-depression-1929 | great-depression-1929.jpg | Dorothea Lange, Image edited | Public domain | [Migrant Mother 1936 2.jpg](https://commons.wikimedia.org/wiki/File:Migrant_Mother_1936_2.jpg) |
 | pearl-harbor-1941 | pearl-harbor-1941.jpg | U.S. Navy | Public domain | [Pearl Harbor Attack, 7 December 1941 - 80-G-19942.jpg](https://commons.wikimedia.org/wiki/File:Pearl_Harbor_Attack,_7_December_1941_-_80-G-19942.jpg) |
 | salem-witch-trials-1692 | salem-witch-trials-1692.jpg | Joseph E., ca. 1837-1914, artist. | Public domain | [Salem witch2.jpg](https://commons.wikimedia.org/wiki/File:Salem_witch2.jpg) |
 | first-computer-1946 | first-computer-1946.jpg | Unknown authorUnknown author | Public domain | [Glen Beck and Betty Snyder program the ENIAC in building 328](https://commons.wikimedia.org/wiki/File:Glen_Beck_and_Betty_Snyder_program_the_ENIAC_in_building_328_at_the_Ballistic_Research_Laboratory.jpg) |

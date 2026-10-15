@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
-import { HISTORICAL_EVENTS } from '@/lib/events'
+import { ALL_EVENTS, formatEventYear } from '@/lib/events'
 import { WhatIfEntry, WhatIfResponse, WorldMood } from '@/types'
 import { useAuth } from '@/context/AuthContext'
 import { motion, AnimatePresence } from 'motion/react'
@@ -26,7 +26,7 @@ export default function DivergePage() {
   const router = useRouter()
   const sessionId = params.sessionId as string
 
-  const event = HISTORICAL_EVENTS.find(e => e.id === sessionId)
+  const event = ALL_EVENTS.find(e => e.id === sessionId)
   const customQ = searchParams.get('q')
 
   const [whatIfs, setWhatIfs] = useState<WhatIfEntry[]>([])
@@ -56,14 +56,14 @@ export default function DivergePage() {
   const currentResponse = currentEntry?.response || null
   const divergence = currentResponse?.divergenceScore || 0
   const mood = (currentResponse?.worldMood || 'STABLE') as WorldMood
-  const currentYear = currentResponse?.year || (event?.year?.toString() || '?')
+  const currentYear = currentResponse?.year || (event ? formatEventYear(event.year) : '?')
   const currentFacts = currentResponse?.keyFacts || []
   const currentParagraph = currentResponse?.paragraph || ''
   const realFacts = event?.realFacts || []
   const narrationOpen = narrationOpenFor === activeTimelineIdx
   // The bar shows two lines (about 260 characters at its fixed 860px width) until opened.
   const narrationLong = (currentResponse?.narration?.length || 0) > 260
-  const startingEvent = event ? `${event.title} — ${event.year}` : customQ || 'Custom starting point'
+  const startingEvent = event ? `${event.title} — ${formatEventYear(event.year)}` : customQ || 'Custom starting point'
 
   // A custom starting point (from the home page) arrives as ?q=... and is asked automatically,
   // once auth has resolved so the user's AI settings and autosave apply to this first question.
@@ -352,9 +352,9 @@ export default function DivergePage() {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}>
           <div style={{ padding: '14px 22px 10px', minHeight: 51, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--accent)' }}>REAL TIMELINE</span>
-            {event?.year && (
+            {event && (
               <span style={{ padding: '2px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>
-                {event.year}
+                {formatEventYear(event.year)}
               </span>
             )}
           </div>
@@ -366,7 +366,7 @@ export default function DivergePage() {
                 id={event?.id}
                 title={event?.title || 'Custom starting point'}
                 year={event?.year}
-                caption={event ? `${event.title} · ${event.year}` : undefined}
+                caption={event ? `${event.title} · ${formatEventYear(event.year)}` : undefined}
                 imgStyle={{ filter: 'brightness(0.45) saturate(0.4)' }}
               />
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(8,8,16,0.85))', pointerEvents: 'none' }} />
