@@ -13,18 +13,24 @@ const MOOD_COLORS: Record<string, string> = {
   REBUILDING: '#06B6D4', FLOURISHING: '#10B981',
 }
 
-const FALLBACK_IMAGES: Record<string, string> = {
-  'jfk-1963': 'https://images.unsplash.com/photo-1569428034239-f9565e32e224?w=800&q=80',
-  'ww2-1939': 'https://images.unsplash.com/photo-1524536765000-b76084ca0f01?w=800&q=80',
-  'berlin-wall-1989': 'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800&q=80',
-  '9-11-2001': 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80',
-  'cuban-missile-1962': 'https://images.unsplash.com/photo-1541844053589-346841d0b34c?w=800&q=80',
-  'lincoln-1865': 'https://images.unsplash.com/photo-1617791160588-241658c0f566?w=800&q=80',
-  'titanic-1912': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80',
-  'moon-1969': 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=800&q=80',
-  'ww1-1914': 'https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?w=800&q=80',
-  'soviet-1991': 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&q=80',
+// Events with a photo shipped in /public/events. Everything else uses the event's
+// own Wikimedia image, and falls back to a typographic header if that fails.
+const LOCAL_EVENT_IMAGES = new Set([
+  '9-11-2001', 'covid-2020', 'great-depression-1929', 'mlk-march-1963', 'titanic-1912', 'ww1-1914',
+])
+
+// Wikimedia only serves thumbnails at standard widths; the 800px URLs in lib/events.ts return 400.
+function resolveEventImage(event: { id: string; image: string } | undefined): string | null {
+  if (!event) return null
+  if (LOCAL_EVENT_IMAGES.has(event.id)) return `/events/${event.id}.jpg`
+  return event.image ? event.image.replace('/800px-', '/960px-') : null
 }
+
+type AskError = { message: string; question: string }
+type Refusal = { message: string; question: string }
+
+const CUSTOM_START_COPY =
+  'This is a custom starting point, so there is no recorded timeline to compare against. Diverge will anchor its answer in documented history for this topic.'
 
 export default function DivergePage() {
   const params = useParams()
@@ -48,9 +54,16 @@ export default function DivergePage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const { settings, user, profile, updateSettings, signOut } = useAuth()
+  const { settings, user, profile, updateSettings, signOut, loading: authLoading } = useAuth()
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const hasAutoSubmitted = useRef(false)
+  const [pendingQuestion, setPendingQuestion] = useState<string | null>(null)
+  const [askError, setAskError] = useState<AskError | null>(null)
+  const [refusal, setRefusal] = useState<Refusal | null>(null)
+  const [summaryError, setSummaryError] = useState<string | null>(null)
+  const [imgFailed, setImgFailed] = useState(false)
+  // Which answer's narration is expanded; collapsing happens automatically when you switch answers.
+  const [narrationOpenFor, setNarrationOpenFor] = useState<number | null>(null)
 
   const currentEntry = whatIfs[activeTimelineIdx] || null
   const currentResponse = currentEntry?.response || null
@@ -60,26 +73,36 @@ export default function DivergePage() {
   const currentFacts = currentResponse?.keyFacts || []
   const currentParagraph = currentResponse?.paragraph || ''
   const realFacts = event?.realFacts || []
+  const narrationOpen = narrationOpenFor === activeTimelineIdx
+  // The bar shows two lines (about 260 characters at its fixed 860px width) until opened.
+  const narrationLong = (currentResponse?.narration?.length || 0) > 260
   const startingEvent = event ? `${event.title} — ${event.year}` : customQ || 'Custom starting point'
 
+  // A custom starting point (from the home page) arrives as ?q=... and is asked automatically,
+  // once auth has resolved so the user's AI settings and autosave apply to this first question.
   useEffect(() => {
+    if (authLoading) return
     if (customQ && !event && !hasAutoSubmitted.current) {
       hasAutoSubmitted.current = true
-      setCurrentInput(customQ)
-      setTimeout(() => handleAsk(), 0)
+      handleAsk(customQ)
     }
-  }, [])
+  }, [authLoading])
 
-  const uncertaintyColor = currentResponse?.uncertaintyLevel === 'LOW'
+  // The API field is named uncertaintyLevel, but its prompt asks "how confident are you",
+  // and the badge reads "<level> CONFIDENCE". Colour it as confidence: high is good.
+  const uncertaintyColor = currentResponse?.uncertaintyLevel === 'HIGH'
     ? '#10B981'
-    : currentResponse?.uncertaintyLevel === 'HIGH'
+    : currentResponse?.uncertaintyLevel === 'LOW'
       ? '#EF4444'
       : '#F59E0B'
 
-  async function handleAsk() {
-    if (!currentInput.trim() || loading) return
+  async function handleAsk(override?: string) {
+    const question = (override ?? currentInput).trim()
+    if (!question || loading) return
     setLoading(true)
-    const question = currentInput.trim()
+    setAskError(null)
+    setRefusal(null)
+    setPendingQuestion(question)
     setCurrentInput('')
 
     try {
@@ -94,31 +117,56 @@ export default function DivergePage() {
         body: JSON.stringify({ startingEvent, previousWhatIfs, currentWorldState, newQuestion: question, realFacts, aiStyle: settings?.ai_response_style || 'detailed' })
       })
 
-      const data: WhatIfResponse = await res.json()
-      const newEntry: WhatIfEntry = { question, response: data, timestamp: Date.now() }
+      const data = await res.json().catch(() => null)
+      if (!res.ok || !data || typeof data.paragraph !== 'string' || !Array.isArray(data.keyFacts)) {
+        throw new Error(data?.error || 'The answer came back in an unexpected format.')
+      }
+
+      // Off-topic questions come back as a refusal with a divergence score of 0.
+      // Show the message, keep it out of the timeline, and give the question back.
+      if (data.divergenceScore === 0) {
+        setRefusal({ message: data.paragraph, question })
+        setCurrentInput(question)
+        setPendingQuestion(null)
+        setLoading(false)
+        return
+      }
+
+      const newEntry: WhatIfEntry = { question, response: data as WhatIfResponse, timestamp: Date.now() }
       const newWhatIfs = [...whatIfs, newEntry]
       setWhatIfs(newWhatIfs)
       setActiveTimelineIdx(newWhatIfs.length - 1)
 
       if (user) {
-        const sessionData = {
-          user_id: user.id,
-          event_id: sessionId,
-          event_title: startingEvent,
-          what_ifs: newWhatIfs.map(w => ({ question: w.question })),
-          divergence_score: data.divergenceScore || 0,
-          updated_at: new Date().toISOString(),
-        }
-        if (currentSessionId) {
-          await supabase.from('sessions').update(sessionData).eq('id', currentSessionId)
-        } else {
-          const { data: saved } = await supabase.from('sessions').insert(sessionData).select().single()
-          if (saved) setCurrentSessionId(saved.id)
+        try {
+          const sessionData = {
+            user_id: user.id,
+            event_id: sessionId,
+            event_title: startingEvent,
+            what_ifs: newWhatIfs.map(w => ({ question: w.question })),
+            divergence_score: data.divergenceScore || 0,
+            updated_at: new Date().toISOString(),
+          }
+          if (currentSessionId) {
+            await supabase.from('sessions').update(sessionData).eq('id', currentSessionId)
+          } else {
+            const { data: saved } = await supabase.from('sessions').insert(sessionData).select().single()
+            if (saved) setCurrentSessionId(saved.id)
+          }
+        } catch (err) {
+          // The answer is already on screen; a failed autosave shouldn't turn it into an error.
+          console.error(err)
         }
       }
     } catch (err) {
       console.error(err)
+      setAskError({
+        message: err instanceof Error && err.message ? err.message : 'Something went wrong while generating the answer.',
+        question,
+      })
+      setCurrentInput(question)
     }
+    setPendingQuestion(null)
     setLoading(false)
   }
 
@@ -151,6 +199,7 @@ export default function DivergePage() {
   async function handleSummary() {
     if (whatIfs.length === 0) return
     setSummaryLoading(true)
+    setSummaryError(null)
     setShowSummary(true)
     try {
       const res = await fetch('/api/summary', {
@@ -162,12 +211,32 @@ export default function DivergePage() {
           finalWorldState: currentResponse?.keyFacts.join('. ') || ''
         })
       })
-      setSummary(await res.json())
-    } catch (err) { console.error(err) }
+      const data = await res.json().catch(() => null)
+      if (!res.ok || !data || typeof data.title !== 'string') {
+        throw new Error(data?.error || 'The summary came back in an unexpected format.')
+      }
+      setSummary(data)
+    } catch (err) {
+      console.error(err)
+      setSummaryError(err instanceof Error && err.message ? err.message : 'Something went wrong while building the summary.')
+    }
     setSummaryLoading(false)
   }
 
-  const eventImage = FALLBACK_IMAGES[sessionId] || `https://picsum.photos/seed/${sessionId}/800/400`
+  // Escape closes the top-most layer. Keyboard action, so no animation is added for it.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return
+      if (showAISettings) setShowAISettings(false)
+      else if (showSummary) setShowSummary(false)
+      else if (showProfileMenu) setShowProfileMenu(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [showAISettings, showSummary, showProfileMenu])
+
+  const eventImage = resolveEventImage(event)
+  const showImage = !!eventImage && !imgFailed
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
@@ -192,7 +261,7 @@ export default function DivergePage() {
         >
           DIVERGE
         </div>
-        <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 600, position: 'relative', zIndex: 1, justifySelf: 'center', whiteSpace: 'nowrap' }}>
+        <div title={startingEvent} style={{ fontSize: 13, color: 'var(--text)', fontWeight: 600, position: 'relative', zIndex: 1, justifySelf: 'center', whiteSpace: 'nowrap', maxWidth: '36vw', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {startingEvent}
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', position: 'relative', zIndex: 1, justifySelf: 'end' }}>
@@ -232,13 +301,14 @@ export default function DivergePage() {
           </button>
           {whatIfs.length > 0 && (
             <button
-              onClick={handleManualSave}
+              onClick={user ? handleManualSave : () => window.open('/auth', '_blank', 'noopener')}
               disabled={saving}
+              title={user ? undefined : 'Opens sign in in a new tab so this session stays open'}
               style={{ ...btnStyle, background: saved ? '#10B981' : 'var(--card-bg)', color: saved ? '#fff' : 'var(--text-dim)', border: saved ? 'none' : '1px solid var(--border-color)', minWidth: 70, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               onMouseEnter={e => { if (!saved) { (e.currentTarget as HTMLButtonElement).style.color = '#10B981'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#10B981' } }}
               onMouseLeave={e => { if (!saved) { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-dim)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)' } }}
             >
-              {saving ? '...' : saved ? 'Saved ✓' : 'Save'}
+              {!user ? 'Sign in to save' : saving ? '...' : saved ? 'Saved ✓' : 'Save'}
             </button>
           )}
           {user && (
@@ -295,7 +365,7 @@ export default function DivergePage() {
 
         {/* LEFT — Real history */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}>
-          <div style={{ padding: '14px 22px 10px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ padding: '14px 22px 10px', minHeight: 51, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--accent)' }}>REAL TIMELINE</span>
             {event?.year && (
               <span style={{ padding: '2px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>
@@ -305,52 +375,44 @@ export default function DivergePage() {
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', padding: '20px 22px' }}>
-            <div style={{ height: 130, borderRadius: 10, overflow: 'hidden', marginBottom: 18, position: 'relative' }}>
-              <img
-                src={eventImage}
-                alt={event?.title || 'Historical event'}
-                referrerPolicy="no-referrer"
-                style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.45) saturate(0.4)' }}
-                onError={e => { (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${sessionId}/800/400` }}
-              />
+            <div style={{ height: 130, borderRadius: 10, overflow: 'hidden', marginBottom: 18, position: 'relative', background: 'color-mix(in srgb, var(--accent) 6%, var(--card-bg))' }}>
+              {showImage && (
+                <img
+                  src={eventImage!}
+                  alt={event?.title || 'Historical event'}
+                  referrerPolicy="no-referrer"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 33%', filter: 'brightness(0.45) saturate(0.4)' }}
+                  onError={() => setImgFailed(true)}
+                />
+              )}
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(8,8,16,0.85))' }} />
-              <div style={{ position: 'absolute', bottom: 10, left: 12, fontSize: 11, color: 'var(--text-dim)', fontWeight: 500 }}>
-                {event?.title || startingEvent} · {event?.year || ''}
-              </div>
+              {showImage ? (
+                <div style={{ position: 'absolute', bottom: 10, left: 12, fontSize: 11, color: 'var(--text-dim)', fontWeight: 500 }}>
+                  {event?.title} · {event?.year}
+                </div>
+              ) : (
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, textAlign: 'center', padding: '0 20px' }}>
+                  <div style={{ fontFamily: 'Playfair Display, Georgia, serif', fontStyle: 'italic', fontSize: 20, color: 'var(--text)' }}>{event?.title || 'Custom starting point'}</div>
+                  {event && <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--accent)' }}>{event.year}</div>}
+                </div>
+              )}
             </div>
 
             <p style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 14, lineHeight: 1.8, color: 'var(--text-dim)', marginBottom: 18, fontStyle: 'italic' }}>
-              {event?.fullDesc || 'Real history as it happened.'}
+              {event?.fullDesc || CUSTOM_START_COPY}
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {realFacts.map((fact, i) => {
-                const key = `real-${i}`
-                const isExp = expandedFact === key
-                return (
-                  <div key={i}
-                    onClick={() => setExpandedFact(isExp ? null : key)}
-                    style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 10, background: 'var(--card-bg)', border: `1px solid ${isExp ? 'color-mix(in srgb, var(--accent) 25%, transparent)' : 'var(--border-color)'}`, cursor: 'pointer', transition: 'all 0.18s' }}
-                    onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = 'color-mix(in srgb, var(--accent) 4%, transparent)'}
-                    onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'var(--card-bg)'}
-                  >
-                    <div style={{ flexShrink: 0, marginTop: 5 }}>
-                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)' }} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.5 }}>{fact}</div>
-                      {isExp && (
-                        <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 7, lineHeight: 1.65, paddingTop: 7, borderTop: '1px solid var(--border-color)', animation: 'fadeIn 0.2s ease' }}>
-                          This is what actually happened in recorded history.
-                        </div>
-                      )}
-                    </div>
-                    <button style={{ flexShrink: 0, width: 18, height: 18, borderRadius: '50%', border: `1px solid ${isExp ? 'var(--accent)' : 'var(--border-color)'}`, background: isExp ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent', color: isExp ? 'var(--accent)' : 'var(--text-dim)', fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', transform: isExp ? 'rotate(180deg)' : 'rotate(0)' }}>
-                      ▾
-                    </button>
+              {realFacts.map((fact, i) => (
+                <div key={i}
+                  style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 10, background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}
+                >
+                  <div style={{ flexShrink: 0, marginTop: 5 }}>
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)' }} />
                   </div>
-                )
-              })}
+                  <div style={{ flex: 1, fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.5 }}>{fact}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -376,9 +438,9 @@ export default function DivergePage() {
 
         {/* RIGHT — Your alternate timeline */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}>
-          <div style={{ padding: '14px 22px 10px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ padding: '14px 22px 10px', minHeight: 51, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--accent)' }}>DIVERGED TIMELINE</span>
-            {currentYear && (
+            {currentYear && currentYear !== '?' && (
               <span style={{ padding: '2px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>
                 {currentYear}
               </span>
@@ -403,6 +465,25 @@ export default function DivergePage() {
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', padding: '20px 22px' }}>
+            {askError && !loading && (
+              <div role="alert" style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 10, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#F87171', marginBottom: 4 }}>Couldn’t get an answer</div>
+                <div style={{ fontSize: 12, color: 'var(--text-dim)', lineHeight: 1.6 }}>{askError.message} Your question is back in the box below.</div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                  <button onClick={() => handleAsk(askError.question)} style={{ ...btnStyle, padding: '5px 12px', fontSize: 12, color: 'var(--text)' }}>Try again</button>
+                  <button onClick={() => setAskError(null)} style={{ ...btnStyle, padding: '5px 12px', fontSize: 12, background: 'transparent' }}>Dismiss</button>
+                </div>
+              </div>
+            )}
+            {refusal && !loading && (
+              <div role="status" style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 10, background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>That one isn’t a historical what-if</div>
+                <div style={{ fontSize: 12, color: 'var(--text-dim)', lineHeight: 1.6 }}>{refusal.message} Edit your question below and ask again.</div>
+                <div style={{ marginTop: 10 }}>
+                  <button onClick={() => setRefusal(null)} style={{ ...btnStyle, padding: '5px 12px', fontSize: 12, background: 'transparent' }}>Dismiss</button>
+                </div>
+              </div>
+            )}
             {loading ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-dim)', textAlign: 'center', gap: 18 }}>
                 <div style={{ position: 'relative', width: 56, height: 56 }}>
@@ -429,6 +510,12 @@ export default function DivergePage() {
                 >
                   Diverging history...
                 </motion.div>
+                {pendingQuestion && (
+                  <div style={{ maxWidth: 440, padding: '10px 14px', borderRadius: 10, background: 'var(--card-bg)', border: '1px solid var(--border-color)', textAlign: 'left' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--accent)', marginBottom: 4 }}>YOU ASKED</div>
+                    <div style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.55 }}>{pendingQuestion}</div>
+                  </div>
+                )}
               </div>
             ) : !currentResponse ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-dim)', textAlign: 'center', gap: 10 }}>
@@ -442,6 +529,14 @@ export default function DivergePage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4, ease: 'easeOut' }}
               >
+                {currentEntry && (
+                  <div style={{ marginBottom: 16, padding: '10px 14px', borderRadius: 10, background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--accent)', marginBottom: 4 }}>
+                      YOU ASKED{whatIfs.length > 1 ? ` · ${activeTimelineIdx + 1} OF ${whatIfs.length}` : ''}
+                    </div>
+                    <div style={{ fontSize: 13.5, color: 'var(--text)', lineHeight: 1.55, fontWeight: 500 }}>{currentEntry.question}</div>
+                  </div>
+                )}
                 <p style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 14, lineHeight: 1.8, color: 'var(--text)', marginBottom: 20, fontStyle: 'italic' }}>
                   {currentParagraph}
                 </p>
@@ -450,13 +545,21 @@ export default function DivergePage() {
                   {currentFacts.map((fact, i) => {
                     const key = `alt-${activeTimelineIdx}-${i}`
                     const isExp = expandedFact === key
+                    const hasExplanation = !!currentResponse.factExplanations?.[i]
+                    const toggleFact = () => setExpandedFact(isExp ? null : key)
                     return (
                       <motion.div key={i}
                         initial={{ opacity: 0, x: -8 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.3, delay: i * 0.06 }}
-                        onClick={() => setExpandedFact(isExp ? null : key)}
-                        style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 10, background: isExp ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : 'var(--card-bg)', border: `1px solid ${isExp ? 'color-mix(in srgb, var(--accent) 25%, transparent)' : 'var(--border-color)'}`, cursor: 'pointer', transition: 'all 0.18s' }}
+                        {...(hasExplanation ? {
+                          role: 'button',
+                          tabIndex: 0,
+                          'aria-expanded': isExp,
+                          onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleFact() } },
+                        } : {})}
+                        onClick={hasExplanation ? toggleFact : undefined}
+                        style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 10, background: isExp ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : 'var(--card-bg)', border: `1px solid ${isExp ? 'color-mix(in srgb, var(--accent) 25%, transparent)' : 'var(--border-color)'}`, cursor: hasExplanation ? 'pointer' : 'default', transition: 'all 0.18s' }}
                         onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = 'color-mix(in srgb, var(--accent) 5%, transparent)'}
                         onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = isExp ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : 'var(--card-bg)'}
                       >
@@ -471,9 +574,11 @@ export default function DivergePage() {
                             </div>
                           )}
                         </div>
-                        <button style={{ flexShrink: 0, width: 18, height: 18, borderRadius: '50%', border: `1px solid ${isExp ? 'var(--accent)' : 'var(--border-color)'}`, background: isExp ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent', color: isExp ? 'var(--accent)' : 'var(--text-dim)', fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', transform: isExp ? 'rotate(180deg)' : 'rotate(0)' }}>
-                          ▾
-                        </button>
+                        {hasExplanation && (
+                          <span aria-hidden="true" style={{ flexShrink: 0, width: 18, height: 18, borderRadius: '50%', border: `1px solid ${isExp ? 'var(--accent)' : 'var(--border-color)'}`, background: isExp ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent', color: isExp ? 'var(--accent)' : 'var(--text-dim)', fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', transform: isExp ? 'rotate(180deg)' : 'rotate(0)' }}>
+                            ▾
+                          </span>
+                        )}
                       </motion.div>
                     )
                   })}
@@ -495,17 +600,33 @@ export default function DivergePage() {
 
       {/* Narration */}
       {currentResponse?.narration && (
-        <div style={{ padding: '14px 40px', borderTop: '1px solid var(--border-color)', background: 'var(--card-bg)', flexShrink: 0, position: 'relative', zIndex: 1 }}>
-          <p style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 13, lineHeight: 1.8, color: 'var(--text-dim)', margin: 0, fontStyle: 'italic', textAlign: 'center', maxWidth: 860, marginInline: 'auto' }}>
-            {currentResponse.narration}
-          </p>
+        <div style={{ padding: '10px 40px', borderTop: '1px solid var(--border-color)', background: 'var(--card-bg)', flexShrink: 0, position: 'relative', zIndex: 1 }}>
+          <div style={{ maxWidth: 860, marginInline: 'auto', display: 'flex', alignItems: 'baseline', gap: 14 }}>
+            <p
+              style={{
+                fontFamily: 'Playfair Display, Georgia, serif', fontSize: 13, lineHeight: 1.8, color: 'var(--text-dim)', margin: 0, fontStyle: 'italic', textAlign: 'center', flex: 1,
+                ...(narrationOpen ? { maxHeight: '28vh', overflowY: 'auto' } : { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }),
+              }}
+            >
+              {currentResponse.narration}
+            </p>
+            {narrationLong && (
+              <button
+                onClick={() => setNarrationOpenFor(narrationOpen ? null : activeTimelineIdx)}
+                aria-expanded={narrationOpen}
+                style={{ flexShrink: 0, background: 'none', border: 'none', color: 'var(--accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}
+              >
+                {narrationOpen ? 'Show less' : 'Read more'}
+              </button>
+            )}
+          </div>
         </div>
       )}
 
       {/* Timeline dots */}
       <div style={{ padding: '10px 24px', borderTop: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', flexShrink: 0, position: 'relative', zIndex: 1, background: 'var(--nav-bg)', overflow: 'hidden' }}>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', overflowX: 'auto', position: 'relative', zIndex: 1 }}>
-          <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--text-dim)', border: '2px solid var(--border-color)', flexShrink: 0, cursor: 'pointer' }} />
+          <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--text-dim)', border: '2px solid var(--border-color)', flexShrink: 0 }} />
           {whatIfs.map((entry, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
               <div style={{ width: 36, height: 1, background: 'var(--border-color)' }} />
@@ -536,7 +657,7 @@ export default function DivergePage() {
           />
           <span style={{ fontSize: 11, color: 'var(--text-dim)', flexShrink: 0 }}>{currentInput.length}/500</span>
           <button
-            onClick={handleAsk}
+            onClick={() => handleAsk()}
             disabled={loading || !currentInput.trim()}
             style={{ padding: '12px 22px', borderRadius: 10, background: loading || !currentInput.trim() ? 'color-mix(in srgb, var(--accent) 40%, transparent)' : 'var(--accent)', color: '#fff', fontSize: 14, fontWeight: 700, border: 'none', cursor: loading || !currentInput.trim() ? 'not-allowed' : 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'inherit' }}
           >
@@ -547,7 +668,7 @@ export default function DivergePage() {
           </button>
         </div>
         <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-          Press Enter to ask · Shift+Enter for new line
+          Press Enter to ask
         </div>
       </div>
 
@@ -575,6 +696,15 @@ export default function DivergePage() {
               <div style={{ textAlign: 'center', padding: '60px 0' }}>
                 <div style={{ width: 30, height: 30, borderRadius: '50%', border: '2px solid var(--border-color)', borderTopColor: 'var(--accent)', animation: 'spin 0.8s linear infinite', margin: '0 auto 14px' }} />
                 <div style={{ color: 'var(--text-dim)', fontSize: 14 }}>Building your alternate timeline...</div>
+              </div>
+            ) : summaryError ? (
+              <div role="alert" style={{ textAlign: 'center', padding: '48px 0 24px' }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Couldn’t build the summary</div>
+                <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.6, marginBottom: 18 }}>{summaryError}</div>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                  <button onClick={handleSummary} style={{ ...btnStyle, color: 'var(--text)' }}>Try again</button>
+                  <button onClick={() => setShowSummary(false)} style={{ ...btnStyle, background: 'transparent' }}>Close</button>
+                </div>
               </div>
             ) : summary ? (
               <>
@@ -605,7 +735,7 @@ export default function DivergePage() {
                     Keep Exploring
                   </button>
                   <button onClick={() => router.push('/')} style={{ flex: 1, padding: '11px', borderRadius: 9, border: 'none', background: 'var(--accent)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    New Game
+                    Pick another event
                   </button>
                 </div>
               </>
