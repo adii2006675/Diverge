@@ -6,24 +6,12 @@ import { WhatIfEntry, WhatIfResponse, WorldMood } from '@/types'
 import { useAuth } from '@/context/AuthContext'
 import { motion, AnimatePresence } from 'motion/react'
 import { supabase } from '@/lib/supabase'
+import EventImage from '@/components/EventImage'
 
 const MOOD_COLORS: Record<string, string> = {
   STABLE: '#10B981', TENSE: '#F59E0B', CRITICAL: '#EF4444',
   'AT WAR': '#EF4444', CATASTROPHIC: '#7C3AED',
   REBUILDING: '#06B6D4', FLOURISHING: '#10B981',
-}
-
-// Events with a photo shipped in /public/events. Everything else uses the event's
-// own Wikimedia image, and falls back to a typographic header if that fails.
-const LOCAL_EVENT_IMAGES = new Set([
-  '9-11-2001', 'covid-2020', 'great-depression-1929', 'mlk-march-1963', 'titanic-1912', 'ww1-1914',
-])
-
-// Wikimedia only serves thumbnails at standard widths; the 800px URLs in lib/events.ts return 400.
-function resolveEventImage(event: { id: string; image: string } | undefined): string | null {
-  if (!event) return null
-  if (LOCAL_EVENT_IMAGES.has(event.id)) return `/events/${event.id}.jpg`
-  return event.image ? event.image.replace('/800px-', '/960px-') : null
 }
 
 type AskError = { message: string; question: string }
@@ -61,7 +49,6 @@ export default function DivergePage() {
   const [askError, setAskError] = useState<AskError | null>(null)
   const [refusal, setRefusal] = useState<Refusal | null>(null)
   const [summaryError, setSummaryError] = useState<string | null>(null)
-  const [imgFailed, setImgFailed] = useState(false)
   // Which answer's narration is expanded; collapsing happens automatically when you switch answers.
   const [narrationOpenFor, setNarrationOpenFor] = useState<number | null>(null)
 
@@ -235,8 +222,6 @@ export default function DivergePage() {
     return () => window.removeEventListener('keydown', onKey)
   }, [showAISettings, showSummary, showProfileMenu])
 
-  const eventImage = resolveEventImage(event)
-  const showImage = !!eventImage && !imgFailed
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
@@ -376,26 +361,15 @@ export default function DivergePage() {
 
           <div style={{ flex: 1, overflowY: 'auto', padding: '20px 22px' }}>
             <div style={{ height: 130, borderRadius: 10, overflow: 'hidden', marginBottom: 18, position: 'relative', background: 'color-mix(in srgb, var(--accent) 6%, var(--card-bg))' }}>
-              {showImage && (
-                <img
-                  src={eventImage!}
-                  alt={event?.title || 'Historical event'}
-                  referrerPolicy="no-referrer"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 33%', filter: 'brightness(0.45) saturate(0.4)' }}
-                  onError={() => setImgFailed(true)}
-                />
-              )}
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(8,8,16,0.85))' }} />
-              {showImage ? (
-                <div style={{ position: 'absolute', bottom: 10, left: 12, fontSize: 11, color: 'var(--text-dim)', fontWeight: 500 }}>
-                  {event?.title} · {event?.year}
-                </div>
-              ) : (
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, textAlign: 'center', padding: '0 20px' }}>
-                  <div style={{ fontFamily: 'Playfair Display, Georgia, serif', fontStyle: 'italic', fontSize: 20, color: 'var(--text)' }}>{event?.title || 'Custom starting point'}</div>
-                  {event && <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--accent)' }}>{event.year}</div>}
-                </div>
-              )}
+              <EventImage
+                key={event?.id || 'custom'}
+                id={event?.id}
+                title={event?.title || 'Custom starting point'}
+                year={event?.year}
+                caption={event ? `${event.title} · ${event.year}` : undefined}
+                imgStyle={{ filter: 'brightness(0.45) saturate(0.4)' }}
+              />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(8,8,16,0.85))', pointerEvents: 'none' }} />
             </div>
 
             <p style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 14, lineHeight: 1.8, color: 'var(--text-dim)', marginBottom: 18, fontStyle: 'italic' }}>

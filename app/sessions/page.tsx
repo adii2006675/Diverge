@@ -5,6 +5,8 @@ import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
 import CardBorderTrace from '@/components/CardBorderTrace'
+import EventImage from '@/components/EventImage'
+import { HISTORICAL_EVENTS } from '@/lib/events'
 import { motion, AnimatePresence } from 'motion/react'
 
 type Session = {
@@ -196,7 +198,17 @@ export default function SessionsPage() {
                   }}
                 >
                   <CardBorderTrace radius={14} />
-                  <div style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: 10, alignItems: 'center', padding: '16px 18px' }}>
+                  <div style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: '44px 1fr auto auto auto', gap: 14, alignItems: 'center', padding: '14px 18px' }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 10, overflow: 'hidden', position: 'relative', background: 'color-mix(in srgb, var(--accent) 8%, var(--card-bg))' }}>
+                      <EventImage
+                        key={session.event_id}
+                        id={session.event_id}
+                        title={session.event_title || ''}
+                        year={HISTORICAL_EVENTS.find(e => e.id === session.event_id)?.year}
+                        compact
+                        loading="lazy"
+                      />
+                    </div>
                     {isRenaming ? (
                       <input
                         autoFocus
