@@ -22,8 +22,10 @@ Diverge is an alternate-history app: pick a real historical event, ask "what if"
 
 ## Redesign rules
 
-- We're redesigning the UI on the `redesign` branch. Visual and UX changes only unless the user says otherwise.
+- This is a polish pass, not a redesign. On the `redesign` branch we make the existing UI look more polished, add better animation, improve quality of life, and fix what's broken. Visual and UX changes only unless the user says otherwise.
+- Diverge is desktop-only (target 1280px and up). Don't design or fix mobile or tablet layouts. Below 1024px the app shows a "Diverge is built for desktop" message instead of the page.
+- Keep the original layout of every page, as it exists in the code at commit `f07b07f` (before any redesign work), including the two-column real-vs-diverged split on `/diverge/[sessionId]`. Improve within the layout; don't restructure it.
 - Don't change Supabase queries, auth logic, database schema, or the Claude API route logic without asking first.
 - Work one page or component at a time, and stop after each one so the user can review.
-- After UI changes, start the dev server and use Playwright to screenshot the page and check that the main flows still work. Report anything broken.
+- After UI changes, start the dev server and use Playwright to screenshot the page at 1440px (and 1280px when layout could be affected) and check that the main flows still work. Report anything broken.
 - Use the impeccable skill for design decisions and the Emil skills for animation and interaction details.

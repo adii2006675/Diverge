@@ -23,8 +23,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
           <StarBackground />
         </div>
-        <div style={{ position: 'relative', zIndex: 1 }}>
+        <div className="app-shell" style={{ position: 'relative', zIndex: 1 }}>
           <AuthProvider>{children}</AuthProvider>
+        </div>
+        <div className="desktop-notice" role="status">
+          <div className="desktop-notice-wordmark">DIVERGE</div>
+          <h1>Diverge is built for desktop</h1>
+          <p>Open it on a laptop or desktop computer with a browser window at least 1024px wide.</p>
         </div>
       </body>
     </html>
