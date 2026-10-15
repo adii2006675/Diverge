@@ -22,10 +22,12 @@ Diverge is an alternate-history app: pick a real historical event, ask "what if"
 
 ## Redesign rules
 
-- This is a polish pass, not a redesign. On the `redesign` branch we make the existing UI look more polished, add better animation, improve quality of life, and fix what's broken. Visual and UX changes only unless the user says otherwise.
-- Diverge is desktop-only (target 1280px and up). Don't design or fix mobile or tablet layouts. Below 1024px the app shows a "Diverge is built for desktop" message instead of the page.
-- Keep the original layout of every page, as it exists in the code at commit `f07b07f` (before any redesign work), including the two-column real-vs-diverged split on `/diverge/[sessionId]`. Improve within the layout; don't restructure it.
-- Don't change Supabase queries, auth logic, database schema, or the Claude API route logic without asking first.
-- Work one page or component at a time, and stop after each one so the user can review.
-- After UI changes, start the dev server and use Playwright to screenshot the page at 1440px (and 1280px when layout could be affected) and check that the main flows still work. Report anything broken.
+- Goal: make the UI polished, bubbly, interactive and alive-feeling, with smooth motion that doesn't feel slow. Visual and UX changes only unless the user says otherwise.
+- Diverge is desktop-only. Supported viewports are 1024px and up, from a small window to fullscreen. Every page must scale cleanly across that range: no fixed widths that leave big empty gaps or cut content off. Verify at 1024, 1280, 1440 and 1920px. Don't design or fix phone or tablet layouts. Below 1024px the app shows a "Diverge is built for desktop" message instead of the page.
+- Layout changes are allowed on `/diverge/[sessionId]` and it should be redesigned in a bubbly, interactive way, but it keeps the top header/nav (the shared `Nav`, with links to all the pages). Show a mockup screenshot and get approval before building the new layout for real.
+- Every other page keeps its original layout, as it exists in the code at commit `f07b07f`, apart from responsive scaling fixes.
+- Motion: use the Emil skills. Keep animation fast and purposeful, never animate keyboard-initiated actions, and respect `prefers-reduced-motion` (keep opacity and colour changes, drop movement).
 - Use the impeccable skill for design decisions and the Emil skills for animation and interaction details.
+- Don't change Supabase queries, auth logic, database schema, or the Claude API route logic without asking first. Approved so far: the `max_tokens` and `mapChanges` fix in `api/diverge` (done); wiring response length and depth into the `api/diverge` prompt; updating the saved Supabase `sessions` row when the user rewinds the timeline. Anything beyond those still needs approval.
+- Work in chunks. Each chunk gets its own commit, and stop after each one so the user can test.
+- After UI changes, start the dev server and use Playwright to screenshot the page at 1440px, and at 1024, 1280 and 1920px when layout could be affected, and check that the main flows still work. Report anything broken.

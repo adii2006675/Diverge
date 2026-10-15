@@ -26,15 +26,17 @@ Core flow: Explore (or home) to pick an event, then `/diverge/[sessionId]` for t
 
 - Static catalogue of historical events in `lib/events.ts` (title, year, era, short and full description, real facts). Event imagery is currently a mix of local and stock images and is unreliable.
 - AI response shape: narration paragraph, key facts with explanations, world mood (STABLE, TENSE, CRITICAL, AT WAR, CATASTROPHIC, REBUILDING, FLOURISHING), divergence score, year, reliability notes, uncertainty level.
-- Existing user settings: theme, language, accent colour, font size, AI response style, confidence-level and historian's-note toggles, default era.
-- Constraint: Diverge is a desktop-only app. Target viewport is 1280px and up. Below 1024px the app shows a "Diverge is built for desktop" message instead of the page. No mobile or tablet layouts are designed or maintained.
-- Constraint: the work on the `redesign` branch is a polish of the original layouts (as they exist in the code at the start of the redesign), not a redesign. Layouts, including the two-column real-vs-diverged split on `/diverge/[sessionId]`, are kept. Visual refinement, motion, quality-of-life and bug fixes only.
-- Constraint: redesign is visual and UX only on the `redesign` branch. Supabase queries, auth logic, schema and the Claude API route logic are not changed without asking.
+- Existing user settings (stored per signed-in user in Supabase `user_settings`): theme, language, accent colour, font size, AI response style, AI plausibility, AI tone, confidence-level and historian's-note toggles, default era. Guests have no persisted settings. Only the response style is currently sent to the API; plausibility and tone are saved but unused.
+- Planned: response length (short / medium / long) and depth (simple / in-depth), which must change what the API returns.
+- Constraint: Diverge is a desktop-only app. Supported viewports are 1024px and up, from a small window to fullscreen, and every page must scale cleanly across that range with no fixed widths leaving big gaps or cutting content off. Below 1024px the app shows a "Diverge is built for desktop" message instead of the page. No mobile or tablet layouts are designed or maintained.
+- Constraint: the `/diverge/[sessionId]` layout may be redesigned in a bubbly, interactive way, but it keeps the top header/nav (the shared `Nav`, with links to all the pages). A mockup is shown and approved before it is built. Every other page keeps its original layout (as in the code at the start of the redesign), apart from responsive scaling fixes.
+- Constraint: the work on the `redesign` branch is visual and UX only. Supabase queries, auth logic, schema and the Claude API route logic are not changed without asking. Approved so far: the `max_tokens` and `mapChanges` fix in `api/diverge` (done), wiring response length and depth into the `api/diverge` prompt, and updating the saved `sessions` row when the user rewinds the timeline.
 - Open decision: how the voice choice below is exposed in the UI and wired to the API.
 
 ## Brand Commitments
 
 - Name: Diverge. Existing hero line: "History had a plan. You don't have to follow it."
+- Personality of the interface: bubbly, interactive and alive-feeling, with smooth, quick motion that respects reduced-motion preferences. Confirmed by the user.
 - Voice: the user can choose between a **Serious historian** voice (measured, evidence-first, flags uncertainty) and a **Dramatic storyteller** voice (cinematic and tense, still grounded). Both stay grounded in documented history. Not decided: which is the default.
 
 ## Evidence on Hand
@@ -49,8 +51,9 @@ Core flow: Explore (or home) to pick an event, then `/diverge/[sessionId]` for t
 2. Grounded beats dramatic: speculation is labelled, uncertainty is shown, and nothing in the interface implies certainty the AI does not have.
 3. The reader's question stays central: what they asked, and what changed because of it, is never lost.
 4. Waiting is part of the experience: responses are slow, so the interface must make the wait understandable.
-5. It must feel authored and polished as a showcase piece on desktop, while keeping the layouts users already know.
+5. It must feel authored, polished and alive as a showcase piece on desktop: bubbly and interactive, but never slow or noisy.
+6. Users stay in control of their timeline: they can revisit any point, and rewinding (which discards later questions) always asks first.
 
 ## Accessibility & Inclusion
 
-No specific requirement was stated. Baseline: WCAG AA contrast, visible keyboard focus, and reduced-motion support, designed for desktop viewports of 1280px and up. Long-form reading comfort matters because the core content is paragraphs.
+No specific requirement was stated. Baseline: WCAG AA contrast, visible keyboard focus, and reduced-motion support, designed for desktop viewports of 1024px and up. Long-form reading comfort matters because the core content is paragraphs.
