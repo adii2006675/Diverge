@@ -159,14 +159,13 @@ NOW OUTPUT ONLY THIS JSON — no markdown, no backticks, no text outside the JSO
   "reliabilityNotes": "One sentence flagging where your response is highly certain vs where it is educated speculation. Be honest.",
   "worldMood": "exactly one of: STABLE, TENSE, CRITICAL, AT WAR, CATASTROPHIC, REBUILDING, FLOURISHING",
   "divergenceScore": <integer 1-100. Start low for small changes. Compound upward for each additional what-if. A world where one small decision changed is maybe 15-25. A world where WW2 never happened is 70+. A world without the Industrial Revolution is 95+>,
-  "mapChanges": "Specific description of which nations, empires, or regions gain or lose power and why",
   "year": "The effective year the alternate world has reached in its development — may be ahead or behind real history depending on consequences",
   "uncertaintyLevel": "LOW, MEDIUM, or HIGH — how confident are you in these predictions based on historical evidence"
 }`
 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 2000,
+      max_tokens: 4000,
       temperature: 0.3,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt }]

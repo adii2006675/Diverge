@@ -6,7 +6,6 @@ export type WhatIfResponse = {
   factExplanations: string[]
   worldMood: WorldMood
   divergenceScore: number
-  mapChanges: string
   year: string
   paragraph: string
 }
