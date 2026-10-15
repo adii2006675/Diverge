@@ -59,7 +59,7 @@ export default function ExplorePage() {
   }, [expandedId])
 
   return (
-    <main style={{ minHeight: '100vh', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
+    <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
       <Nav active="explore" />
 
       {/* Hero */}
@@ -211,7 +211,7 @@ export default function ExplorePage() {
                   borderRadius: 20, border: '1px solid var(--border-color)',
                   background: 'var(--bg)', overflow: 'hidden',
                   position: 'relative', isolation: 'isolate',
-                  maxWidth: 520, width: '100%', maxHeight: '85vh', overflowY: 'auto',
+                  maxWidth: 520, width: '100%', maxHeight: 'calc(85vh / var(--ui-scale, 1))', overflowY: 'auto',
                   pointerEvents: 'auto',
                 }}
               >

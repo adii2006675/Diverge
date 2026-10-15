@@ -34,7 +34,7 @@ export default function CreditsPage() {
   const td: React.CSSProperties = { padding: '10px 14px', fontSize: 13, lineHeight: 1.5, verticalAlign: 'middle', borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.1))' }
 
   return (
-    <main style={{ minHeight: '100vh', background: 'transparent', color: 'var(--text, #fff)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
+    <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text, #fff)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
       <Nav />
       <div style={{ position: 'relative', zIndex: 1, width: 'min(92vw, 1200px)', margin: '0 auto', padding: '120px 0 80px' }}>
         <h1 style={{ fontSize: 40, fontWeight: 900, letterSpacing: '-0.02em', marginBottom: 12 }}>Image credits</h1>
@@ -62,7 +62,7 @@ export default function CreditsPage() {
                     </div>
                   </td>
                   <td style={{ ...td, fontWeight: 600 }}>{titleOf(r.id)}</td>
-                  <td style={{ ...td, color: 'var(--text-dim, rgba(255,255,255,0.55))' }}>{r.author}</td>
+                  <td style={{ ...td, color: 'var(--text-dim, rgba(255,255,255,0.55))', overflowWrap: 'anywhere' }}>{r.author}</td>
                   <td style={{ ...td, whiteSpace: 'nowrap' }}>{r.licence}</td>
                   <td style={{ ...td, whiteSpace: 'nowrap' }}>
                     {r.sourceUrl ? (

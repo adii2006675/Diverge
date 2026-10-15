@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { AuthProvider } from '@/context/AuthContext'
 import StarBackground from '@/components/StarBackground'
+import ViewportScale from '@/components/ViewportScale'
 
 export const metadata: Metadata = {
   title: 'Diverge',
@@ -13,8 +14,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: "(function(){try{if(location.pathname.indexOf('/diverge')===0||!CSS.supports('zoom','1.2'))return;var s=Math.min(1.75,Math.max(1,innerWidth/1440));document.documentElement.style.setProperty('--ui-scale',s.toFixed(3))}catch(e){}})()" }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet" />
@@ -24,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <StarBackground />
         </div>
         <div className="app-shell" style={{ position: 'relative', zIndex: 1 }}>
+          <ViewportScale />
           <AuthProvider>{children}</AuthProvider>
         </div>
         <div className="desktop-notice" role="status">

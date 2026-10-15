@@ -42,11 +42,11 @@ export default function LandingPage() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', background: 'transparent', color: 'var(--text)', position: 'relative', overflowX: 'hidden', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', position: 'relative', overflowX: 'hidden', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <Nav active="home" />
 
       {/* Hero */}
-      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', textAlign: 'center', padding: '0 24px', paddingTop: 80 }}>
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 'var(--vh-fit, 100vh)', textAlign: 'center', padding: '0 24px', paddingTop: 80 }}>
 
         {user && profile?.username && (
           <motion.p
@@ -202,7 +202,7 @@ export default function LandingPage() {
                   borderRadius: 20, border: '1px solid var(--border-color)',
                   background: 'var(--bg)', overflow: 'hidden',
                   position: 'relative', isolation: 'isolate',
-                  maxWidth: 520, width: '100%', maxHeight: '85vh', overflowY: 'auto',
+                  maxWidth: 520, width: '100%', maxHeight: 'calc(85vh / var(--ui-scale, 1))', overflowY: 'auto',
                   pointerEvents: 'auto',
                 }}
               >

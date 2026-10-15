@@ -19,6 +19,20 @@ body {
   margin: 0;
 }
 
+/* Pages scale up proportionally above 1440px wide. --ui-scale is set by ViewportScale (and an inline
+   script in layout.tsx before first paint). zoom also scales viewport units, so full-height values
+   use --vh-fit, which divides it back out. */
+:root {
+  --ui-scale: 1;
+  --vh-fit: calc(100vh / var(--ui-scale, 1));
+}
+
+@supports (zoom: 1.2) {
+  .app-shell {
+    zoom: var(--ui-scale, 1);
+  }
+}
+
 /* Diverge is desktop-only: below 1024px show a notice instead of the app. */
 .desktop-notice {
   display: none;
