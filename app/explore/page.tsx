@@ -216,6 +216,7 @@ export default function ExplorePage() {
                     </div>
                     <div style={{ display: 'flex', gap: 10 }}>
                       <button
+                        className="modal-btn"
                         onClick={() => setExpandedId(null)}
                         style={{ flex: 1, padding: '12px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-dim)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}
                         onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)'}
@@ -224,6 +225,7 @@ export default function ExplorePage() {
                         Back
                       </button>
                       <button
+                        className="modal-btn modal-btn-go"
                         onClick={() => router.push(`/diverge/${expandedEvent.id}`)}
                         style={{ flex: 1, padding: '12px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
                       >
