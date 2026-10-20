@@ -943,10 +943,255 @@ export const ANCIENT_EVENTS: HistoricalEvent[] = [
   },
   ]
 
-export const ERAS = ['All', 'Ancient', 'Medieval', 'Renaissance', 'Industrial', 'WWI/WWII', 'Cold War', 'Modern']
 
-// Every event the app knows about: the main list plus the ancient events.
-export const ALL_EVENTS: HistoricalEvent[] = [...HISTORICAL_EVENTS, ...ANCIENT_EVENTS]
+// Technology, business and crypto milestones.
+export const TECH_EVENTS: HistoricalEvent[] = [
+  {
+    id: 'microsoft-1975',
+    year: 1975,
+    title: 'Microsoft is Founded',
+    shortDesc: 'Bill Gates and Paul Allen start a software company in Albuquerque that would put a computer on every desk.',
+    fullDesc: 'On April 4, 1975, Bill Gates and Paul Allen founded Microsoft in Albuquerque, New Mexico, to sell a BASIC interpreter for the Altair 8800 hobbyist computer. A 1981 deal to supply MS-DOS for the IBM PC turned it into the dominant force in personal computing.',
+    era: 'Tech',
+    image: '/events/microsoft-1975.jpg',
+    realFacts: [
+      'Founded April 4, 1975 in Albuquerque, New Mexico',
+      'First product was a BASIC interpreter for the Altair 8800',
+      'Licensed MS-DOS to IBM for the 1981 IBM PC',
+      'Windows 1.0 shipped in 1985',
+      'Reached a market value of $1 trillion in 2019'
+    ]
+  },
+  {
+    id: 'apple-founded-1976',
+    year: 1976,
+    title: 'Apple is Founded',
+    shortDesc: 'Steve Jobs, Steve Wozniak and Ronald Wayne start Apple in a Los Altos garage.',
+    fullDesc: 'On April 1, 1976, Steve Jobs, Steve Wozniak and Ronald Wayne founded Apple Computer to sell the Apple I, a hand-built circuit board Wozniak had designed. The follow-up Apple II, launched in 1977, became one of the first mass-produced personal computers.',
+    era: 'Tech',
+    image: '/events/apple-founded-1976.jpg',
+    realFacts: [
+      'Founded April 1, 1976 by Jobs, Wozniak and Wayne',
+      'The Apple I sold for $666.66',
+      'Wayne sold his share back for $800 within two weeks',
+      'The Apple II launched in 1977',
+      'Apple went public on December 12, 1980'
+    ]
+  },
+  {
+    id: 'macintosh-1984',
+    year: 1984,
+    title: 'The Macintosh is Unveiled',
+    shortDesc: 'A Super Bowl ad and a mouse-driven computer reshape what a personal computer looks like.',
+    fullDesc: 'Apple introduced the Macintosh on January 24, 1984, two days after a Ridley Scott-directed "1984" ad aired during the Super Bowl. Its graphical interface and mouse brought point-and-click computing to a mass audience, though early sales were slower than hoped.',
+    era: 'Tech',
+    image: '/events/macintosh-1984.jpg',
+    realFacts: [
+      'Introduced January 24, 1984',
+      'The "1984" ad aired during Super Bowl XVIII on January 22',
+      'Launch price was $2,495',
+      'The original Macintosh had 128 KB of RAM',
+      'Steve Jobs left Apple in 1985 after a power struggle'
+    ]
+  },
+  {
+    id: 'jobs-returns-1997',
+    year: 1997,
+    title: 'Steve Jobs Returns to Apple',
+    shortDesc: 'Apple buys NeXT, brings back its co-founder, and is saved from near collapse.',
+    fullDesc: 'Apple bought NeXT in late 1996, which brought Steve Jobs back to the company he had left in 1985. He became interim CEO in 1997, a time when Apple was close to running out of money, and went on to launch the iMac, iPod and iPhone.',
+    era: 'Tech',
+    image: '/events/jobs-returns-1997.jpg',
+    realFacts: [
+      'Apple acquired NeXT in December 1996 for about $429 million',
+      'Jobs became interim CEO in September 1997',
+      'Microsoft invested $150 million in Apple in August 1997',
+      'The iMac launched in 1998',
+      'Apple later introduced the iPod in 2001 and the iPhone in 2007'
+    ]
+  },
+  {
+    id: 'google-1998',
+    year: 1998,
+    title: 'Google is Founded',
+    shortDesc: 'Two Stanford PhD students turn a better way of ranking web pages into a company.',
+    fullDesc: 'Larry Page and Sergey Brin incorporated Google on September 4, 1998, starting out of a rented garage in Menlo Park, California. Their PageRank algorithm ranked pages by how many other pages linked to them, and the search engine quickly outpaced its rivals.',
+    era: 'Tech',
+    image: '/events/google-1998.jpg',
+    realFacts: [
+      'Incorporated September 4, 1998 by Larry Page and Sergey Brin',
+      'Began in a garage in Menlo Park, California',
+      'Search results were ranked by PageRank',
+      'Google went public on August 19, 2004',
+      'Alphabet became its parent company in 2015'
+    ]
+  },
+  {
+    id: 'bitcoin-2009',
+    year: 2009,
+    title: 'Bitcoin is Launched',
+    shortDesc: 'An anonymous creator releases a digital currency with no central bank behind it.',
+    fullDesc: 'After publishing a white paper on October 31, 2008, the pseudonymous Satoshi Nakamoto mined the first Bitcoin block on January 3, 2009. Bitcoin let strangers send value to each other without a bank, and began the cryptocurrency industry.',
+    era: 'Tech',
+    image: '/events/bitcoin-2009.jpg',
+    realFacts: [
+      'The white paper was published October 31, 2008',
+      'The first block was mined January 3, 2009',
+      'Its text referenced a headline from The Times about bank bailouts',
+      'In 2010 a programmer paid 10,000 BTC for two pizzas',
+      'Supply is capped at 21 million coins'
+    ]
+  },
+  {
+    id: 'ethereum-2015',
+    year: 2015,
+    title: 'Ethereum Goes Live',
+    shortDesc: 'A blockchain that runs programs, not just payments, opens up smart contracts.',
+    fullDesc: 'Ethereum launched on July 30, 2015, based on a design Vitalik Buterin proposed in 2013. Its smart contracts let developers run code on the blockchain, which led to decentralized applications and a wave of new token projects.',
+    era: 'Tech',
+    image: '/events/ethereum-2015.jpg',
+    realFacts: [
+      'Launched July 30, 2015',
+      'Proposed by Vitalik Buterin in 2013',
+      'The DAO hack in 2016 led to a split that created Ethereum Classic',
+      'Its ether currency became the second-largest cryptocurrency',
+      'Ethereum moved to proof of stake on September 15, 2022'
+    ]
+  },
+  {
+    id: 'nvidia-founded-1993',
+    year: 1993,
+    title: 'Nvidia is Founded',
+    shortDesc: 'Three engineers plan a graphics chip company over breakfast at a Denny\'s.',
+    fullDesc: 'Jensen Huang, Chris Malachowski and Curtis Priem founded Nvidia in April 1993 to build chips for 3D graphics. The GeForce 256 in 1999 was marketed as the first GPU, and the same parallel design later proved ideal for artificial intelligence.',
+    era: 'Tech',
+    image: '/events/nvidia-founded-1993.jpg',
+    realFacts: [
+      'Founded in April 1993 by Jensen Huang, Chris Malachowski and Curtis Priem',
+      'The founders planned the company at a Denny\'s diner in San Jose',
+      'The GeForce 256 launched in 1999',
+      'Nvidia went public in January 1999',
+      'Jensen Huang is still its CEO'
+    ]
+  },
+  {
+    id: 'cuda-2006',
+    year: 2006,
+    title: 'Nvidia Announces CUDA',
+    shortDesc: 'Graphics chips are opened up to general-purpose programming, setting the stage for modern AI.',
+    fullDesc: 'Nvidia announced CUDA in November 2006 and released it in 2007, letting programmers use GPUs for general computing rather than only graphics. In 2012 the AlexNet neural network was trained on Nvidia GPUs, helping start the deep-learning boom.',
+    era: 'Tech',
+    image: '/events/cuda-2006.jpg',
+    realFacts: [
+      'Announced in November 2006 with the GeForce 8800 GPU',
+      'Released to developers in 2007',
+      'Let programmers run general code on graphics chips',
+      'AlexNet won the ImageNet competition in 2012 using GPUs',
+      'CUDA became the standard platform for AI training'
+    ]
+  },
+  {
+    id: 'tesla-founded-2003',
+    year: 2003,
+    title: 'Tesla is Founded',
+    shortDesc: 'Two engineers set out to build a better electric car; Elon Musk joins soon after.',
+    fullDesc: 'Martin Eberhard and Marc Tarpenning founded Tesla Motors in July 2003. Elon Musk led its 2004 funding round and became chairman, and the company\'s first car, the Roadster, arrived in 2008 as one of the first production electric cars with lithium-ion batteries.',
+    era: 'Tech',
+    image: '/events/tesla-founded-2003.jpg',
+    realFacts: [
+      'Incorporated July 1, 2003 by Martin Eberhard and Marc Tarpenning',
+      'Elon Musk led the 2004 funding round and joined as chairman',
+      'The Roadster began deliveries in 2008',
+      'Musk became CEO in October 2008',
+      'Tesla went public in June 2010'
+    ]
+  },
+  {
+    id: 'model-s-2012',
+    year: 2012,
+    title: 'The Tesla Model S Arrives',
+    shortDesc: 'An electric sedan proves EVs can be fast, long-range and desirable.',
+    fullDesc: 'Tesla began delivering the Model S on June 22, 2012. Its long range, speed and software updates over the air made it a benchmark for electric cars, and it won Motor Trend\'s Car of the Year for 2013.',
+    era: 'Tech',
+    image: '/events/model-s-2012.jpg',
+    realFacts: [
+      'Deliveries began June 22, 2012',
+      'Named Motor Trend Car of the Year for 2013',
+      'Offered a battery range of up to about 265 miles in its top version',
+      'Received software updates over the air',
+      'Led to the Model 3, unveiled in 2016'
+    ]
+  },
+  {
+    id: 'nvidia-trillion-2023',
+    year: 2023,
+    title: 'Nvidia Hits $1 Trillion',
+    shortDesc: 'Demand for AI chips makes a graphics company one of the most valuable in the world.',
+    fullDesc: 'Nvidia\'s market value passed $1 trillion on May 30, 2023, driven by demand for the data-center chips that train AI systems. It became the first chipmaker to reach that milestone, and went on to pass $3 trillion in 2024.',
+    era: 'Tech',
+    image: '/events/nvidia-trillion-2023.jpg',
+    realFacts: [
+      'Passed $1 trillion in market value on May 30, 2023',
+      'First chipmaker to reach that value',
+      'Driven by demand for data-center GPUs such as the H100',
+      'Passed $3 trillion in June 2024',
+      'ChatGPT\'s launch in late 2022 set off the surge in AI spending'
+    ]
+  },
+  {
+    id: 'chatgpt-2022',
+    year: 2022,
+    title: 'ChatGPT is Released',
+    shortDesc: 'A chatbot from OpenAI brings generative AI to millions of people overnight.',
+    fullDesc: 'OpenAI released ChatGPT on November 30, 2022. It reached one million users in five days, and by early 2023 was estimated to have around 100 million monthly users, making it one of the fastest-growing consumer apps ever.',
+    era: 'Tech',
+    image: '/events/chatgpt-2022.jpg',
+    realFacts: [
+      'Released November 30, 2022 by OpenAI',
+      'Reached one million users in five days',
+      'Estimated at about 100 million monthly users by January 2023',
+      'Built on the GPT-3.5 language model',
+      'GPT-4 followed on March 14, 2023'
+    ]
+  },
+  {
+    id: 'ftx-2022',
+    year: 2022,
+    title: 'FTX Collapses',
+    shortDesc: 'One of the biggest crypto exchanges fails in days, taking customer money with it.',
+    fullDesc: 'In early November 2022 a run on FTX exposed that the exchange had lent customer funds to its sister firm Alameda Research. FTX filed for bankruptcy on November 11, 2022, and founder Sam Bankman-Fried was later convicted of fraud.',
+    era: 'Tech',
+    image: '/events/ftx-2022.jpg',
+    realFacts: [
+      'A CoinDesk report on November 2, 2022 raised alarms about Alameda\'s balance sheet',
+      'FTX filed for Chapter 11 bankruptcy on November 11, 2022',
+      'Billions of dollars of customer funds were missing',
+      'Sam Bankman-Fried was convicted on seven counts in November 2023',
+      'He was sentenced to 25 years in prison in March 2024'
+    ]
+  },
+  {
+    id: 'bitcoin-etf-2024',
+    year: 2024,
+    title: 'Spot Bitcoin ETFs Approved',
+    shortDesc: 'The SEC lets ordinary investors buy Bitcoin through a regular brokerage account.',
+    fullDesc: 'On January 10, 2024, the US Securities and Exchange Commission approved the first spot Bitcoin exchange-traded funds. They gave mainstream investors a regulated way to hold Bitcoin, and large inflows helped push its price to a record high in March 2024.',
+    era: 'Tech',
+    image: '/events/bitcoin-etf-2024.jpg',
+    realFacts: [
+      'Approved by the SEC on January 10, 2024',
+      'Eleven funds began trading the next day',
+      'BlackRock\'s iShares Bitcoin Trust became one of the largest',
+      'Bitcoin reached a record of about $73,000 in March 2024',
+      'The Bitcoin halving followed in April 2024'
+    ]
+  },
+]
+
+export const ERAS = ['All', 'Ancient', 'Medieval', 'Renaissance', 'Industrial', 'WWI/WWII', 'Cold War', 'Modern', 'Tech']
+
+// Every event the app knows about: the main list plus the ancient and tech events.
+export const ALL_EVENTS: HistoricalEvent[] = [...HISTORICAL_EVENTS, ...ANCIENT_EVENTS, ...TECH_EVENTS]
 
 export function formatEventYear(year: number): string {
   return year < 0 ? `${Math.abs(year)} BC` : String(year)

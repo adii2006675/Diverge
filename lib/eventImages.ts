@@ -58,6 +58,21 @@ const EVENT_IMAGES: Record<string, string> = {
   'alexander-great-336bc': '/events/alexander-great-336bc.jpg',
   'first-olympics-776bc': '/events/first-olympics-776bc.jpg',
   'great-wall-221bc': '/events/great-wall-221bc.jpg',
+  'microsoft-1975': '/events/microsoft-1975.jpg',
+  'apple-founded-1976': '/events/apple-founded-1976.jpg',
+  'macintosh-1984': '/events/macintosh-1984.jpg',
+  'jobs-returns-1997': '/events/jobs-returns-1997.jpg',
+  'google-1998': '/events/google-1998.jpg',
+  'bitcoin-2009': '/events/bitcoin-2009.jpg',
+  'ethereum-2015': '/events/ethereum-2015.jpg',
+  'nvidia-founded-1993': '/events/nvidia-founded-1993.jpg',
+  'cuda-2006': '/events/cuda-2006.jpg',
+  'tesla-founded-2003': '/events/tesla-founded-2003.jpg',
+  'model-s-2012': '/events/model-s-2012.jpg',
+  'nvidia-trillion-2023': '/events/nvidia-trillion-2023.png',
+  'chatgpt-2022': '/events/chatgpt-2022.jpg',
+  'ftx-2022': '/events/ftx-2022.jpg',
+  'bitcoin-etf-2024': '/events/bitcoin-etf-2024.jpg',
 }
 
 // Vertical crop for the wide banner images. Faces and subjects usually sit in the upper part of a photo.

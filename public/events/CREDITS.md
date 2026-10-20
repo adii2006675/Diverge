@@ -65,3 +65,18 @@ Images in this folder are shown on the event cards and the diverge page.
 | alexander-great-336bc | alexander-great-336bc.jpg | Unknown authorUnknown author | Public domain | [Alexander the Great mosaic.jpg](https://commons.wikimedia.org/wiki/File:Alexander_the_Great_mosaic.jpg) |
 | first-olympics-776bc | first-olympics-776bc.jpg | Annatsach | CC BY-SA 4.0 | [Olympia - Stadium - 4.jpg](https://commons.wikimedia.org/wiki/File:Olympia_-_Stadium_-_4.jpg) |
 | great-wall-221bc | great-wall-221bc.jpg | Severin.stalder | CC BY-SA 3.0 | [The Great Wall of China at Jinshanling-edit.jpg](https://commons.wikimedia.org/wiki/File:The_Great_Wall_of_China_at_Jinshanling-edit.jpg) |
+| microsoft-1975 | microsoft-1975.jpg | Coolcaesar | CC BY-SA 4.0 | [Building92microsoft.jpg](https://commons.wikimedia.org/wiki/File:Building92microsoft.jpg) |
+| apple-founded-1976 | apple-founded-1976.jpg | The wub | CC BY-SA 4.0 | [Apple-1, 1976, Computer History Museum.jpg](https://commons.wikimedia.org/wiki/File:Apple-1,_1976,_Computer_History_Museum.jpg) |
+| macintosh-1984 | macintosh-1984.jpg | Photo: Bernard Gotfryd - Edited from tif by Cart | Public domain | [Macintosh 128k computer, January 1984, by Bernard Gotfryd - ](https://commons.wikimedia.org/wiki/File:Macintosh_128k_computer,_January_1984,_by_Bernard_Gotfryd_-_(cropped_to_remove_individual).jpg) |
+| jobs-returns-1997 | jobs-returns-1997.jpg | Ben Stanfield from Washington, DC, USA | CC BY-SA 2.0 | [Steve Jobs (541301944).jpg](https://commons.wikimedia.org/wiki/File:Steve_Jobs_(541301944).jpg) |
+| google-1998 | google-1998.jpg | Ehud Kenan | CC BY 2.0 | [Google page brin.jpg](https://commons.wikimedia.org/wiki/File:Google_page_brin.jpg) |
+| bitcoin-2009 | bitcoin-2009.jpg | Stock Catalog | CC BY 2.0 | [Coinbank BitCoin (38461155220).jpg](https://commons.wikimedia.org/wiki/File:Coinbank_BitCoin_(38461155220).jpg) |
+| ethereum-2015 | ethereum-2015.jpg | John Phillips | CC BY 2.0 | [Vitalik Buterin TechCrunch London 2015.jpg](https://commons.wikimedia.org/wiki/File:Vitalik_Buterin_TechCrunch_London_2015.jpg) |
+| nvidia-founded-1993 | nvidia-founded-1993.jpg | Maurizio Pesce | CC BY 2.0 | [Nvidia CEO Jensen Huang gestikuliert.jpg](https://commons.wikimedia.org/wiki/File:Nvidia_CEO_Jensen_Huang_gestikuliert.jpg) |
+| cuda-2006 | cuda-2006.jpg | Hyins | Public domain | [NVIDIA GeForce 8800 GTX Board.jpg](https://commons.wikimedia.org/wiki/File:NVIDIA_GeForce_8800_GTX_Board.jpg) |
+| tesla-founded-2003 | tesla-founded-2003.jpg | Rutger van der Maar | CC BY 2.0 | [2008 Tesla Roadster front.jpg](https://commons.wikimedia.org/wiki/File:2008_Tesla_Roadster_front.jpg) |
+| model-s-2012 | model-s-2012.jpg | Granada | CC BY-SA 4.0 | [20180630 Tesla Model S 70D 2015 midnight blue left front.jpg](https://commons.wikimedia.org/wiki/File:20180630_Tesla_Model_S_70D_2015_midnight_blue_left_front.jpg) |
+| nvidia-trillion-2023 | nvidia-trillion-2023.png | 极客湾Geekerwan | CC BY 3.0 | [NVIDIA H100 (极客湾Geekerwan) 014.png](https://commons.wikimedia.org/wiki/File:NVIDIA_H100_(%E6%9E%81%E5%AE%A2%E6%B9%BEGeekerwan)_014.png) |
+| chatgpt-2022 | chatgpt-2022.jpg | HaeB | CC BY-SA 4.0 | [Pioneer Building, San Francisco (2019) -1.jpg](https://commons.wikimedia.org/wiki/File:Pioneer_Building,_San_Francisco_(2019)_-1.jpg) |
+| ftx-2022 | ftx-2022.jpg | Pixabay | CC0 | [Bitcoin currency stack.jpg](https://commons.wikimedia.org/wiki/File:Bitcoin_currency_stack.jpg) |
+| bitcoin-etf-2024 | bitcoin-etf-2024.jpg | Satheesh Sankaran | CC BY 2.0 | [Holding Bitcoin cryptocurrency coin.jpg](https://commons.wikimedia.org/wiki/File:Holding_Bitcoin_cryptocurrency_coin.jpg) |

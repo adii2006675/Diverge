@@ -46,6 +46,10 @@ function confidenceInfo(level: string) {
 type AskError = { message: string; question: string }
 type Refusal = { message: string; question: string }
 
+const WAIT_STAGES = ['Reading the historical record', 'Tracing the causes', 'Weighing the ripple effects', 'Writing your answer']
+// Measured typical times for each length setting.
+const WAIT_USUAL: Record<'short' | 'medium' | 'long', string> = { short: '10–15', medium: '15–30', long: '30–60' }
+
 const CUSTOM_START_COPY =
   'This is a custom starting point, so there is no recorded timeline to compare against. Diverge will anchor its answer in documented history for this topic.'
 
@@ -57,6 +61,7 @@ export default function DivergePage() {
 
   const event = ALL_EVENTS.find(e => e.id === sessionId)
   const customQ = searchParams.get('q')
+  const resumeId = searchParams.get('session')
 
   const [whatIfs, setWhatIfs] = useState<WhatIfEntry[]>([])
   const [currentInput, setCurrentInput] = useState('')
@@ -77,6 +82,10 @@ export default function DivergePage() {
   const inputRef = useRef<HTMLInputElement>(null)
   const { settings, user, updateSettings, loading: authLoading } = useAuth()
   const hasAutoSubmitted = useRef(false)
+  const hasResumed = useRef(false)
+  const [resumedTitle, setResumedTitle] = useState<string | null>(null)
+  const [resumeNote, setResumeNote] = useState<{ questions: string[] } | null>(null)
+  const [elapsed, setElapsed] = useState(0)
   const [scrollTarget, setScrollTarget] = useState<number | null>(null)
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null)
   const [askError, setAskError] = useState<AskError | null>(null)
@@ -106,17 +115,39 @@ export default function DivergePage() {
     .slice(0, 4)
   // Optional field: the API will start returning 2-3 next questions in a later step.
   const suggestions = (latest?.response.suggestions || []).filter(s => typeof s === 'string' && s.trim()).slice(0, 3)
-  const startingEvent = event ? `${event.title} — ${formatEventYear(event.year)}` : customQ || 'Custom starting point'
+  const startingEvent = event ? `${event.title} — ${formatEventYear(event.year)}` : resumedTitle || customQ || 'Custom starting point'
 
   // A custom starting point (from the home page) arrives as ?q=... and is asked automatically,
   // once auth has resolved so the user's AI settings and autosave apply to this first question.
   useEffect(() => {
     if (authLoading) return
+    // Continue from Sessions: reload the saved session instead of starting over.
+    if (resumeId) {
+      if (hasResumed.current || !user) return
+      hasResumed.current = true
+      supabase.from('sessions').select('*').eq('id', resumeId).eq('user_id', user.id).single().then(({ data }) => {
+        if (!data) return
+        const saved = Array.isArray(data.what_ifs) ? data.what_ifs : []
+        const withAnswers = saved.filter((w: { question?: unknown; response?: unknown }) => w && typeof w.question === 'string' && w.response && typeof (w.response as { paragraph?: unknown }).paragraph === 'string')
+        setCurrentSessionId(data.id)
+        if (!event && typeof data.event_title === 'string') setResumedTitle(data.event_title)
+        if (withAnswers.length > 0 && withAnswers.length === saved.length) {
+          const entries: WhatIfEntry[] = withAnswers.map((w: { question: string; response: WhatIfResponse; timestamp?: number }) => ({ question: w.question, response: w.response, timestamp: w.timestamp || 0 }))
+          setWhatIfs(entries)
+          setActiveTimelineIdx(entries.length - 1)
+          setScrollTarget(entries.length - 1)
+        } else {
+          // Saved before answers were stored: only the questions survive.
+          setResumeNote({ questions: saved.map((w: unknown) => (typeof w === 'string' ? w : (w as { question?: string })?.question || '')).filter(Boolean) })
+        }
+      })
+      return
+    }
     if (customQ && !event && !hasAutoSubmitted.current) {
       hasAutoSubmitted.current = true
       handleAsk(customQ)
     }
-  }, [authLoading])
+  }, [authLoading, user])
 
   async function handleAsk(override?: string) {
     const question = (override ?? currentInput).trim()
@@ -174,7 +205,7 @@ export default function DivergePage() {
             user_id: user.id,
             event_id: sessionId,
             event_title: startingEvent,
-            what_ifs: newWhatIfs.map(w => ({ question: w.question })),
+            what_ifs: newWhatIfs.map(w => ({ question: w.question, response: w.response, timestamp: w.timestamp })),
             divergence_score: data.divergenceScore || 0,
             updated_at: new Date().toISOString(),
           }
@@ -209,7 +240,7 @@ export default function DivergePage() {
         user_id: user.id,
         event_id: sessionId,
         event_title: startingEvent,
-        what_ifs: whatIfs.map(w => ({ question: w.question })),
+        what_ifs: whatIfs.map(w => ({ question: w.question, response: w.response, timestamp: w.timestamp })),
         divergence_score: currentResponse?.divergenceScore || 0,
         updated_at: new Date().toISOString(),
       }
@@ -253,6 +284,15 @@ export default function DivergePage() {
     }
     setSummaryLoading(false)
   }
+
+  // Seconds since the question was sent, for the waiting card.
+  useEffect(() => {
+    if (!loading) { setElapsed(0); return }
+    const started = Date.now()
+    setElapsed(0)
+    const id = window.setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000)
+    return () => window.clearInterval(id)
+  }, [loading])
 
   // Escape closes the top-most layer. Keyboard action, so no animation is added for it.
   useEffect(() => {
@@ -398,11 +438,36 @@ export default function DivergePage() {
               {loading && (
                 <div className="dv-ex" id="ans-loading">
                   {pendingQuestion && <div className="dv-q">{pendingQuestion}</div>}
-                  <div className="dv-ans dv-wait" role="status">
-                    <div className="dv-wait-row"><span className="dv-spin" aria-hidden="true" />Diverging history…</div>
+                  <div className="dv-ans dv-wait" role="status" aria-live="polite">
+                    <div className="dv-wait-head">
+                      <span className="dv-orbit" aria-hidden="true"><i /><i /><i /></span>
+                      <div>
+                        <b>{WAIT_STAGES[Math.min(WAIT_STAGES.length - 1, Math.floor(elapsed / 7))]}…</b>
+                        <span className="dv-wait-sub">{elapsed}s so far · usually {WAIT_USUAL[normalizeLength(settings?.ai_response_style)]} seconds</span>
+                      </div>
+                    </div>
+                    <div className="dv-steps" aria-hidden="true">
+                      {WAIT_STAGES.map((label, i) => {
+                        const stage = Math.min(WAIT_STAGES.length - 1, Math.floor(elapsed / 7))
+                        return <span key={label} className={i < stage ? 'done' : i === stage ? 'now' : ''}><i />{label}</span>
+                      })}
+                    </div>
+                    <span className="dv-bar-wait" aria-hidden="true" />
                     <span className="dv-skel" style={{ width: '92%' }} />
                     <span className="dv-skel" style={{ width: '84%' }} />
                     <span className="dv-skel" style={{ width: '58%' }} />
+                  </div>
+                </div>
+              )}
+
+              {resumeNote && !loading && whatIfs.length === 0 && (
+                <div className="dv-note" role="status">
+                  <b>Welcome back</b>
+                  <p>This session was saved before answers were kept, so only your questions survived. Tap a question to ask it again and rebuild the timeline.</p>
+                  <div className="dv-note-actions" style={{ flexWrap: 'wrap' }}>
+                    {resumeNote.questions.map(q => (
+                      <button key={q} className="dv-btn" type="button" onClick={() => { setResumeNote(null); handleAsk(q) }}>{q.length > 70 ? q.slice(0, 69) + '…' : q}</button>
+                    ))}
                   </div>
                 </div>
               )}
