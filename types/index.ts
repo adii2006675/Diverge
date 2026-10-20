@@ -10,6 +10,8 @@ export type WhatIfResponse = {
   divergenceScore: number
   year: string
   uncertaintyLevel: 'LOW' | 'MEDIUM' | 'HIGH'
+  /** 2-3 follow-up "What if..." questions. Not returned by the API yet. */
+  suggestions?: string[]
 }
 
 export type WhatIfEntry = {
