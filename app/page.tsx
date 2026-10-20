@@ -7,6 +7,8 @@ import { HISTORICAL_EVENTS } from '@/lib/events'
 import { useAuth } from '@/context/AuthContext'
 import TiltCard from '@/components/TiltCard'
 import EventImage from '@/components/EventImage'
+import { useT } from '@/lib/useT'
+import { eventText } from '@/lib/localizeEvent'
 
 const FEATURED_IDS = ['9-11-2001', 'ww1-1914', 'titanic-1912', 'great-depression-1929', 'covid-2020', 'mlk-march-1963']
 
@@ -22,6 +24,7 @@ const LONG_DESCRIPTIONS: Record<string, string> = {
 export default function LandingPage() {
   const router = useRouter()
   const { user, profile } = useAuth()
+  const { t, language } = useT()
   const [freeText, setFreeText] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
@@ -55,7 +58,7 @@ export default function LandingPage() {
             transition={{ duration: 0.5 }}
             style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-dim)', marginBottom: 16, letterSpacing: '-0.01em' }}
           >
-            Hey, <span style={{ color: 'var(--text)' }}>{profile.username}</span>
+            {t('Hey,')} <span style={{ color: 'var(--text)' }}>{profile.username}</span>
           </motion.p>
         )}
 
@@ -65,7 +68,7 @@ export default function LandingPage() {
           transition={{ duration: 0.6, ease: 'easeOut' }}
           style={{ fontSize: 'clamp(40px, 7vw, 88px)', fontWeight: 900, lineHeight: 1.08, margin: '0 0 4px', letterSpacing: '-0.02em' }}
         >
-          History had a plan.
+          {t('History had a plan.')}
         </motion.h1>
 
         <motion.h1
@@ -74,7 +77,7 @@ export default function LandingPage() {
           transition={{ duration: 0.6, delay: 0.15, ease: 'easeOut' }}
           style={{ fontSize: 'clamp(40px, 7vw, 88px)', fontWeight: 900, lineHeight: 1.08, color: 'var(--accent)', margin: '0 0 28px', letterSpacing: '-0.02em' }}
         >
-          You don't have to follow it.
+          {t('You don\'t have to follow it.')}
         </motion.h1>
 
         <motion.p
@@ -83,7 +86,7 @@ export default function LandingPage() {
           transition={{ duration: 0.5, delay: 0.3, ease: 'easeOut' }}
           style={{ fontSize: 19, color: 'var(--text-dim)', marginBottom: 52, lineHeight: 1.6, whiteSpace: 'nowrap' }}
         >
-          Pick any event in time. Ask to see a change. Watch it Diverge.
+          {t('Pick any event in time. Ask to see a change. Watch it Diverge.')}
         </motion.p>
 
         <motion.div
@@ -96,7 +99,7 @@ export default function LandingPage() {
             value={freeText}
             onChange={e => setFreeText(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && freeText.trim() && handleStart()}
-            placeholder="What if 9/11 never happened..."
+            placeholder={t('What if 9/11 never happened...')}
             style={{ flex: 1, padding: '15px 20px', borderRadius: 12, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text)', fontSize: 'var(--font-scale)', outline: 'none', fontFamily: 'inherit' }}
           />
           <button
@@ -110,7 +113,7 @@ export default function LandingPage() {
               color: freeText.trim() ? '#fff' : 'var(--text-dim)',
             }}
           >
-            Diverge
+            {t('Diverge')}
           </button>
         </motion.div>
       </div>
@@ -124,7 +127,7 @@ export default function LandingPage() {
           transition={{ duration: 0.5 }}
         >
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 28 }}>
-            FEATURED SCENARIOS
+            {t('Featured scenarios').toUpperCase()}
           </div>
         </motion.div>
 
@@ -146,14 +149,14 @@ export default function LandingPage() {
                 <EventImage key={event.id} id={event.id} title={event.title} year={event.year} loading="lazy" />
                 <div style={{ position: 'absolute', top: 12, left: 14 }}>
                   <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', background: 'var(--bg)', padding: '3px 8px', borderRadius: 4 }}>
-                    {event.era.toUpperCase()} · {event.year}
+                    {t(event.era).toUpperCase()} · {event.year}
                   </span>
                 </div>
               </div>
 
               <div style={{ padding: '14px 16px 16px' }}>
-                <div style={{ fontSize: 'var(--font-scale)', fontWeight: 700, marginBottom: 6, color: 'var(--text)' }}>{event.title}</div>
-                <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', lineHeight: 1.6 }}>{event.shortDesc}</div>
+                <div style={{ fontSize: 'var(--font-scale)', fontWeight: 700, marginBottom: 6, color: 'var(--text)' }}>{eventText(language, event).title}</div>
+                <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', lineHeight: 1.6 }}>{eventText(language, event).shortDesc}</div>
               </div>
               </TiltCard>
             </motion.div>
@@ -173,7 +176,7 @@ export default function LandingPage() {
             onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.borderColor = 'var(--accent)'; el.style.color = 'var(--text)' }}
             onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.borderColor = 'var(--border-color)'; el.style.color = 'var(--text-dim)' }}
           >
-            Show more events
+            {t('Show more events')}
           </button>
         </motion.div>
       </div>
@@ -213,14 +216,14 @@ export default function LandingPage() {
                     <EventImage key={expandedEvent.id} id={expandedEvent.id} title={expandedEvent.title} year={expandedEvent.year} />
                     <div style={{ position: 'absolute', top: 14, left: 16 }}>
                       <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', background: 'var(--bg)', padding: '3px 9px', borderRadius: 5 }}>
-                        {expandedEvent.era.toUpperCase()} · {expandedEvent.year}
+                        {t(expandedEvent.era).toUpperCase()} · {expandedEvent.year}
                       </span>
                     </div>
                   </div>
                   <div style={{ padding: '20px 24px 24px' }}>
-                    <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 12, color: 'var(--text)' }}>{expandedEvent.title}</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 12, color: 'var(--text)' }}>{eventText(language, expandedEvent).title}</div>
                     <div style={{ fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: 24 }}>
-                      {LONG_DESCRIPTIONS[expandedEvent.id] || expandedEvent.fullDesc}
+                      {eventText(language, expandedEvent).longDesc || (language === 'English' ? LONG_DESCRIPTIONS[expandedEvent.id] : undefined) || eventText(language, expandedEvent).fullDesc}
                     </div>
                     <div style={{ display: 'flex', gap: 10 }}>
                       <button
@@ -230,14 +233,14 @@ export default function LandingPage() {
                         onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)'}
                         onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)'}
                       >
-                        Back
+                        {t('Back')}
                       </button>
                       <button
                         className="modal-btn modal-btn-go"
                         onClick={() => router.push(`/diverge/${expandedEvent.id}`)}
                         style={{ flex: 1, padding: '12px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
                       >
-                        Diverge
+                        {t('Diverge')}
                       </button>
                     </div>
                   </div>
