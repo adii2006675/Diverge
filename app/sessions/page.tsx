@@ -20,6 +20,17 @@ type Session = {
 
 type SortMode = 'newest' | 'oldest' | 'most_diverged' | 'least_diverged'
 
+// Saved what-ifs are normally { question }, but older or hand-edited rows can be plain strings or other shapes.
+// Always return text so a strange row can never crash the page.
+function whatIfText(w: unknown): string {
+  if (typeof w === 'string') return w
+  if (w && typeof w === 'object') {
+    const q = (w as { question?: unknown }).question
+    if (typeof q === 'string' && q.trim()) return q
+  }
+  return 'Untitled question'
+}
+
 export default function SessionsPage() {
   const router = useRouter()
   const { user, loading } = useAuth()
@@ -285,7 +296,7 @@ export default function SessionsPage() {
                       </div>
                       {session.what_ifs?.slice(0, 5).map((w: any, i: number) => (
                         <div key={i} style={{ fontSize: 12, color: 'var(--text-dim)', padding: '5px 0', borderBottom: i < Math.min(session.what_ifs.length, 5) - 1 ? '1px solid var(--border-color)' : 'none' }}>
-                          {i + 1}. {w.question || w}
+                          {i + 1}. {whatIfText(w)}
                         </div>
                       ))}
                       <button
