@@ -1,8 +1,9 @@
 'use client'
 import { useAuth } from '@/context/AuthContext'
+import { useT } from '@/lib/useT'
+import { LANGUAGES, NATIVE_NAMES } from '@/lib/i18n'
 
 const THEMES = ['light', 'dark']
-const LANGUAGES = ['English', 'Spanish', 'French', 'German', 'Japanese', 'Portuguese', 'Hindi', 'Chinese']
 const ACCENT_COLORS = [
   { value: 'none', label: 'None', hex: 'var(--text)' },
   { value: 'red', label: 'Red', hex: '#F43F5E' },
@@ -21,6 +22,7 @@ const FONT_SIZES = [
 
 export default function SettingsPanel() {
   const { settings, updateSettings } = useAuth()
+  const { t } = useT()
 
   async function handleToggle(key: 'show_confidence_level') {
     if (!settings) return
@@ -31,23 +33,23 @@ export default function SettingsPanel() {
     <>
         <Section title="Theme">
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {THEMES.map(t => (
+            {THEMES.map(theme => (
               <button
-                key={t}
-                onClick={() => updateSettings({ theme: t })}
+                key={theme}
+                onClick={() => updateSettings({ theme })}
                 style={{
                   flex: 1, padding: '10px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
-                  border: `1px solid ${settings?.theme === t ? 'var(--accent)' : 'var(--border-color)'}`,
-                  background: settings?.theme === t ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--card-bg)',
-                  color: settings?.theme === t ? 'var(--accent)' : 'var(--text-dim)',
-                  fontSize: 'var(--font-scale)', fontWeight: settings?.theme === t ? 700 : 400,
+                  border: `1px solid ${settings?.theme === theme ? 'var(--accent)' : 'var(--border-color)'}`,
+                  background: settings?.theme === theme ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--card-bg)',
+                  color: settings?.theme === theme ? 'var(--accent)' : 'var(--text-dim)',
+                  fontSize: 'var(--font-scale)', fontWeight: settings?.theme === theme ? 700 : 400,
                   transition: 'all 0.18s',
                   textTransform: 'capitalize',
                   minWidth: 100,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
-                {t}
+                {t(theme)}
               </button>
             ))}
           </div>
@@ -71,7 +73,7 @@ export default function SettingsPanel() {
                 }}
               >
                 <span style={{ width: 12, height: 12, borderRadius: '50%', background: c.hex, flexShrink: 0 }} />
-                {c.label}
+                {t(c.label)}
               </button>
             ))}
           </div>
@@ -94,7 +96,7 @@ export default function SettingsPanel() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
-                {f.label}
+                {t(f.label)}
               </button>
             ))}
           </div>
@@ -118,7 +120,7 @@ export default function SettingsPanel() {
                   overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
                 }}
               >
-                {lang}
+                {NATIVE_NAMES[lang]}
               </button>
             ))}
           </div>
@@ -127,8 +129,8 @@ export default function SettingsPanel() {
         <Section title="Display Options">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <Toggle
-              label="Show confidence level"
-              desc="Display LOW / MEDIUM / HIGH confidence badge on AI responses"
+              label={t('Show confidence level')}
+              desc={t('Display LOW / MEDIUM / HIGH confidence badge on AI responses')}
               value={settings?.show_confidence_level ?? true}
               onChange={() => handleToggle('show_confidence_level')}
             />
@@ -139,10 +141,11 @@ export default function SettingsPanel() {
 }
 
 export function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  const { t } = useT()
   return (
     <div style={{ marginBottom: 36 }}>
       <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 14 }}>
-        {title}
+        {t(title)}
       </div>
       {children}
     </div>

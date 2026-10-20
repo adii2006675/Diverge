@@ -5,10 +5,12 @@ import Nav from '@/components/Nav'
 import AIResponseSettings from '@/components/AIResponseSettings'
 import ApiKeyField from '@/components/ApiKeyField'
 import { Section } from '@/components/SettingsPanel'
+import { useT } from '@/lib/useT'
 
 export default function SettingsPage() {
   const router = useRouter()
   const { user, loading } = useAuth()
+  const { t } = useT()
 
   if (loading) return (
     <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -26,8 +28,8 @@ export default function SettingsPage() {
     <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
       <Nav active="settings" />
       <div style={{ position: 'relative', zIndex: 1, maxWidth: 640, margin: '0 auto', padding: '140px 24px 60px' }}>
-        <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 8, letterSpacing: '-0.02em' }}>Settings</h1>
-        <p style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 40 }}>Changes save automatically to your account.</p>
+        <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 8, letterSpacing: '-0.02em' }}>{t('Settings')}</h1>
+        <p style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 40 }}>{t('Changes save automatically to your account.')}</p>
 
         <Section title="AI Responses">
           <AIResponseSettings showDescriptions />
@@ -41,7 +43,7 @@ export default function SettingsPage() {
           onClick={() => router.push('/')}
           style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-dim)', fontSize: 'var(--font-scale)', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          Home
+          {t('Home')}
         </button>
       </div>
     </main>

@@ -2,10 +2,12 @@
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useState } from 'react'
+import { useT } from '@/lib/useT'
 
 export default function Nav({ active }: { active?: string }) {
   const router = useRouter()
   const { user, profile, signOut } = useAuth()
+  const { t } = useT()
   const [showUserMenu, setShowUserMenu] = useState(false)
 
   async function handleSignOut() {
@@ -66,7 +68,7 @@ export default function Nav({ active }: { active?: string }) {
               onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)'}
               onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.color = active === label.toLowerCase() ? 'var(--text)' : 'var(--text-dim)'}
             >
-              {label}
+              {t(label)}
             </button>
           ))}
           <button
@@ -81,7 +83,7 @@ export default function Nav({ active }: { active?: string }) {
             onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)'}
             onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.color = active === 'sessions' ? 'var(--text)' : 'var(--text-dim)'}
           >
-            Sessions
+            {t('Sessions')}
           </button>
         </div>
 
@@ -92,7 +94,7 @@ export default function Nav({ active }: { active?: string }) {
               onClick={() => router.push('/auth')}
               style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
             >
-              Sign In
+              {t('Sign In')}
             </button>
           ) : (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -107,7 +109,7 @@ export default function Nav({ active }: { active?: string }) {
                   }}
                   onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)'}
                   onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)'}
-                  title="Profile"
+                  title={t('Profile')}
                 >
                   {!profile?.avatar_url && (profile?.username?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?')}
                 </button>
@@ -115,7 +117,7 @@ export default function Nav({ active }: { active?: string }) {
                 {showUserMenu && (
                   <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '8px', minWidth: 200, zIndex: 100, animation: 'fadeIn 0.15s ease' }}>
                     <div style={{ padding: '8px 12px 12px', borderBottom: '1px solid var(--border-color)', marginBottom: 6 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{profile?.username || 'User'}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{profile?.username || t('User')}</div>
                       <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>{user.email}</div>
                     </div>
 
@@ -130,7 +132,7 @@ export default function Nav({ active }: { active?: string }) {
                         onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'var(--card-bg)'}
                         onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
                       >
-                        {item.label}
+                        {t(item.label)}
                       </button>
                     ))}
 
@@ -141,7 +143,7 @@ export default function Nav({ active }: { active?: string }) {
                         onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.08)'}
                         onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
                       >
-                        Sign Out
+                        {t('Sign Out')}
                       </button>
                     </div>
                   </div>
