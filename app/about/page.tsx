@@ -23,7 +23,7 @@ export default function AboutPage() {
           viewport={{ once: true, amount: 0.4 }}
           variants={fadeUp}
           transition={{ duration: 0.6, ease: 'easeOut' }}
-          style={{ fontSize: 'calc(var(--font-scale) * 3.5)', fontWeight: 900, marginBottom: 24, letterSpacing: '-0.02em' }}
+          style={{ fontSize: 'calc(var(--font-scale) * 3.5)', fontWeight: 900, marginBottom: 24, letterSpacing: '-0.02em', textAlign: 'center' }}
         >
           What is Diverge?
         </motion.h1>
@@ -68,7 +68,7 @@ export default function AboutPage() {
             viewport={{ once: true, amount: 0.5, margin: '-15% 0px -15% 0px' }}
             variants={fadeUp}
             transition={{ duration: 0.5, ease: 'easeOut' }}
-            style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 16 }}
+            style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 16, textAlign: 'center' }}
           >
             How it works
           </motion.h2>
@@ -118,7 +118,7 @@ export default function AboutPage() {
           transition={{ duration: 0.5, ease: 'easeOut' }}
           style={{ borderTop: '1px solid var(--accent)', paddingTop: 40, marginBottom: 40 }}
         >
-          <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 12 }}>Accuracy disclaimer</h2>
+          <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 12, textAlign: 'center' }}>Accuracy disclaimer</h2>
           <p style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.75, color: 'var(--text-dim)' }}>
             Diverge is powered by AI reasoning from historical knowledge, not a verified academic database. Responses are grounded in real history but should be treated as informed speculation rather than fact. History is contested and complex — the AI acknowledges uncertainty where it exists.
           </p>
@@ -132,7 +132,7 @@ export default function AboutPage() {
           transition={{ duration: 0.5, ease: 'easeOut' }}
           style={{ borderTop: '1px solid var(--accent)', paddingTop: 40 }}
         >
-          <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 12 }}>Built by</h2>
+          <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 12, textAlign: 'center' }}>Built by</h2>
           <p style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.75, color: 'var(--text-dim)', marginBottom: 20 }}>
             Diverge was built by Adi Sharma, a CS student at the University of Delaware. It uses the Claude API by Anthropic for AI responses, Next.js for the frontend, and Supabase for session storage.
           </p>

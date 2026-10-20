@@ -191,7 +191,7 @@ body {
   pointer-events: none;
   z-index: 3;
   opacity: calc(var(--glow) * 0.9);
-  background: radial-gradient(320px circle at var(--mx) var(--my), rgba(255, 255, 255, 0.1), transparent 60%);
+  background: radial-gradient(90px circle at var(--mx) var(--my), rgba(255, 255, 255, 0.16), transparent 100%);
 }
 /* Static outline for the expanded card: same masked ring, always on. */
 .tilt-ring.static {

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import Nav from '@/components/Nav'
 import { HISTORICAL_EVENTS } from '@/lib/events'
 import { useAuth } from '@/context/AuthContext'
-import CardBorderTrace from '@/components/CardBorderTrace'
+import TiltCard from '@/components/TiltCard'
 import EventImage from '@/components/EventImage'
 
 const FEATURED_IDS = ['9-11-2001', 'ww1-1914', 'titanic-1912', 'great-depression-1929', 'covid-2020', 'mlk-march-1963']
@@ -137,12 +137,11 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: idx * 0.07, ease: 'easeOut' }}
-              whileHover={{ y: -10 }}
-              style={{ borderRadius: 16, border: '1px solid var(--border-color)', background: 'var(--bg)', overflow: 'hidden', cursor: 'pointer', position: 'relative', zIndex: 1, isolation: 'isolate', marginBottom: 10 }}
+              transition={{ duration: 0.4, delay: Math.min(idx, 11) * 0.05, ease: 'easeOut' }}
+              style={{ borderRadius: 16, marginBottom: 10 }}
               onClick={() => setExpandedId(event.id)}
             >
-              <CardBorderTrace radius={16} />
+              <TiltCard radius={16}>
               <div style={{ height: 140, overflow: 'hidden', position: 'relative', background: 'var(--bg)' }}>
                 <EventImage key={event.id} id={event.id} title={event.title} year={event.year} loading="lazy" />
                 <div style={{ position: 'absolute', top: 12, left: 14 }}>
@@ -156,6 +155,7 @@ export default function LandingPage() {
                 <div style={{ fontSize: 'var(--font-scale)', fontWeight: 700, marginBottom: 6, color: 'var(--text)' }}>{event.title}</div>
                 <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', lineHeight: 1.6 }}>{event.shortDesc}</div>
               </div>
+              </TiltCard>
             </motion.div>
           ))}
         </div>
@@ -199,7 +199,7 @@ export default function LandingPage() {
                 className="event-card always-trace"
                 transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
                 style={{
-                  borderRadius: 20, border: '1px solid var(--border-color)',
+                  borderRadius: 20,
                   background: 'var(--bg)', overflow: 'hidden',
                   position: 'relative', isolation: 'isolate',
                   maxWidth: 520, width: '100%', maxHeight: 'calc(85vh / var(--ui-scale, 1))', overflowY: 'auto',
@@ -207,7 +207,7 @@ export default function LandingPage() {
                 }}
               >
                 <div style={{ position: 'absolute', inset: 0, background: 'var(--card-bg)', zIndex: 0 }} />
-                <CardBorderTrace radius={20} />
+                <div className="tilt-ring static" aria-hidden="true" />
                 <div style={{ position: 'relative', zIndex: 1 }}>
                   <div style={{ height: 220, overflow: 'hidden', position: 'relative', background: 'var(--card-bg)' }}>
                     <EventImage key={expandedEvent.id} id={expandedEvent.id} title={expandedEvent.title} year={expandedEvent.year} />

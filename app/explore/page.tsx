@@ -160,20 +160,7 @@ export default function ExplorePage() {
                   </div>
                   <div style={{ padding: '12px 14px 14px' }}>
                     <div style={{ fontSize: 'var(--font-scale)', fontWeight: 700, marginBottom: 5, color: 'var(--text)' }}>{event.title}</div>
-                    <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', lineHeight: 1.6, marginBottom: 12 }}>{event.shortDesc}</div>
-                    <button
-                      onClick={e => { e.stopPropagation(); router.push(`/diverge/${event.id}`) }}
-                      style={{
-                        width: '100%', padding: '8px', borderRadius: 8,
-                        border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)', background: 'color-mix(in srgb, var(--accent) 7%, transparent)',
-                        color: 'var(--accent)', fontSize: 'var(--font-scale)', fontWeight: 600, cursor: 'pointer',
-                        fontFamily: 'inherit', transition: 'all 0.15s',
-                      }}
-                      onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'color-mix(in srgb, var(--accent) 16%, transparent)'}
-                      onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'color-mix(in srgb, var(--accent) 7%, transparent)'}
-                    >
-                      Explore
-                    </button>
+                    <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', lineHeight: 1.6, marginBottom: 0 }}>{event.shortDesc}</div>
                   </div>
                 </div>
                 </TiltCard>

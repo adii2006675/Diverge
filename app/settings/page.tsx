@@ -14,7 +14,7 @@ const ACCENT_COLORS = [
   { value: 'green', label: 'Green', hex: '#10B981' },
   { value: 'purple', label: 'Purple', hex: '#8B5CF6' },
   { value: 'pink', label: 'Pink', hex: '#EC4899' },
-  { value: 'teal', label: 'Teal', hex: '#14B8A6' },
+  { value: 'teal', label: 'Brown', hex: '#B07D4F' },
 ]
 const FONT_SIZES = [
   { value: 'small', label: 'Small' },

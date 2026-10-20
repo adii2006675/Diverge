@@ -55,7 +55,7 @@ const ACCENT_COLORS: Record<string, string> = {
   green: '#10B981',
   purple: '#8B5CF6',
   pink: '#EC4899',
-  teal: '#14B8A6',
+  teal: '#B07D4F', // the stored value is still 'teal' (safe for any database constraint); it now shows as Brown
 }
 
 const FONT_SCALES: Record<string, string> = {
