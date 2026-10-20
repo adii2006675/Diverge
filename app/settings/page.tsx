@@ -2,6 +2,8 @@
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import Nav from '@/components/Nav'
+import AIResponseSettings from '@/components/AIResponseSettings'
+import ApiKeyField from '@/components/ApiKeyField'
 
 const THEMES = ['light', 'dark']
 const LANGUAGES = ['English', 'Spanish', 'French', 'German', 'Japanese', 'Portuguese', 'Hindi', 'Chinese']
@@ -13,20 +15,13 @@ const ACCENT_COLORS = [
   { value: 'green', label: 'Green', hex: '#10B981' },
   { value: 'purple', label: 'Purple', hex: '#8B5CF6' },
   { value: 'pink', label: 'Pink', hex: '#EC4899' },
-  { value: 'teal', label: 'Teal', hex: '#14B8A6' },
+  { value: 'teal', label: 'Brown', hex: '#B07D4F' },
 ]
 const FONT_SIZES = [
   { value: 'small', label: 'Small' },
   { value: 'medium', label: 'Medium' },
   { value: 'large', label: 'Large' },
 ]
-const AI_STYLES = [
-  { value: 'detailed', label: 'Detailed', desc: 'Full historical analysis with deep context' },
-  { value: 'concise', label: 'Concise', desc: 'Short punchy responses, key facts only' },
-  { value: 'academic', label: 'Academic', desc: 'Formal tone with citations and hedging' },
-  { value: 'storytelling', label: 'Storytelling', desc: 'Narrative driven, cinematic and vivid' },
-]
-
 export default function SettingsPage() {
   const router = useRouter()
   const { user, settings, updateSettings, loading } = useAuth()
@@ -43,7 +38,7 @@ export default function SettingsPage() {
     return null
   }
 
-  async function handleToggle(key: 'show_confidence_level' | 'show_historians_note') {
+  async function handleToggle(key: 'show_confidence_level') {
     if (!settings) return
     await updateSettings({ [key]: !settings[key] })
   }
@@ -151,26 +146,12 @@ export default function SettingsPage() {
           </div>
         </Section>
 
-        <Section title="AI Response Style">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {AI_STYLES.map(style => (
-              <button
-                key={style.value}
-                onClick={() => updateSettings({ ai_response_style: style.value })}
-                style={{
-                  padding: '12px 16px', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit',
-                  border: `1px solid ${settings?.ai_response_style === style.value ? 'var(--accent)' : 'var(--border-color)'}`,
-                  background: settings?.ai_response_style === style.value ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'var(--card-bg)',
-                  textAlign: 'left', transition: 'all 0.18s',
-                }}
-              >
-                <div style={{ fontSize: 'var(--font-scale)', fontWeight: 600, color: settings?.ai_response_style === style.value ? 'var(--accent)' : 'var(--text)', marginBottom: 2 }}>
-                  {style.label}
-                </div>
-                <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)' }}>{style.desc}</div>
-              </button>
-            ))}
-          </div>
+        <Section title="AI Responses">
+          <AIResponseSettings showDescriptions />
+        </Section>
+
+        <Section title="Your API key">
+          <ApiKeyField />
         </Section>
 
         <Section title="Display Options">
@@ -180,12 +161,6 @@ export default function SettingsPage() {
               desc="Display LOW / MEDIUM / HIGH confidence badge on AI responses"
               value={settings?.show_confidence_level ?? true}
               onChange={() => handleToggle('show_confidence_level')}
-            />
-            <Toggle
-              label="Show historian's note"
-              desc="Display the reliability note at the bottom of each response"
-              value={settings?.show_historians_note ?? true}
-              onChange={() => handleToggle('show_historians_note')}
             />
           </div>
         </Section>

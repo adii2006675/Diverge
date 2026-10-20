@@ -10,6 +10,14 @@ export type WhatIfResponse = {
   divergenceScore: number
   year: string
   uncertaintyLevel: 'LOW' | 'MEDIUM' | 'HIGH'
+  /** 2-3 follow-up "What if..." questions. Not returned by the API yet. */
+  suggestions?: string[]
+  /** Per key fact: documented history, a reasoned inference, or speculation. */
+  factTypes?: ('documented' | 'inference' | 'speculation')[]
+  /** Reference articles the answer was grounded in. */
+  sources?: { title: string; url: string }[]
+  /** Indexes of documented facts a second check could not confirm. */
+  unverified?: number[]
 }
 
 export type WhatIfEntry = {

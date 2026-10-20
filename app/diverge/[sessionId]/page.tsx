@@ -7,6 +7,11 @@ import { useAuth } from '@/context/AuthContext'
 import { motion, AnimatePresence } from 'motion/react'
 import { supabase } from '@/lib/supabase'
 import EventImage from '@/components/EventImage'
+import Nav from '@/components/Nav'
+import AIResponseSettings from '@/components/AIResponseSettings'
+import { streamAnswer, aiHeaders, AiError, setUserApiKey } from '@/lib/aiClient'
+import { normalizeLength, normalizeDepth, normalizeTone, normalizePlausibility } from '@/lib/aiSettings'
+import './diverge.css'
 
 const MOOD_COLORS: Record<string, string> = {
   STABLE: '#10B981', TENSE: '#F59E0B', CRITICAL: '#EF4444',
@@ -14,8 +19,45 @@ const MOOD_COLORS: Record<string, string> = {
   REBUILDING: '#06B6D4', FLOURISHING: '#10B981',
 }
 
+// The model's year field is free text ("1968", "Approximately 1600 CE", "300 BC"). Pull out a year if there is one.
+function parseYear(text: string | undefined | null): number | null {
+  const m = /(\d{1,4})\s*(BC|BCE|AD|CE)?/i.exec(text || '')
+  if (!m) return null
+  const n = parseInt(m[1], 10)
+  return m[2] && /^BC/i.test(m[2]) ? -n : n
+}
+
+function firstSentence(text: string, max = 260) {
+  const m = /^[\s\S]*?[.!?](?=\s|$)/.exec(text || '')
+  const s = (m ? m[0] : text || '').trim()
+  return s.length > max ? s.slice(0, max - 1).trimEnd() + '…' : s
+}
+
+// While the JSON streams in, show just the paragraph text that has arrived so far.
+function liveParagraph(raw: string) {
+  const m = /"paragraph"\s*:\s*"((?:[^"\\]|\\.)*)/.exec(raw)
+  if (!m) return ''
+  return m[1].replace(/\\n/g, ' ').replace(/\\"/g, '"').replace(/\\\\/g, '\\')
+}
+
+function moodLabel(mood: string) {
+  return mood.charAt(0) + mood.slice(1).toLowerCase()
+}
+
+// The API field is named uncertaintyLevel but its prompt asks "how confident are you": HIGH is good.
+function confidenceInfo(level: string) {
+  if (level === 'HIGH') return { label: 'High confidence', color: '#10B981' }
+  if (level === 'LOW') return { label: 'Low confidence', color: '#EF4444' }
+  return { label: 'Medium confidence', color: '#F59E0B' }
+}
+
 type AskError = { message: string; question: string }
 type Refusal = { message: string; question: string }
+type Gate = { code: string; message: string; question: string }
+
+const WAIT_STAGES = ['Reading the historical record', 'Tracing the causes', 'Weighing the ripple effects', 'Writing your answer']
+// Measured typical times for each length setting.
+const WAIT_USUAL: Record<'short' | 'medium' | 'long', string> = { short: '10–15', medium: '15–30', long: '30–60' }
 
 const CUSTOM_START_COPY =
   'This is a custom starting point, so there is no recorded timeline to compare against. Diverge will anchor its answer in documented history for this topic.'
@@ -28,11 +70,16 @@ export default function DivergePage() {
 
   const event = ALL_EVENTS.find(e => e.id === sessionId)
   const customQ = searchParams.get('q')
+  const resumeId = searchParams.get('session')
 
   const [whatIfs, setWhatIfs] = useState<WhatIfEntry[]>([])
   const [currentInput, setCurrentInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [expandedFact, setExpandedFact] = useState<string | null>(null)
+  // Answer i is open if the user toggled it, otherwise only the latest answer starts open. Facts toggle independently.
+  const [openAnswers, setOpenAnswers] = useState<Record<number, boolean>>({})
+  const [openFacts, setOpenFacts] = useState<Record<string, boolean>>({})
+  const [askedEvents, setAskedEvents] = useState<string[]>([])
+  const threadRef = useRef<HTMLDivElement>(null)
   const [showSummary, setShowSummary] = useState(false)
   const [summary, setSummary] = useState<any>(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
@@ -42,46 +89,79 @@ export default function DivergePage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const { settings, user, profile, updateSettings, signOut, loading: authLoading } = useAuth()
-  const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const { settings, user, updateSettings, loading: authLoading } = useAuth()
   const hasAutoSubmitted = useRef(false)
+  const hasResumed = useRef(false)
+  const [resumedTitle, setResumedTitle] = useState<string | null>(null)
+  const [resumeNote, setResumeNote] = useState<{ questions: string[] } | null>(null)
+  const [elapsed, setElapsed] = useState(0)
+  // Index of the answer that just arrived, so only it plays the reveal animation.
+  const [freshIdx, setFreshIdx] = useState<number | null>(null)
+  const [scrollTarget, setScrollTarget] = useState<number | null>(null)
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null)
   const [askError, setAskError] = useState<AskError | null>(null)
   const [refusal, setRefusal] = useState<Refusal | null>(null)
   const [summaryError, setSummaryError] = useState<string | null>(null)
-  // Which answer's narration is expanded; collapsing happens automatically when you switch answers.
-  const [narrationOpenFor, setNarrationOpenFor] = useState<number | null>(null)
+  const [gate, setGate] = useState<Gate | null>(null)
+  const [keyDraft, setKeyDraft] = useState('')
+  const [streamText, setStreamText] = useState('')
 
+  const latest = whatIfs.length > 0 ? whatIfs[whatIfs.length - 1] : null
   const currentEntry = whatIfs[activeTimelineIdx] || null
   const currentResponse = currentEntry?.response || null
   const divergence = currentResponse?.divergenceScore || 0
   const mood = (currentResponse?.worldMood || 'STABLE') as WorldMood
   const currentYear = currentResponse?.year || (event ? formatEventYear(event.year) : '?')
-  const currentFacts = currentResponse?.keyFacts || []
-  const currentParagraph = currentResponse?.paragraph || ''
   const realFacts = event?.realFacts || []
-  const narrationOpen = narrationOpenFor === activeTimelineIdx
-  // The bar shows two lines (about 260 characters at its fixed 860px width) until opened.
-  const narrationLong = (currentResponse?.narration?.length || 0) > 260
-  const startingEvent = event ? `${event.title} — ${formatEventYear(event.year)}` : customQ || 'Custom starting point'
+  const isAnswerOpen = (i: number) => openAnswers[i] ?? i === whatIfs.length - 1
+
+  // Real events around and after the timeline's current year, from the static event list.
+  const yearNow = currentResponse ? parseYear(currentResponse.year) : (event?.year ?? null)
+  const meanwhile = (() => {
+    if (yearNow === null) return { near: true, list: [] as typeof ALL_EVENTS }
+    const byDistance = [...ALL_EVENTS].filter(e => e.id !== event?.id).sort((a, b) => Math.abs(a.year - yearNow) - Math.abs(b.year - yearNow))
+    const near = byDistance.filter(e => Math.abs(e.year - yearNow) <= 25).slice(0, 3)
+    return near.length > 0 ? { near: true, list: near } : { near: false, list: byDistance.slice(0, 2) }
+  })()
+  const unanswered = yearNow === null ? [] : ALL_EVENTS
+    .filter(e => e.year > yearNow && e.id !== event?.id && !askedEvents.includes(e.id))
+    .sort((a, b) => a.year - b.year)
+    .slice(0, 4)
+  // Optional field: the API will start returning 2-3 next questions in a later step.
+  const suggestions = (latest?.response.suggestions || []).filter(s => typeof s === 'string' && s.trim()).slice(0, 3)
+  const startingEvent = event ? `${event.title} — ${formatEventYear(event.year)}` : resumedTitle || customQ || 'Custom starting point'
 
   // A custom starting point (from the home page) arrives as ?q=... and is asked automatically,
   // once auth has resolved so the user's AI settings and autosave apply to this first question.
   useEffect(() => {
     if (authLoading) return
+    // Continue from Sessions: reload the saved session instead of starting over.
+    if (resumeId) {
+      if (hasResumed.current || !user) return
+      hasResumed.current = true
+      supabase.from('sessions').select('*').eq('id', resumeId).eq('user_id', user.id).single().then(({ data }) => {
+        if (!data) return
+        const saved = Array.isArray(data.what_ifs) ? data.what_ifs : []
+        const withAnswers = saved.filter((w: { question?: unknown; response?: unknown }) => w && typeof w.question === 'string' && w.response && typeof (w.response as { paragraph?: unknown }).paragraph === 'string')
+        setCurrentSessionId(data.id)
+        if (!event && typeof data.event_title === 'string') setResumedTitle(data.event_title)
+        if (withAnswers.length > 0 && withAnswers.length === saved.length) {
+          const entries: WhatIfEntry[] = withAnswers.map((w: { question: string; response: WhatIfResponse; timestamp?: number }) => ({ question: w.question, response: w.response, timestamp: w.timestamp || 0 }))
+          setWhatIfs(entries)
+          setActiveTimelineIdx(entries.length - 1)
+          setScrollTarget(entries.length - 1)
+        } else {
+          // Saved before answers were stored: only the questions survive.
+          setResumeNote({ questions: saved.map((w: unknown) => (typeof w === 'string' ? w : (w as { question?: string })?.question || '')).filter(Boolean) })
+        }
+      })
+      return
+    }
     if (customQ && !event && !hasAutoSubmitted.current) {
       hasAutoSubmitted.current = true
       handleAsk(customQ)
     }
-  }, [authLoading])
-
-  // The API field is named uncertaintyLevel, but its prompt asks "how confident are you",
-  // and the badge reads "<level> CONFIDENCE". Colour it as confidence: high is good.
-  const uncertaintyColor = currentResponse?.uncertaintyLevel === 'HIGH'
-    ? '#10B981'
-    : currentResponse?.uncertaintyLevel === 'LOW'
-      ? '#EF4444'
-      : '#F59E0B'
+  }, [authLoading, user])
 
   async function handleAsk(override?: string) {
     const question = (override ?? currentInput).trim()
@@ -89,24 +169,39 @@ export default function DivergePage() {
     setLoading(true)
     setAskError(null)
     setRefusal(null)
+    setGate(null)
+    setStreamText('')
     setPendingQuestion(question)
     setCurrentInput('')
 
     try {
       const previousWhatIfs = whatIfs.map(w => w.question)
-      const currentWorldState = currentResponse
-        ? currentResponse.keyFacts.join('. ')
+      const currentWorldState = latest
+        ? latest.response.keyFacts.join('. ')
         : 'History as it really happened.'
 
-      const res = await fetch('/api/diverge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ startingEvent, previousWhatIfs, currentWorldState, newQuestion: question, realFacts, aiStyle: settings?.ai_response_style || 'detailed' })
+      let data: any = null
+      let streamErr: { code: string; message: string } | null = null
+      await streamAnswer({
+        startingEvent, previousWhatIfs, currentWorldState, newQuestion: question, realFacts,
+        length: normalizeLength(settings?.ai_response_style),
+        depth: normalizeDepth(settings?.ai_depth),
+        tone: normalizeTone(settings?.ai_tone),
+        plausibility: normalizePlausibility(settings?.ai_plausibility),
+        // The timeline can only move forward: the next answer's year must not be earlier than this.
+        previousYear: latest ? parseYear(latest.response.year) : (event?.year ?? null),
+      }, ev => {
+        if (ev.t === 'delta') setStreamText(t => t + ev.text)
+        else if (ev.t === 'done') data = { ...ev.data }
+        else if (ev.t === 'error') streamErr = { code: ev.code, message: ev.message }
+        else if (ev.t === 'verify') {
+          // The second check runs after the answer is shown; mark the facts it could not confirm.
+          setWhatIfs(list => list.map((w, i) => (i === list.length - 1 ? { ...w, response: { ...w.response, unverified: ev.unverified } } : w)))
+        }
       })
-
-      const data = await res.json().catch(() => null)
-      if (!res.ok || !data || typeof data.paragraph !== 'string' || !Array.isArray(data.keyFacts)) {
-        throw new Error(data?.error || 'The answer came back in an unexpected format.')
+      if (streamErr) throw new AiError((streamErr as { message: string }).message, (streamErr as { code: string }).code)
+      if (!data || typeof data.paragraph !== 'string' || !Array.isArray(data.keyFacts)) {
+        throw new Error('The answer came back in an unexpected format.')
       }
 
       // Off-topic questions come back as a refusal with a divergence score of 0.
@@ -123,6 +218,8 @@ export default function DivergePage() {
       const newWhatIfs = [...whatIfs, newEntry]
       setWhatIfs(newWhatIfs)
       setActiveTimelineIdx(newWhatIfs.length - 1)
+      setScrollTarget(newWhatIfs.length - 1)
+      setFreshIdx(newWhatIfs.length - 1)
 
       if (user) {
         try {
@@ -130,7 +227,7 @@ export default function DivergePage() {
             user_id: user.id,
             event_id: sessionId,
             event_title: startingEvent,
-            what_ifs: newWhatIfs.map(w => ({ question: w.question })),
+            what_ifs: newWhatIfs.map(w => ({ question: w.question, response: w.response, timestamp: w.timestamp })),
             divergence_score: data.divergenceScore || 0,
             updated_at: new Date().toISOString(),
           }
@@ -147,6 +244,13 @@ export default function DivergePage() {
       }
     } catch (err) {
       console.error(err)
+      if (err instanceof AiError && ['sign_in_required', 'free_limit_reached', 'invalid_api_key', 'usage_unavailable'].includes(err.code)) {
+        setGate({ code: err.code, message: err.message, question })
+        setCurrentInput(question)
+        setPendingQuestion(null)
+        setLoading(false)
+        return
+      }
       setAskError({
         message: err instanceof Error && err.message ? err.message : 'Something went wrong while generating the answer.',
         question,
@@ -165,7 +269,7 @@ export default function DivergePage() {
         user_id: user.id,
         event_id: sessionId,
         event_title: startingEvent,
-        what_ifs: whatIfs.map(w => ({ question: w.question })),
+        what_ifs: whatIfs.map(w => ({ question: w.question, response: w.response, timestamp: w.timestamp })),
         divergence_score: currentResponse?.divergenceScore || 0,
         updated_at: new Date().toISOString(),
       }
@@ -191,7 +295,7 @@ export default function DivergePage() {
     try {
       const res = await fetch('/api/summary', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await aiHeaders(),
         body: JSON.stringify({
           startingEvent,
           whatIfs: whatIfs.map(w => w.question),
@@ -210,440 +314,389 @@ export default function DivergePage() {
     setSummaryLoading(false)
   }
 
+  // Seconds since the question was sent, for the waiting card.
+  useEffect(() => {
+    if (!loading) { setElapsed(0); return }
+    const started = Date.now()
+    setElapsed(0)
+    const id = window.setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000)
+    return () => window.clearInterval(id)
+  }, [loading])
+
   // Escape closes the top-most layer. Keyboard action, so no animation is added for it.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key !== 'Escape') return
       if (showAISettings) setShowAISettings(false)
       else if (showSummary) setShowSummary(false)
-      else if (showProfileMenu) setShowProfileMenu(false)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [showAISettings, showSummary, showProfileMenu])
+  }, [showAISettings, showSummary])
+
+  // After a new answer arrives, bring its question to the top of the thread.
+  useEffect(() => {
+    if (scrollTarget === null) return
+    document.getElementById(`ans-${scrollTarget}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setScrollTarget(null)
+  }, [scrollTarget])
+
+  // Selecting a dot (or prev/next) opens that answer and scrolls to it.
+  function selectAnswer(i: number) {
+    if (i < 0 || i >= whatIfs.length) return
+    setActiveTimelineIdx(i)
+    setOpenAnswers(m => ({ ...m, [i]: true }))
+    setScrollTarget(i)
+  }
+
+  function askAboutEvent(e: (typeof ALL_EVENTS)[number]) {
+    setAskedEvents(list => [...list, e.id])
+    handleAsk(`What if ${e.title} (${formatEventYear(e.year)}) had unfolded differently in this timeline?`)
+  }
 
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
+    <div className="dv" style={{ height: 'var(--vh-fit, 100vh)' }}>
+      <Nav />
 
-      {/* Top bar */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '18px 40px', borderBottom: '1px solid var(--border-color)', flexShrink: 0, background: 'var(--nav-bg)', position: 'relative', zIndex: 10 }}>
-        <div
-          onClick={() => router.push('/')}
-          style={{
-            fontSize: 17, fontWeight: 900, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: 'pointer',
-            position: 'relative', zIndex: 1, justifySelf: 'start', display: 'inline-block',
-            backgroundImage: 'linear-gradient(to right, var(--accent) 50%, var(--text) 50%)',
-            backgroundSize: '200% 100%',
-            backgroundPosition: 'right bottom',
-            WebkitBackgroundClip: 'text',
-            backgroundClip: 'text',
-            color: 'transparent',
-            transition: 'background-position 0.4s ease, transform 0.25s ease',
-          }}
-          onMouseEnter={e => { const el = e.currentTarget as HTMLDivElement; el.style.backgroundPosition = 'left bottom'; el.style.transform = 'scale(1.08)' }}
-          onMouseLeave={e => { const el = e.currentTarget as HTMLDivElement; el.style.backgroundPosition = 'right bottom'; el.style.transform = 'scale(1)' }}
-        >
-          DIVERGE
+      <div className="dv-bar">
+        <div className="dv-ev">
+          <div className="dv-ev-th"><EventImage id={event?.id} title={event?.title || 'Custom'} year={event?.year} compact /></div>
+          <div>
+            <b title={startingEvent}>{event?.title || 'Custom starting point'}</b>
+            <span>{event ? formatEventYear(event.year) : 'Your own question'}{whatIfs.length > 0 ? ` · ${activeTimelineIdx >= 0 ? `Question ${activeTimelineIdx + 1} of ${whatIfs.length}` : 'Start'}` : ''}</span>
+          </div>
         </div>
-        <div title={startingEvent} style={{ fontSize: 13, color: 'var(--text)', fontWeight: 600, position: 'relative', zIndex: 1, justifySelf: 'center', whiteSpace: 'nowrap', maxWidth: '36vw', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {startingEvent}
-        </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', position: 'relative', zIndex: 1, justifySelf: 'end' }}>
+        <div className="dv-sp" />
+        <button className="dv-btn" type="button" onClick={() => setShowAISettings(true)}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+          AI settings
+        </button>
+        {whatIfs.length > 0 && (
           <button
-            onClick={() => setShowAISettings(true)}
-            style={{ ...btnStyle, padding: "7px 12px", fontWeight: 700, position: 'relative', width: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            onMouseEnter={e => {
-              const btn = e.currentTarget as HTMLButtonElement
-              btn.style.color = 'var(--accent)'; btn.style.borderColor = 'var(--accent)'
-              const label = btn.querySelector('.ai-label') as HTMLElement
-              const gear = btn.querySelector('.ai-gear') as HTMLElement
-              if (label) label.style.opacity = '0'
-              if (gear) { gear.style.opacity = '1'; gear.style.transform = 'rotate(180deg)' }
-            }}
-            onMouseLeave={e => {
-              const btn = e.currentTarget as HTMLButtonElement
-              btn.style.color = 'var(--text-dim)'; btn.style.borderColor = 'var(--border-color)'
-              const label = btn.querySelector('.ai-label') as HTMLElement
-              const gear = btn.querySelector('.ai-gear') as HTMLElement
-              if (label) label.style.opacity = '1'
-              if (gear) { gear.style.opacity = '0'; gear.style.transform = 'rotate(0deg)' }
-            }}
+            className="dv-btn pri"
+            type="button"
+            onClick={user ? handleManualSave : () => window.open('/auth', '_blank', 'noopener')}
+            disabled={saving}
+            title={user ? undefined : 'Opens sign in in a new tab so this session stays open'}
           >
-            <span className="ai-label" style={{ transition: 'opacity 0.15s' }}>AI</span>
-            <svg className="ai-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ position: 'absolute', width: 16, height: 16, opacity: 0, transition: 'opacity 0.15s, transform 0.4s ease' }}>
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
+            {!user ? 'Sign in to save' : saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save'}
           </button>
-          <button
-            onClick={() => router.push('/')}
-            style={btnStyle}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--accent)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'color-mix(in srgb, var(--accent) 40%, transparent)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-dim)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)' }}
-          >
-            Exit
-          </button>
-          {whatIfs.length > 0 && (
-            <button
-              onClick={user ? handleManualSave : () => window.open('/auth', '_blank', 'noopener')}
-              disabled={saving}
-              title={user ? undefined : 'Opens sign in in a new tab so this session stays open'}
-              style={{ ...btnStyle, background: saved ? '#10B981' : 'var(--card-bg)', color: saved ? '#fff' : 'var(--text-dim)', border: saved ? 'none' : '1px solid var(--border-color)', minWidth: 70, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              onMouseEnter={e => { if (!saved) { (e.currentTarget as HTMLButtonElement).style.color = '#10B981'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#10B981' } }}
-              onMouseLeave={e => { if (!saved) { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-dim)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)' } }}
-            >
-              {!user ? 'Sign in to save' : saving ? '...' : saved ? 'Saved ✓' : 'Save'}
-            </button>
-          )}
-          {user && (
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
-                style={{
-                  width: 36, height: 36, borderRadius: '50%', border: '1px solid var(--border-color)',
-                  background: profile?.avatar_url ? `url(${profile.avatar_url}) center/cover` : 'color-mix(in srgb, var(--accent) 20%, transparent)',
-                  color: 'var(--text)', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-                onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)'}
-                onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)'}
-              >
-                {!profile?.avatar_url && (profile?.username?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?')}
-              </button>
-              {showProfileMenu && (
-                <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '8px', minWidth: 200, zIndex: 300 }}>
-                  <div style={{ padding: '8px 12px 12px', borderBottom: '1px solid var(--border-color)', marginBottom: 6 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{profile?.username || 'User'}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>{user.email}</div>
-                  </div>
-                  {[
-                    { label: 'Profile', action: () => router.push('/profile') },
-                    { label: 'Settings', action: () => router.push('/settings') },
-                  ].map(item => (
-                    <button key={item.label} onClick={() => { item.action(); setShowProfileMenu(false) }}
-                      style={{ display: 'block', width: '100%', padding: '8px 12px', borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--text-dim)', fontSize: 13, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
-                      onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'var(--card-bg)'}
-                      onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
-                    >{item.label}</button>
-                  ))}
-                  <div style={{ borderTop: '1px solid var(--border-color)', marginTop: 6, paddingTop: 6 }}>
-                    <button
-                      onClick={async () => { await signOut(); router.push('/'); setShowProfileMenu(false) }}
-                      style={{ display: 'block', width: '100%', padding: '8px 12px', borderRadius: 8, border: 'none', background: 'transparent', color: '#EF4444', fontSize: 13, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
-                      onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.08)'}
-                      onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
-                    >
-                      Sign Out
-                    </button>
-                  </div>
+        )}
+      </div>
+
+      <div className="dv-body">
+        <div className="dv-left">
+          <div className="dv-thread" ref={threadRef} role="log" aria-label="Your questions and answers">
+            <div className="dv-thread-in">
+              {whatIfs.length === 0 && !loading && (
+                <div className="dv-empty">
+                  <div className="dv-empty-orb" aria-hidden="true">?</div>
+                  <h2>What would have changed?</h2>
+                  <p>Ask a &ldquo;what if&rdquo; about {event ? event.title : 'this moment in history'} below, or tap a suggestion in the panel on the right.</p>
                 </div>
               )}
-            </div>
-          )}
-        </div>
-        </div>
 
-      {/* Split screen */}
-      <div style={{ display: 'flex', flex: 1, flexDirection: 'column', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
-        <div style={{ borderBottom: '1px solid var(--border-color)', flexShrink: 0 }} />
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden', alignItems: 'stretch' }}>
-
-        {/* LEFT — Real history */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}>
-          <div style={{ padding: '14px 22px 10px', minHeight: 51, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--accent)' }}>REAL TIMELINE</span>
-            {event && (
-              <span style={{ padding: '2px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>
-                {formatEventYear(event.year)}
-              </span>
-            )}
-          </div>
-
-          <div style={{ flex: 1, overflowY: 'auto', padding: '20px 22px' }}>
-            <div style={{ height: 130, borderRadius: 10, overflow: 'hidden', marginBottom: 18, position: 'relative', background: 'color-mix(in srgb, var(--accent) 6%, var(--card-bg))' }}>
-              <EventImage
-                key={event?.id || 'custom'}
-                id={event?.id}
-                title={event?.title || 'Custom starting point'}
-                year={event?.year}
-                caption={event ? `${event.title} · ${formatEventYear(event.year)}` : undefined}
-                imgStyle={{ filter: 'brightness(0.45) saturate(0.4)' }}
-              />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(8,8,16,0.85))', pointerEvents: 'none' }} />
-            </div>
-
-            <p style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 14, lineHeight: 1.8, color: 'var(--text-dim)', marginBottom: 18, fontStyle: 'italic' }}>
-              {event?.fullDesc || CUSTOM_START_COPY}
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {realFacts.map((fact, i) => (
-                <div key={i}
-                  style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 10, background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}
-                >
-                  <div style={{ flexShrink: 0, marginTop: 5 }}>
-                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)' }} />
-                  </div>
-                  <div style={{ flex: 1, fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.5 }}>{fact}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* CENTER — Divergence % */}
-        <div style={{ width: 72, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative', height: '100%' }}>
-          <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1, background: 'var(--border-color)', transform: 'translateX(-50%)' }} />
-          <AnimatePresence>
-            {divergence > 0 && (
-              <motion.div
-                key={divergence}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                style={{ zIndex: 1, background: 'transparent', padding: '10px 4px', textAlign: 'center' }}
-              >
-                <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--accent)', lineHeight: 1 }}>{divergence}%</div>
-                <div style={{ fontSize: 8, color: 'var(--text-dim)', letterSpacing: '0.08em', marginTop: 3 }}>DIVERGED</div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* RIGHT — Your alternate timeline */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}>
-          <div style={{ padding: '14px 22px 10px', minHeight: 51, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--accent)' }}>DIVERGED TIMELINE</span>
-            {currentYear && currentYear !== '?' && (
-              <span style={{ padding: '2px 9px', borderRadius: 999, background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>
-                {currentYear}
-              </span>
-            )}
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
-              {currentResponse?.uncertaintyLevel && settings?.show_confidence_level !== false && (
-                <span style={{
-                  padding: '2px 9px', borderRadius: 999, fontSize: 10, fontWeight: 700,
-                  background: `${uncertaintyColor}18`,
-                  border: `1px solid ${uncertaintyColor}44`,
-                  color: uncertaintyColor,
-                }}>
-                  {currentResponse.uncertaintyLevel} CONFIDENCE
-                </span>
-              )}
-              {mood && (
-                <span style={{ padding: '2px 9px', borderRadius: 999, background: `${MOOD_COLORS[mood] || '#fff'}18`, border: `1px solid ${MOOD_COLORS[mood] || '#fff'}44`, fontSize: 10, fontWeight: 700, color: MOOD_COLORS[mood] || '#fff' }}>
-                  {mood}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div style={{ flex: 1, overflowY: 'auto', padding: '20px 22px' }}>
-            {askError && !loading && (
-              <div role="alert" style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 10, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)' }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#F87171', marginBottom: 4 }}>Couldn’t get an answer</div>
-                <div style={{ fontSize: 12, color: 'var(--text-dim)', lineHeight: 1.6 }}>{askError.message} Your question is back in the box below.</div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                  <button onClick={() => handleAsk(askError.question)} style={{ ...btnStyle, padding: '5px 12px', fontSize: 12, color: 'var(--text)' }}>Try again</button>
-                  <button onClick={() => setAskError(null)} style={{ ...btnStyle, padding: '5px 12px', fontSize: 12, background: 'transparent' }}>Dismiss</button>
-                </div>
-              </div>
-            )}
-            {refusal && !loading && (
-              <div role="status" style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 10, background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>That one isn’t a historical what-if</div>
-                <div style={{ fontSize: 12, color: 'var(--text-dim)', lineHeight: 1.6 }}>{refusal.message} Edit your question below and ask again.</div>
-                <div style={{ marginTop: 10 }}>
-                  <button onClick={() => setRefusal(null)} style={{ ...btnStyle, padding: '5px 12px', fontSize: 12, background: 'transparent' }}>Dismiss</button>
-                </div>
-              </div>
-            )}
-            {loading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-dim)', textAlign: 'center', gap: 18 }}>
-                <div style={{ position: 'relative', width: 56, height: 56 }}>
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                    style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid transparent', borderTopColor: 'var(--accent)', borderRightColor: 'color-mix(in srgb, var(--accent) 30%, transparent)' }}
-                  />
-                  <motion.div
-                    animate={{ rotate: -360 }}
-                    transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-                    style={{ position: 'absolute', inset: 8, borderRadius: '50%', border: '2px solid transparent', borderBottomColor: 'var(--accent)', opacity: 0.6 }}
-                  />
-                  <motion.div
-                    animate={{ scale: [1, 1.15, 1], opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-                    style={{ position: 'absolute', inset: 20, borderRadius: '50%', background: 'var(--accent)' }}
-                  />
-                </div>
-                <motion.div
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-                  style={{ fontSize: 14 }}
-                >
-                  Diverging history...
-                </motion.div>
-                {pendingQuestion && (
-                  <div style={{ maxWidth: 440, padding: '10px 14px', borderRadius: 10, background: 'var(--card-bg)', border: '1px solid var(--border-color)', textAlign: 'left' }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--accent)', marginBottom: 4 }}>YOU ASKED</div>
-                    <div style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.55 }}>{pendingQuestion}</div>
-                  </div>
-                )}
-              </div>
-            ) : !currentResponse ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-dim)', textAlign: 'center', gap: 10 }}>
-                <div style={{ fontSize: 36 }}>🌍</div>
-                <div style={{ fontSize: 14 }}>Ask your first "what if" below to begin</div>
-              </div>
-            ) : (
-              <motion.div
-                key={activeTimelineIdx}
-                initial={{ opacity: 0, x: -12 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.4, ease: 'easeOut' }}
-              >
-                {currentEntry && (
-                  <div style={{ marginBottom: 16, padding: '10px 14px', borderRadius: 10, background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--accent)', marginBottom: 4 }}>
-                      YOU ASKED{whatIfs.length > 1 ? ` · ${activeTimelineIdx + 1} OF ${whatIfs.length}` : ''}
-                    </div>
-                    <div style={{ fontSize: 13.5, color: 'var(--text)', lineHeight: 1.55, fontWeight: 500 }}>{currentEntry.question}</div>
-                  </div>
-                )}
-                <p style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 14, lineHeight: 1.8, color: 'var(--text)', marginBottom: 20, fontStyle: 'italic' }}>
-                  {currentParagraph}
-                </p>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {currentFacts.map((fact, i) => {
-                    const key = `alt-${activeTimelineIdx}-${i}`
-                    const isExp = expandedFact === key
-                    const hasExplanation = !!currentResponse.factExplanations?.[i]
-                    const toggleFact = () => setExpandedFact(isExp ? null : key)
-                    return (
-                      <motion.div key={i}
-                        initial={{ opacity: 0, x: -8 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: i * 0.06 }}
-                        {...(hasExplanation ? {
-                          role: 'button',
-                          tabIndex: 0,
-                          'aria-expanded': isExp,
-                          onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleFact() } },
-                        } : {})}
-                        onClick={hasExplanation ? toggleFact : undefined}
-                        style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 10, background: isExp ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : 'var(--card-bg)', border: `1px solid ${isExp ? 'color-mix(in srgb, var(--accent) 25%, transparent)' : 'var(--border-color)'}`, cursor: hasExplanation ? 'pointer' : 'default', transition: 'all 0.18s' }}
-                        onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = 'color-mix(in srgb, var(--accent) 5%, transparent)'}
-                        onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = isExp ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : 'var(--card-bg)'}
+              {whatIfs.map((w, i) => {
+                const r = w.response
+                const open = isAnswerOpen(i)
+                const prevScore = i > 0 ? whatIfs[i - 1].response.divergenceScore : 0
+                const delta = r.divergenceScore - prevScore
+                const c = confidenceInfo(r.uncertaintyLevel)
+                return (
+                  <div className={`dv-ex${activeTimelineIdx === i ? ' active' : ''}`} id={`ans-${i}`} key={i}>
+                    <div className="dv-q">{w.question}</div>
+                    <div className="dv-ans">
+                      <button
+                        type="button"
+                        className="dv-ans-head"
+                        aria-expanded={open}
+                        aria-controls={`ans-body-${i}`}
+                        onClick={() => { setOpenAnswers(m => ({ ...m, [i]: !open })); setActiveTimelineIdx(i) }}
                       >
-                        <div style={{ flexShrink: 0, marginTop: 5 }}>
-                          <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', boxShadow: isExp ? '0 0 6px var(--accent)' : 'none' }} />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 13, color: isExp ? 'var(--text)' : 'var(--text-dim)', lineHeight: 1.5, fontWeight: isExp ? 500 : 400 }}>{fact}</div>
-                          {isExp && currentResponse.factExplanations?.[i] && (
-                            <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 7, lineHeight: 1.65, paddingTop: 7, borderTop: '1px solid var(--border-color)', animation: 'fadeIn 0.2s ease' }}>
-                              {currentResponse.factExplanations[i]}
-                            </div>
+                        <span className="dv-tags">
+                          <span className="dv-tag">{r.year}</span>
+                          <span className="dv-tag up">{delta >= 0 ? '+' : '−'}{Math.abs(delta)}% to {r.divergenceScore}% diverged</span>
+                          <span className="dv-tag" style={{ ['--c' as string]: MOOD_COLORS[r.worldMood] || '#fff' }}><i />{moodLabel(r.worldMood)}</span>
+                          {settings?.show_confidence_level !== false && (
+                            <span className="dv-tag" style={{ ['--c' as string]: c.color }}><i />{c.label}</span>
+                          )}
+                        </span>
+                        <span className={`dv-chev${open ? ' open' : ''}`} aria-hidden="true">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+                        </span>
+                      </button>
+                      {!open && <p className="dv-head">{firstSentence(r.paragraph)}</p>}
+                      <div className={`dv-collapse${open ? ' open' : ''}`} id={`ans-body-${i}`}>
+                        <div>
+                          <div className={`dv-reveal${freshIdx === i ? ' go' : ''}`}><p className="dv-prose dv-para">{r.paragraph}</p></div>
+                          <div className="dv-chips">
+                            {r.keyFacts.map((f, k) => {
+                              const key = `${i}-${k}`
+                              const factOpen = !!openFacts[key]
+                              const expl = r.factExplanations?.[k]
+                              return (
+                                <div className={`dv-chip${factOpen ? ' open' : ''}${freshIdx === i ? ' fresh' : ''}`} key={k} style={freshIdx === i ? { animationDelay: `${420 + k * 70}ms` } : undefined}>
+                                  <button
+                                    type="button"
+                                    className="dv-chip-head"
+                                    aria-expanded={factOpen}
+                                    disabled={!expl}
+                                    onClick={() => setOpenFacts(m => ({ ...m, [key]: !factOpen }))}
+                                  >
+                                    <span className="dv-chip-n">{k + 1}</span>
+                                    <span className="dv-chip-t">{f}</span>
+                                    {r.factTypes?.[k] && r.factTypes[k] !== 'documented' && (
+                                      <span className="dv-chip-kind" title={r.factTypes[k] === 'inference' ? 'A reasoned consequence of the change, not a recorded fact' : 'A bolder possibility, not a prediction'}>{r.factTypes[k]}</span>
+                                    )}
+                                    {r.factTypes?.[k] === 'documented' && r.unverified?.includes(k) && (
+                                      <span className="dv-chip-kind warn" title="A second check could not confirm this against the reference">unconfirmed</span>
+                                    )}
+                                  </button>
+                                  {expl && (
+                                    <div className={`dv-collapse${factOpen ? ' open' : ''}`}>
+                                      <div><p className="dv-chip-x">{expl}</p></div>
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                          {r.sources && r.sources.length > 0 && (
+                            <p className="dv-sources">Grounded in: {r.sources.map((src, n) => (
+                              <span key={src.url}>{n > 0 && ', '}<a href={src.url} target="_blank" rel="noreferrer">{src.title} (Wikipedia)</a></span>
+                            ))}</p>
                           )}
                         </div>
-                        {hasExplanation && (
-                          <span aria-hidden="true" style={{ flexShrink: 0, width: 18, height: 18, borderRadius: '50%', border: `1px solid ${isExp ? 'var(--accent)' : 'var(--border-color)'}`, background: isExp ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent', color: isExp ? 'var(--accent)' : 'var(--text-dim)', fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', transform: isExp ? 'rotate(180deg)' : 'rotate(0)' }}>
-                            ▾
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+
+              {loading && (
+                <div className="dv-ex" id="ans-loading">
+                  {pendingQuestion && <div className="dv-q">{pendingQuestion}</div>}
+                  <div className="dv-ans dv-wait" role="status" aria-live="polite">
+                    <div className="dv-wait-head">
+                      <span className="dv-orbit" aria-hidden="true"><i /><i /><i /></span>
+                      <div>
+                        <b>{WAIT_STAGES[Math.min(WAIT_STAGES.length - 1, Math.floor(elapsed / 7))]}…</b>
+                        <span className="dv-wait-sub">{elapsed}s · usually {WAIT_USUAL[normalizeLength(settings?.ai_response_style)]} seconds</span>
+                      </div>
+                    </div>
+                    <div className="dv-steps" aria-hidden="true">
+                      {WAIT_STAGES.map((label, i) => {
+                        const stage = Math.min(WAIT_STAGES.length - 1, Math.floor(elapsed / 7))
+                        return <span key={label} className={i < stage ? 'done' : i === stage ? 'now' : ''}><i />{label}</span>
+                      })}
+                    </div>
+                    <span className="dv-bar-wait" aria-hidden="true" />
+                    {streamText ? (
+                      <p className="dv-prose dv-para" style={{ marginTop: 10 }}>{liveParagraph(streamText)}</p>
+                    ) : (
+                      <>
+                        <span className="dv-skel" style={{ width: '92%' }} />
+                        <span className="dv-skel" style={{ width: '84%' }} />
+                        <span className="dv-skel" style={{ width: '58%' }} />
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {resumeNote && !loading && whatIfs.length === 0 && (
+                <div className="dv-note" role="status">
+                  <b>Welcome back</b>
+                  <p>This session was saved before answers were kept, so only your questions survived. Tap a question to ask it again and rebuild the timeline.</p>
+                  <div className="dv-note-actions" style={{ flexWrap: 'wrap' }}>
+                    {resumeNote.questions.map(q => (
+                      <button key={q} className="dv-btn" type="button" onClick={() => { setResumeNote(null); handleAsk(q) }}>{q.length > 70 ? q.slice(0, 69) + '…' : q}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {askError && !loading && (
+                <div className="dv-note err" role="alert">
+                  <b>Couldn’t get an answer</b>
+                  <p>{askError.message} Your question is back in the box below.</p>
+                  <div className="dv-note-actions">
+                    <button className="dv-btn" type="button" onClick={() => handleAsk(askError.question)}>Try again</button>
+                    <button className="dv-btn ghost" type="button" onClick={() => setAskError(null)}>Dismiss</button>
+                  </div>
+                </div>
+              )}
+              {gate && !loading && (
+                <div className="dv-note" role="alert">
+                  <b>{gate.code === 'free_limit_reached' ? 'You’ve used your 2 free questions' : gate.code === 'sign_in_required' ? 'Sign in to ask' : gate.code === 'invalid_api_key' ? 'That API key didn’t work' : 'Free questions unavailable'}</b>
+                  <p>{gate.message}</p>
+                  <form
+                    className="dv-note-actions"
+                    style={{ flexWrap: 'wrap' }}
+                    onSubmit={e => {
+                      e.preventDefault()
+                      if (!keyDraft.trim()) return
+                      setUserApiKey(keyDraft)
+                      setKeyDraft('')
+                      const q = gate.question
+                      setGate(null)
+                      handleAsk(q)
+                    }}
+                  >
+                    <input
+                      type="password"
+                      autoComplete="off"
+                      spellCheck={false}
+                      value={keyDraft}
+                      onChange={e => setKeyDraft(e.target.value)}
+                      placeholder="sk-ant-… your Anthropic API key"
+                      aria-label="Your Anthropic API key"
+                      style={{ flex: '1 1 240px', minWidth: 0, padding: '9px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontSize: 13 }}
+                    />
+                    <button className="dv-btn" type="submit" disabled={!keyDraft.trim()}>Use my key</button>
+                    {!user && <button className="dv-btn ghost" type="button" onClick={() => router.push('/auth')}>Sign in</button>}
+                    <button className="dv-btn ghost" type="button" disabled title="Payments are coming soon">Pay (coming soon)</button>
+                  </form>
+                  <p style={{ fontSize: 12, opacity: 0.7, marginTop: 8 }}>Your key stays in this browser and is sent only with your own requests. It is never saved on the server.</p>
+                </div>
+              )}
+              {refusal && !loading && (
+                <div className="dv-note" role="status">
+                  <b>That one isn’t a historical what-if</b>
+                  <p>{refusal.message} Edit your question below and ask again.</p>
+                  <div className="dv-note-actions">
+                    <button className="dv-btn ghost" type="button" onClick={() => setRefusal(null)}>Dismiss</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="dv-dockwrap">
+            <div className="dv-dock">
+              <div className="dv-trackrow">
+                <button className="dv-circ" type="button" aria-label="Previous answer" disabled={whatIfs.length === 0 || activeTimelineIdx <= 0} onClick={() => selectAnswer(activeTimelineIdx - 1)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+                </button>
+                <div className="dv-track">
+                  <button className={`dv-dot start${activeTimelineIdx === -1 ? ' now' : ''}`} type="button" aria-label="Back to the start" onClick={() => { setActiveTimelineIdx(-1); threadRef.current?.scrollTo({ top: 0, behavior: 'smooth' }) }}>Start</button>
+                  {whatIfs.map((w, i) => {
+                    const r = w.response
+                    const c = confidenceInfo(r.uncertaintyLevel)
+                    return (
+                      <span key={i} style={{ display: 'contents' }}>
+                        <span className={`dv-seg${i <= activeTimelineIdx ? ' on' : ''}`} />
+                        <button className={`dv-dot${i === activeTimelineIdx ? ' now' : ''}`} type="button" aria-label={`Question ${i + 1}: ${w.question}`} onClick={() => selectAnswer(i)}>
+                          {i + 1}
+                          <span className="dv-hc" role="tooltip">
+                            <span className="dv-hq">{w.question}</span>
+                            <span className="dv-hs">
+                              <span className="dv-tag">{r.year}</span>
+                              <span className="dv-tag">{r.divergenceScore}% diverged</span>
+                              <span className="dv-tag" style={{ ['--c' as string]: MOOD_COLORS[r.worldMood] || '#fff' }}><i />{moodLabel(r.worldMood)}</span>
+                              <span className="dv-tag" style={{ ['--c' as string]: c.color }}><i />{c.label}</span>
+                            </span>
+                            <span className="dv-hl">{firstSentence(r.paragraph, 170)}</span>
                           </span>
-                        )}
-                      </motion.div>
+                        </button>
+                      </span>
                     )
                   })}
                 </div>
-
-                {/* Reliability notes */}
-                {currentResponse.reliabilityNotes && settings?.show_historians_note !== false && (
-                  <div style={{ marginTop: 14, padding: '10px 12px', borderRadius: 10, background: 'color-mix(in srgb, var(--accent) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 15%, transparent)' }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', marginBottom: 4 }}>HISTORIAN'S NOTE</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-dim)', lineHeight: 1.65 }}>{currentResponse.reliabilityNotes}</div>
-                  </div>
-                )}
-              </motion.div>
-            )}
-          </div>
-        </div>
-        </div>
-      </div>
-
-      {/* Narration */}
-      {currentResponse?.narration && (
-        <div style={{ padding: '10px 40px', borderTop: '1px solid var(--border-color)', background: 'var(--card-bg)', flexShrink: 0, position: 'relative', zIndex: 1 }}>
-          <div style={{ maxWidth: 860, marginInline: 'auto', display: 'flex', alignItems: 'baseline', gap: 14 }}>
-            <p
-              style={{
-                fontFamily: 'Playfair Display, Georgia, serif', fontSize: 13, lineHeight: 1.8, color: 'var(--text-dim)', margin: 0, fontStyle: 'italic', textAlign: 'center', flex: 1,
-                ...(narrationOpen ? { maxHeight: '28vh', overflowY: 'auto' } : { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }),
-              }}
-            >
-              {currentResponse.narration}
-            </p>
-            {narrationLong && (
-              <button
-                onClick={() => setNarrationOpenFor(narrationOpen ? null : activeTimelineIdx)}
-                aria-expanded={narrationOpen}
-                style={{ flexShrink: 0, background: 'none', border: 'none', color: 'var(--accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}
-              >
-                {narrationOpen ? 'Show less' : 'Read more'}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Timeline dots */}
-      <div style={{ padding: '10px 24px', borderTop: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', flexShrink: 0, position: 'relative', zIndex: 1, background: 'var(--nav-bg)', overflow: 'hidden' }}>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', overflowX: 'auto', position: 'relative', zIndex: 1 }}>
-          <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--text-dim)', border: '2px solid var(--border-color)', flexShrink: 0 }} />
-          {whatIfs.map((entry, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-              <div style={{ width: 36, height: 1, background: 'var(--border-color)' }} />
-              <div
-                title={entry.question}
-                onClick={() => setActiveTimelineIdx(i)}
-                style={{ width: 10, height: 10, borderRadius: '50%', background: i === activeTimelineIdx ? 'var(--accent)' : 'var(--text-dim)', border: `2px solid ${i === activeTimelineIdx ? 'var(--accent)' : 'var(--border-color)'}`, cursor: 'pointer', flexShrink: 0, transition: 'all 0.2s', boxShadow: i === activeTimelineIdx ? '0 0 8px var(--accent)' : 'none' }}
-              />
+                <button className="dv-circ" type="button" aria-label="Next answer" disabled={whatIfs.length === 0 || activeTimelineIdx >= whatIfs.length - 1} onClick={() => selectAnswer(activeTimelineIdx + 1)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
+                </button>
+                <button className="dv-btn" type="button" onClick={handleSummary} disabled={whatIfs.length === 0}>View summary</button>
+              </div>
+              <label className="dv-ask">
+                <input
+                  ref={inputRef}
+                  value={currentInput}
+                  onChange={e => setCurrentInput(e.target.value.slice(0, 500))}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAsk() } }}
+                  placeholder="What if…"
+                  aria-label="Ask a what-if question"
+                  disabled={loading}
+                />
+                <span className="dv-cnt">{currentInput.length}/500</span>
+                <button className="dv-send" type="button" aria-label="Ask Diverge" onClick={() => handleAsk()} disabled={loading || !currentInput.trim()}>
+                  {loading ? <span className="dv-spin sm" aria-hidden="true" /> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>}
+                </button>
+              </label>
             </div>
-          ))}
+          </div>
         </div>
-        <button onClick={handleSummary} style={{ marginLeft: 12, padding: '5px 12px', borderRadius: 7, border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)', background: 'color-mix(in srgb, var(--accent) 7%, transparent)', color: 'var(--accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit', position: 'relative', zIndex: 1 }}>
-          View Summary
-        </button>
-      </div>
 
-      {/* Input */}
-      <div style={{ padding: '12px 24px 16px', background: 'var(--nav-bg)', flexShrink: 0, borderTop: '1px solid var(--border-color)', position: 'relative', zIndex: 1, overflow: 'hidden' }}>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', position: 'relative', zIndex: 1 }}>
-          <input
-            ref={inputRef}
-            value={currentInput}
-            onChange={e => setCurrentInput(e.target.value.slice(0, 500))}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAsk() } }}
-            placeholder="What if..."
-            disabled={loading}
-            style={{ flex: 1, padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text)', fontSize: 14, outline: 'none', fontFamily: 'inherit', opacity: loading ? 0.6 : 1 }}
-          />
-          <span style={{ fontSize: 11, color: 'var(--text-dim)', flexShrink: 0 }}>{currentInput.length}/500</span>
-          <button
-            onClick={() => handleAsk()}
-            disabled={loading || !currentInput.trim()}
-            style={{ padding: '12px 22px', borderRadius: 10, background: loading || !currentInput.trim() ? 'color-mix(in srgb, var(--accent) 40%, transparent)' : 'var(--accent)', color: '#fff', fontSize: 14, fontWeight: 700, border: 'none', cursor: loading || !currentInput.trim() ? 'not-allowed' : 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'inherit' }}
-          >
-            {loading
-              ? <><div style={{ width: 13, height: 13, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.25)', borderTopColor: '#fff', animation: 'spin 0.8s linear infinite' }} />Thinking...</>
-              : 'Ask Diverge →'
-            }
-          </button>
-        </div>
-        <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-          Press Enter to ask
-        </div>
+        <aside className="dv-world" aria-label="World state">
+          <div className="dv-card gauge-card" style={{ ['--mood' as string]: MOOD_COLORS[mood] || '#F59E0B' }}>
+            <div className="dv-gauge" style={{ ['--p' as string]: divergence }} role="img" aria-label={`${divergence}% diverged from real history`}>
+              <div><b>{divergence}%</b><small>diverged</small></div>
+            </div>
+            <div className="dv-tags center">
+              {currentYear !== '?' && <span className="dv-tag">{currentYear}</span>}
+              {currentResponse ? (
+                <>
+                  <span className="dv-tag" style={{ ['--c' as string]: MOOD_COLORS[mood] || '#fff' }}><i />{moodLabel(mood)}</span>
+                  {settings?.show_confidence_level !== false && (
+                    <span className="dv-tag" style={{ ['--c' as string]: confidenceInfo(currentResponse.uncertaintyLevel).color }}><i />{confidenceInfo(currentResponse.uncertaintyLevel).label}</span>
+                  )}
+                </>
+              ) : (
+                <span className="dv-tag">Real history</span>
+              )}
+            </div>
+          </div>
+
+          {suggestions.length > 0 && (
+            <div className="dv-card">
+              <h3>Ask next</h3>
+              <div className="dv-sug">
+                {suggestions.map(s => (
+                  <button key={s} type="button" className="dv-sug-b" disabled={loading} onClick={() => handleAsk(s)}>{s}</button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {meanwhile.list.length > 0 && (
+            <div className="dv-card">
+              <h3>Meanwhile in real history</h3>
+              <p className="dv-sub">{meanwhile.near ? `Around ${currentYear}` : `Nothing recorded near ${currentYear}. The closest events:`}</p>
+              <ul className="dv-list">
+                {meanwhile.list.map(e => (
+                  <li key={e.id}><b>{formatEventYear(e.year)}</b><span><i>{e.title}</i>{e.shortDesc}</span></li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {unanswered.length > 0 && (
+            <div className="dv-card">
+              <h3>Unanswered history</h3>
+              <p className="dv-sub">Real events after {currentYear} that this timeline hasn’t touched. Tap one to ask about it.</p>
+              <div className="dv-un">
+                {unanswered.map(e => (
+                  <button key={e.id} type="button" className="dv-un-b" disabled={loading} onClick={() => askAboutEvent(e)}>
+                    <b>{formatEventYear(e.year)}</b>{e.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="dv-card">
+            <h3>Real timeline{event ? ` · ${formatEventYear(event.year)}` : ''}</h3>
+            <div className="dv-ph">
+              <EventImage key={event?.id || 'custom'} id={event?.id} title={event?.title || 'Custom starting point'} year={event?.year} imgStyle={{ filter: 'brightness(0.75) saturate(0.8)' }} />
+            </div>
+            <p className="dv-prose soft">{event?.fullDesc || CUSTOM_START_COPY}</p>
+            <ul className="dv-facts">
+              {realFacts.map(f => <li key={f}>{f}</li>)}
+            </ul>
+          </div>
+
+        </aside>
       </div>
 
       {/* Summary modal */}
@@ -661,7 +714,7 @@ export default function DivergePage() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-            style={{ background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 20, padding: 32, maxWidth: 680, width: '100%', maxHeight: '88vh', overflowY: 'auto' }}
+            style={{ background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 20, padding: 32, maxWidth: 680, width: '100%', maxHeight: 'calc(88vh / var(--ui-scale, 1))', overflowY: 'auto' }}
             onClick={e => e.stopPropagation()}
           >
             <button onClick={() => setShowSummary(false)} style={{ float: 'right', background: 'var(--card-bg)', border: 'none', color: 'var(--text-dim)', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 14 }}>×</button>
@@ -734,7 +787,7 @@ export default function DivergePage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 10 }}
               transition={{ type: 'spring', stiffness: 320, damping: 30 }}
-              style={{ background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 20, padding: '28px 32px', maxWidth: 460, width: '100%', maxHeight: '85vh', overflowY: 'auto', position: 'relative' }}
+              style={{ background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 20, padding: '28px 32px', maxWidth: 460, width: '100%', maxHeight: 'calc(85vh / var(--ui-scale, 1))', overflowY: 'auto', position: 'relative' }}
               onClick={e => e.stopPropagation()}
             >
               <button
@@ -749,76 +802,8 @@ export default function DivergePage() {
                 <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>Changes save automatically.</div>
               </div>
 
-              {/* Response length */}
-              <div style={{ marginBottom: 22 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Response Length</div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {['concise', 'detailed'].map(val => (
-                    <button
-                      key={val}
-                      onClick={() => updateSettings({ ai_response_style: val })}
-                      style={{
-                        flex: 1, padding: '9px', borderRadius: 9, cursor: 'pointer', fontFamily: 'inherit', textTransform: 'capitalize',
-                        border: `1px solid ${settings?.ai_response_style === val ? 'var(--accent)' : 'var(--border-color)'}`,
-                        background: settings?.ai_response_style === val ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--card-bg)',
-                        color: settings?.ai_response_style === val ? 'var(--accent)' : 'var(--text-dim)',
-                        fontSize: 13, fontWeight: settings?.ai_response_style === val ? 700 : 400,
-                      }}
-                    >
-                      {val}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Plausibility */}
-              <div style={{ marginBottom: 22 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Plausibility</div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {[
-                    { val: 'realistic', label: 'Realistic' },
-                    { val: 'speculative', label: 'Speculative' },
-                  ].map(opt => (
-                    <button
-                      key={opt.val}
-                      onClick={() => updateSettings({ ai_plausibility: opt.val })}
-                      style={{
-                        flex: 1, padding: '9px', borderRadius: 9, cursor: 'pointer', fontFamily: 'inherit',
-                        border: `1px solid ${settings?.ai_plausibility === opt.val ? 'var(--accent)' : 'var(--border-color)'}`,
-                        background: settings?.ai_plausibility === opt.val ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--card-bg)',
-                        color: settings?.ai_plausibility === opt.val ? 'var(--accent)' : 'var(--text-dim)',
-                        fontSize: 13, fontWeight: settings?.ai_plausibility === opt.val ? 700 : 400,
-                      }}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Tone */}
               <div style={{ marginBottom: 26 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Tone</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {[
-                    { val: 'historian', label: 'Neutral Historian', desc: 'Balanced, factual, measured' },
-                    { val: 'dramatic', label: 'Dramatic Narrator', desc: 'Vivid, cinematic storytelling' },
-                    { val: 'academic', label: 'Academic', desc: 'Formal, citation-minded, precise' },
-                  ].map(opt => (
-                    <button
-                      key={opt.val}
-                      onClick={() => updateSettings({ ai_tone: opt.val })}
-                      style={{
-                        padding: '10px 12px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
-                        border: `1px solid ${settings?.ai_tone === opt.val ? 'var(--accent)' : 'var(--border-color)'}`,
-                        background: settings?.ai_tone === opt.val ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'var(--card-bg)',
-                      }}
-                    >
-                      <div style={{ fontSize: 13, fontWeight: 600, color: settings?.ai_tone === opt.val ? 'var(--accent)' : 'var(--text)' }}>{opt.label}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>{opt.desc}</div>
-                    </button>
-                  ))}
-                </div>
+                <AIResponseSettings showDescriptions />
               </div>
 
               {/* Toggles */}
@@ -827,11 +812,6 @@ export default function DivergePage() {
                   label="Show confidence level"
                   value={settings?.show_confidence_level ?? true}
                   onChange={() => updateSettings({ show_confidence_level: !(settings?.show_confidence_level ?? true) })}
-                />
-                <AIToggle
-                  label="Show historian's note"
-                  value={settings?.show_historians_note ?? true}
-                  onChange={() => updateSettings({ show_historians_note: !(settings?.show_historians_note ?? true) })}
                 />
               </div>
             </motion.div>

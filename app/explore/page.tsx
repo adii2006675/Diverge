@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import Nav from '@/components/Nav'
 import { ALL_EVENTS, ERAS, formatEventYear } from '@/lib/events'
 import DualSlider from '@/components/DualSlider'
-import CardBorderTrace from '@/components/CardBorderTrace'
+import TiltCard from '@/components/TiltCard'
 import EventImage from '@/components/EventImage'
 
 // The year slider covers 2600 BC to 2026. It is not linear: the ancient world gets 15% of the track and
@@ -36,13 +36,19 @@ function pctToYear(p: number): number {
 
 export default function ExplorePage() {
   const router = useRouter()
-  const [selectedEra, setSelectedEra] = useState('All')
+  // Several eras can be on at once. An empty list means "All".
+  const [selectedEras, setSelectedEras] = useState<string[]>([])
+  const isOn = (era: string) => (era === 'All' ? selectedEras.length === 0 : selectedEras.includes(era))
+  function toggleEra(era: string) {
+    if (era === 'All') return setSelectedEras([])
+    setSelectedEras(list => (list.includes(era) ? list.filter(x => x !== era) : [...list, era]))
+  }
   const [yearMin, setYearMin] = useState(YEAR_MIN)
   const [yearMax, setYearMax] = useState(YEAR_MAX)
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const filtered = ALL_EVENTS.filter(e => {
-    const eraMatch = selectedEra === 'All' || e.era === selectedEra
+    const eraMatch = selectedEras.length === 0 || selectedEras.includes(e.era)
     const yearMatch = e.year >= yearMin && e.year <= yearMax
     return eraMatch && yearMatch
   })
@@ -87,16 +93,17 @@ export default function ExplorePage() {
           {ERAS.map(era => (
             <button
               key={era}
-              onClick={() => setSelectedEra(era)}
+              onClick={() => toggleEra(era)}
+              aria-pressed={isOn(era)}
               style={{
                 padding: '7px 16px', borderRadius: 999, cursor: 'pointer', fontFamily: 'inherit',
-                border: `1px solid ${selectedEra === era ? 'var(--accent)' : 'var(--border-color)'}`,
-                background: selectedEra === era ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'transparent',
-                color: selectedEra === era ? 'var(--accent)' : 'var(--text-dim)',
+                border: `1px solid ${isOn(era) ? 'var(--accent)' : 'var(--border-color)'}`,
+                background: isOn(era) ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'transparent',
+                color: isOn(era) ? 'var(--accent)' : 'var(--text-dim)',
                 fontSize: 'var(--font-scale)', fontWeight: 500, transition: 'all 0.18s',
               }}
-              onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.fontSize = 'calc(var(--font-scale) * 1.08)'; el.style.color = selectedEra === era ? 'var(--accent)' : 'var(--text)' }}
-              onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.fontSize = 'var(--font-scale)'; el.style.color = selectedEra === era ? 'var(--accent)' : 'var(--text-dim)' }}
+              onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.fontSize = 'calc(var(--font-scale) * 1.08)'; el.style.color = isOn(era) ? 'var(--accent)' : 'var(--text)' }}
+              onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.fontSize = 'var(--font-scale)'; el.style.color = isOn(era) ? 'var(--accent)' : 'var(--text-dim)' }}
             >
               {era}
             </button>
@@ -144,16 +151,11 @@ export default function ExplorePage() {
                 className="event-card"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, delay: idx * 0.05, ease: 'easeOut' }}
-                whileHover={{ y: -7.5 }}
-                style={{
-                  borderRadius: 16, border: '1px solid var(--border-color)',
-                  background: 'var(--bg)', overflow: 'hidden',
-                  cursor: 'pointer', position: 'relative', zIndex: 1, isolation: 'isolate',
-                }}
+                transition={{ duration: 0.35, delay: Math.min(idx, 11) * 0.04, ease: 'easeOut' }}
+                style={{ borderRadius: 16 }}
                 onClick={() => setExpandedId(event.id)}
               >
-                <CardBorderTrace radius={16} />
+                <TiltCard radius={16}>
                 <div style={{ position: 'relative', zIndex: 1 }}>
                   <div style={{ height: 130, overflow: 'hidden', position: 'relative', background: 'var(--bg)' }}>
                     <EventImage key={event.id} id={event.id} title={event.title} year={event.year} loading="lazy" />
@@ -165,22 +167,10 @@ export default function ExplorePage() {
                   </div>
                   <div style={{ padding: '12px 14px 14px' }}>
                     <div style={{ fontSize: 'var(--font-scale)', fontWeight: 700, marginBottom: 5, color: 'var(--text)' }}>{event.title}</div>
-                    <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', lineHeight: 1.6, marginBottom: 12 }}>{event.shortDesc}</div>
-                    <button
-                      onClick={e => { e.stopPropagation(); router.push(`/diverge/${event.id}`) }}
-                      style={{
-                        width: '100%', padding: '8px', borderRadius: 8,
-                        border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)', background: 'color-mix(in srgb, var(--accent) 7%, transparent)',
-                        color: 'var(--accent)', fontSize: 'var(--font-scale)', fontWeight: 600, cursor: 'pointer',
-                        fontFamily: 'inherit', transition: 'all 0.15s',
-                      }}
-                      onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'color-mix(in srgb, var(--accent) 16%, transparent)'}
-                      onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'color-mix(in srgb, var(--accent) 7%, transparent)'}
-                    >
-                      Explore
-                    </button>
+                    <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', lineHeight: 1.6, marginBottom: 0 }}>{event.shortDesc}</div>
                   </div>
                 </div>
+                </TiltCard>
               </motion.div>
             ))}
           </div>
@@ -208,7 +198,7 @@ export default function ExplorePage() {
                 className="event-card always-trace"
                 transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
                 style={{
-                  borderRadius: 20, border: '1px solid var(--border-color)',
+                  borderRadius: 20,
                   background: 'var(--bg)', overflow: 'hidden',
                   position: 'relative', isolation: 'isolate',
                   maxWidth: 520, width: '100%', maxHeight: 'calc(85vh / var(--ui-scale, 1))', overflowY: 'auto',
@@ -216,7 +206,7 @@ export default function ExplorePage() {
                 }}
               >
                 <div style={{ position: 'absolute', inset: 0, background: 'var(--card-bg)', zIndex: 0 }} />
-                <CardBorderTrace radius={20} />
+                <div className="tilt-ring static" aria-hidden="true" />
                 <div style={{ position: 'relative', zIndex: 1 }}>
                   <div style={{ height: 220, overflow: 'hidden', position: 'relative', background: 'var(--card-bg)' }}>
                     <EventImage key={expandedEvent.id} id={expandedEvent.id} title={expandedEvent.title} year={expandedEvent.year} />
@@ -233,6 +223,7 @@ export default function ExplorePage() {
                     </div>
                     <div style={{ display: 'flex', gap: 10 }}>
                       <button
+                        className="modal-btn"
                         onClick={() => setExpandedId(null)}
                         style={{ flex: 1, padding: '12px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-dim)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}
                         onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)'}
@@ -241,6 +232,7 @@ export default function ExplorePage() {
                         Back
                       </button>
                       <button
+                        className="modal-btn modal-btn-go"
                         onClick={() => router.push(`/diverge/${expandedEvent.id}`)}
                         style={{ flex: 1, padding: '12px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
                       >

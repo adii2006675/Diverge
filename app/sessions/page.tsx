@@ -20,6 +20,27 @@ type Session = {
 
 type SortMode = 'newest' | 'oldest' | 'most_diverged' | 'least_diverged'
 
+// The what_ifs column is normally an array, but a row can hold a JSON string, a single object or null.
+function toWhatIfList(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value
+  if (typeof value === 'string') {
+    try { return toWhatIfList(JSON.parse(value)) } catch { return value.trim() ? [value] : [] }
+  }
+  if (value && typeof value === 'object') return Object.values(value as Record<string, unknown>)
+  return []
+}
+
+// Saved what-ifs are normally { question }, but older or hand-edited rows can be plain strings or other shapes.
+// Always return text so a strange row can never crash the page.
+function whatIfText(w: unknown): string {
+  if (typeof w === 'string') return w
+  if (w && typeof w === 'object') {
+    const q = (w as { question?: unknown }).question
+    if (typeof q === 'string' && q.trim()) return q
+  }
+  return 'Untitled question'
+}
+
 export default function SessionsPage() {
   const router = useRouter()
   const { user, loading } = useAuth()
@@ -46,7 +67,7 @@ export default function SessionsPage() {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(100)
-    setSessions(data || [])
+    setSessions((data || []).map((row: Session) => ({ ...row, what_ifs: toWhatIfList(row.what_ifs) })))
     setLoadingSessions(false)
   }
 
@@ -285,11 +306,11 @@ export default function SessionsPage() {
                       </div>
                       {session.what_ifs?.slice(0, 5).map((w: any, i: number) => (
                         <div key={i} style={{ fontSize: 12, color: 'var(--text-dim)', padding: '5px 0', borderBottom: i < Math.min(session.what_ifs.length, 5) - 1 ? '1px solid var(--border-color)' : 'none' }}>
-                          {i + 1}. {w.question || w}
+                          {i + 1}. {whatIfText(w)}
                         </div>
                       ))}
                       <button
-                        onClick={e => { e.stopPropagation(); router.push(`/diverge/${session.event_id}`) }}
+                        onClick={e => { e.stopPropagation(); router.push(`/diverge/${session.event_id || 'custom'}?session=${session.id}`) }}
                         style={{ marginTop: 12, width: '100%', padding: '9px', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)', background: 'transparent', color: 'var(--accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
                         onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.12)'}
                         onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
