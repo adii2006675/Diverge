@@ -121,7 +121,7 @@ export default function Nav({ active }: { active?: string }) {
 
                     {[
                       { label: 'Profile', action: () => { router.push('/profile'); setShowUserMenu(false) } },
-                      { label: 'Settings', action: () => { router.push('/settings'); setShowUserMenu(false) } },
+                      { label: 'Settings', action: () => { router.push('/profile'); setShowUserMenu(false) } },
                     ].map(item => (
                       <button
                         key={item.label}

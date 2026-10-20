@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
+import SettingsPanel from '@/components/SettingsPanel'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -20,6 +21,8 @@ export default function ProfilePage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [avatarHover, setAvatarHover] = useState(false)
   const [showPasswordInfo, setShowPasswordInfo] = useState(false)
+  const [editingName, setEditingName] = useState(false)
+  const [nameError, setNameError] = useState('')
 
   useEffect(() => {
     if (profile?.username) setUsername(profile.username)
@@ -38,12 +41,20 @@ export default function ProfilePage() {
   }
 
   async function handleSaveProfile() {
-    if (!username.trim()) return
+    const next = username.trim()
+    if (!next) { setUsername(profile?.username || ''); setEditingName(false); return }
+    if (next === profile?.username) { setEditingName(false); return }
     setSaving(true)
-    await updateProfile({ username: username.trim() })
+    setNameError('')
+    try {
+      await updateProfile({ username: next })
+      setEditingName(false)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch {
+      setNameError('Couldn’t save that name. Try again.')
+    }
     setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
   }
 
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -120,7 +131,7 @@ export default function ProfilePage() {
     <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
       <Nav active="profile" />
 
-      <div style={{ position: 'relative', zIndex: 1, maxWidth: 560, margin: '0 auto', padding: '140px 24px 60px' }}>
+      <div style={{ position: 'relative', zIndex: 1, maxWidth: 640, margin: '0 auto', padding: '140px 24px 60px' }}>
         <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 8, letterSpacing: '-0.02em' }}>Profile</h1>
         <p style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 40 }}>Changes save automatically to your account.</p>
 
@@ -174,36 +185,40 @@ export default function ProfilePage() {
             )}
           </div>
           <div>
-            <div style={{ fontSize: 'var(--font-scale)', fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{profile?.username || 'User'}</div>
-            <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)' }}>{user.email}</div>
-            <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', marginTop: 4, opacity: 0.7 }}>
-              Member since {new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-            </div>
+            {editingName ? (
+              <input
+                autoFocus
+                value={username}
+                maxLength={40}
+                onChange={e => setUsername(e.target.value)}
+                onBlur={handleSaveProfile}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') handleSaveProfile()
+                  if (e.key === 'Escape') { setUsername(profile?.username || ''); setEditingName(false) }
+                }}
+                aria-label="Display name"
+                style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', background: 'var(--card-bg)', border: '1px solid var(--accent)', borderRadius: 10, padding: '4px 10px', outline: 'none', fontFamily: 'inherit', width: 260 }}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setEditingName(true)}
+                title="Click to change your name"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, cursor: 'text', color: 'var(--text)', fontFamily: 'inherit', fontSize: 22, fontWeight: 800 }}
+              >
+                {profile?.username || 'User'}
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" strokeWidth="2" style={{ width: 15, height: 15 }} aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>
+                {saved && <span style={{ fontSize: 12, fontWeight: 600, color: '#10B981' }}>Saved</span>}
+              </button>
+            )}
+            {nameError && <div role="alert" style={{ fontSize: 12, color: '#EF4444', marginTop: 4 }}>{nameError}</div>}
+            <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4, opacity: 0.8 }}>Click your name to change it</div>
           </div>
         </div>
 
-        {/* Username */}
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 12 }}>
-            Display Name
-          </div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <input
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSaveProfile()}
-              placeholder="Your display name"
-              style={{ flex: 1, padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text)', fontSize: 'var(--font-scale)', outline: 'none', fontFamily: 'inherit' }}
-            />
-            <button
-              onClick={handleSaveProfile}
-              disabled={saving || !username.trim()}
-              style={{ padding: '12px 20px', borderRadius: 10, border: 'none', background: saved ? '#10B981' : 'var(--accent)', color: '#fff', fontSize: 'var(--font-scale)', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', minWidth: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              {saving ? '...' : saved ? 'Saved ✓' : 'Save'}
-            </button>
-          </div>
-        </div>
+        <SettingsPanel />
+
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-dim)', margin: '8px 0 14px' }}>Account</div>
 
         {/* Email — read only */}
         <div style={{ marginBottom: 32 }}>
@@ -215,7 +230,7 @@ export default function ProfilePage() {
             disabled
             style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-dim)', fontSize: 'var(--font-scale)', outline: 'none', fontFamily: 'inherit', cursor: 'not-allowed' }}
           />
-          <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', marginTop: 6, opacity: 0.7 }}>Email cannot be changed</div>
+          <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', marginTop: 6, opacity: 0.7 }}>Email cannot be changed. Member since {new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}.</div>
         </div>
 
         {/* Change password */}
