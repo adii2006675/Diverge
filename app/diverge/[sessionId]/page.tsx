@@ -86,6 +86,8 @@ export default function DivergePage() {
   const [resumedTitle, setResumedTitle] = useState<string | null>(null)
   const [resumeNote, setResumeNote] = useState<{ questions: string[] } | null>(null)
   const [elapsed, setElapsed] = useState(0)
+  // Index of the answer that just arrived, so only it plays the reveal animation.
+  const [freshIdx, setFreshIdx] = useState<number | null>(null)
   const [scrollTarget, setScrollTarget] = useState<number | null>(null)
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null)
   const [askError, setAskError] = useState<AskError | null>(null)
@@ -198,6 +200,7 @@ export default function DivergePage() {
       setWhatIfs(newWhatIfs)
       setActiveTimelineIdx(newWhatIfs.length - 1)
       setScrollTarget(newWhatIfs.length - 1)
+      setFreshIdx(newWhatIfs.length - 1)
 
       if (user) {
         try {
@@ -400,15 +403,14 @@ export default function DivergePage() {
                       {!open && <p className="dv-head">{firstSentence(r.paragraph)}</p>}
                       <div className={`dv-collapse${open ? ' open' : ''}`} id={`ans-body-${i}`}>
                         <div>
-                          <p className="dv-prose">{r.paragraph}</p>
-                          {r.narration && <p className="dv-prose soft">{r.narration}</p>}
+                          <div className={`dv-reveal${freshIdx === i ? ' go' : ''}`}><p className="dv-prose dv-para">{r.paragraph}</p></div>
                           <div className="dv-chips">
                             {r.keyFacts.map((f, k) => {
                               const key = `${i}-${k}`
                               const factOpen = !!openFacts[key]
                               const expl = r.factExplanations?.[k]
                               return (
-                                <div className={`dv-chip${factOpen ? ' open' : ''}`} key={k}>
+                                <div className={`dv-chip${factOpen ? ' open' : ''}${freshIdx === i ? ' fresh' : ''}`} key={k} style={freshIdx === i ? { animationDelay: `${420 + k * 70}ms` } : undefined}>
                                   <button
                                     type="button"
                                     className="dv-chip-head"
@@ -443,7 +445,7 @@ export default function DivergePage() {
                       <span className="dv-orbit" aria-hidden="true"><i /><i /><i /></span>
                       <div>
                         <b>{WAIT_STAGES[Math.min(WAIT_STAGES.length - 1, Math.floor(elapsed / 7))]}…</b>
-                        <span className="dv-wait-sub">{elapsed}s so far · usually {WAIT_USUAL[normalizeLength(settings?.ai_response_style)]} seconds</span>
+                        <span className="dv-wait-sub">{elapsed}s · usually {WAIT_USUAL[normalizeLength(settings?.ai_response_style)]} seconds</span>
                       </div>
                     </div>
                     <div className="dv-steps" aria-hidden="true">
@@ -617,12 +619,6 @@ export default function DivergePage() {
             </ul>
           </div>
 
-          {currentResponse?.reliabilityNotes && settings?.show_historians_note !== false && (
-            <div className="dv-card">
-              <h3>Historian’s note</h3>
-              <p className="dv-prose soft" style={{ margin: 0 }}>{currentResponse.reliabilityNotes}</p>
-            </div>
-          )}
         </aside>
       </div>
 
@@ -739,11 +735,6 @@ export default function DivergePage() {
                   label="Show confidence level"
                   value={settings?.show_confidence_level ?? true}
                   onChange={() => updateSettings({ show_confidence_level: !(settings?.show_confidence_level ?? true) })}
-                />
-                <AIToggle
-                  label="Show historian's note"
-                  value={settings?.show_historians_note ?? true}
-                  onChange={() => updateSettings({ show_historians_note: !(settings?.show_historians_note ?? true) })}
                 />
               </div>
             </motion.div>

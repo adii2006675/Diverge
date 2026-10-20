@@ -37,7 +37,7 @@ export default function SettingsPage() {
     return null
   }
 
-  async function handleToggle(key: 'show_confidence_level' | 'show_historians_note') {
+  async function handleToggle(key: 'show_confidence_level') {
     if (!settings) return
     await updateSettings({ [key]: !settings[key] })
   }
@@ -156,12 +156,6 @@ export default function SettingsPage() {
               desc="Display LOW / MEDIUM / HIGH confidence badge on AI responses"
               value={settings?.show_confidence_level ?? true}
               onChange={() => handleToggle('show_confidence_level')}
-            />
-            <Toggle
-              label="Show historian's note"
-              desc="Display the reliability note at the bottom of each response"
-              value={settings?.show_historians_note ?? true}
-              onChange={() => handleToggle('show_historians_note')}
             />
           </div>
         </Section>

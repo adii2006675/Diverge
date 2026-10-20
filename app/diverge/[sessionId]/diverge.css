@@ -165,3 +165,11 @@
 .dv-bar-wait{display:block;height:3px;border-radius:99px;background:color-mix(in srgb,var(--ink) 10%,transparent);position:relative;overflow:hidden}
 .dv-bar-wait::after{content:"";position:absolute;inset:0;width:38%;border-radius:inherit;background:linear-gradient(90deg,transparent,var(--acc),transparent);animation:dvSweep 1.5s cubic-bezier(.4,0,.2,1) infinite}
 @keyframes dvSweep{from{transform:translateX(-100%)}to{transform:translateX(280%)}}
+
+/* New answers write themselves in from the top: the text uncovers downward, then the facts rise in one by one. */
+.dv-reveal.go{animation:dvWipe .9s cubic-bezier(.23,1,.32,1) both}
+@keyframes dvWipe{from{clip-path:inset(0 0 100% 0);opacity:.2;transform:translateY(-6px)}to{clip-path:inset(0 0 -2% 0);opacity:1;transform:none}}
+.dv-para{white-space:pre-line}
+.dv-chip.fresh{animation:dvRise .45s cubic-bezier(.23,1,.32,1) both}
+@keyframes dvRise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.dv-reveal.go,.dv-chip.fresh{animation:none!important}}

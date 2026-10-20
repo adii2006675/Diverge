@@ -19,15 +19,15 @@ export const AI_OPTION_GROUPS = {
   length: {
     title: 'Response length',
     options: [
-      { value: 'short', label: 'Short', desc: 'A couple of sentences and three key facts' },
-      { value: 'medium', label: 'Medium', desc: 'A solid paragraph and four key facts' },
-      { value: 'long', label: 'Long', desc: 'Full paragraphs and five facts with detailed reasoning' },
+      { value: 'short', label: 'Short', desc: '1 to 2 sentences and 3 key facts' },
+      { value: 'medium', label: 'Medium', desc: 'One paragraph and 5 key facts' },
+      { value: 'long', label: 'Long', desc: '2 to 3 paragraphs and 10 key facts' },
     ],
   },
   depth: {
     title: 'Depth',
     options: [
-      { value: 'simple', label: 'Simple', desc: 'Plain language, one clear cause and effect at a time' },
+      { value: 'simple', label: 'Simple', desc: 'Plain, friendly language, like a person explaining it to a friend' },
       { value: 'in-depth', label: 'In-depth', desc: 'Named institutions and people, chains of cause and effect, competing views' },
     ],
   },

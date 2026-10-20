@@ -87,14 +87,14 @@ TONE AND STYLE:
 - Be direct and specific`
 
 // Per-length budgets. Word counts are targets the model is told to hit, so the three lengths differ clearly.
-const LENGTH_SPEC: Record<AILength, { facts: number; paragraph: string; narration: string; explanation: string; note: string; suggestions: number; maxTokens: number }> = {
-  short: { facts: 3, paragraph: 'about 40 words (2 sentences)', narration: 'about 25 words (1 sentence)', explanation: 'one sentence of about 20 words', note: 'one short sentence under 20 words', suggestions: 2, maxTokens: 2000 },
-  medium: { facts: 4, paragraph: 'about 110 words (4-5 sentences)', narration: 'about 60 words (2-3 sentences)', explanation: 'two or three sentences, about 50 words', note: 'one sentence of about 30 words', suggestions: 3, maxTokens: 3000 },
-  long: { facts: 5, paragraph: 'about 190 words (7-9 sentences)', narration: 'about 120 words (4-5 sentences)', explanation: 'four to six sentences, about 100 words', note: 'two sentences of about 50 words', suggestions: 3, maxTokens: 4000 },
+const LENGTH_SPEC: Record<AILength, { facts: number; paragraph: string; explanation: string; suggestions: number; maxTokens: number }> = {
+  short: { facts: 3, paragraph: '1 to 2 sentences in total (under 45 words)', explanation: 'one short sentence (about 15 words)', suggestions: 2, maxTokens: 2000 },
+  medium: { facts: 5, paragraph: 'exactly one paragraph of 5 to 7 sentences (about 110 words)', explanation: 'two sentences (about 35 words)', suggestions: 3, maxTokens: 3500 },
+  long: { facts: 10, paragraph: 'exactly 2 or 3 paragraphs separated by a blank line (write \\n\\n inside the JSON string), each about 80 words', explanation: 'two or three sentences (about 50 words)', suggestions: 3, maxTokens: 7000 },
 }
 
 const DEPTH_INSTRUCTION: Record<AIDepth, string> = {
-  simple: 'DEPTH: SIMPLE. Write for a curious reader with no history background, at roughly a 9th-grade reading level. Use short, everyday sentences and common words. Explain any name or term in a few words the first time it appears. Follow ONE main cause-and-effect chain at a time. Avoid jargon, avoid long lists of names, and skip scholarly debate unless it is essential.',
+  simple: 'DEPTH: SIMPLE. Write like a friendly person explaining this to a friend, the way a smart 8th grader would, in plain everyday language anyone can follow. Use short, natural sentences and common words, and contractions like "didn\'t" and "it\'s". Explain any name or term in a few words the first time it shows up. Follow one main cause and effect at a time. Never use em dashes or en dashes anywhere (use a period or a comma instead). Avoid jargon, fancy words, and stiff phrases like "historians would note". Still be accurate and say when something is a guess.',
   'in-depth': 'DEPTH: IN-DEPTH. Write for a well-read reader. Name the specific people, institutions, treaties, laws and numbers involved. Trace multi-step causal chains (A causes B, which makes C possible), separate short-term from long-term effects, and mention where historians disagree and why. Use precise vocabulary and longer, richer sentences.',
 }
 
@@ -122,7 +122,7 @@ function formatYear(n: number): string {
 }
 
 function numberedFacts(n: number): string {
-  return Array.from({ length: n }, (_, i) => `    "Fact ${i + 1} — a specific documented or reasonably predicted fact about the alternate world; flag speculation with 'most likely' or 'historians would debate'"`).join(',\n')
+    return `    exactly ${n} items, each one a specific documented or reasonably predicted fact about the alternate world (flag speculation with 'most likely' or 'historians would debate'), covering political, economic, military or social consequences`
 }
 
 export async function POST(req: NextRequest) {
@@ -195,15 +195,13 @@ If this is a very large-scale what-if (Industrial Revolution, Roman Empire, inve
 
 NOW OUTPUT ONLY THIS JSON — no markdown, no backticks, no text outside the JSON:
 {
-  "paragraph": "${spec.paragraph} describing the immediate consequence. Grounded in the tone and depth above. Real names, real places, real causal logic. If refusing, explain why here.",
-  "narration": "${spec.narration} written like a historian reflecting on this moment from the future. Different voice and perspective from the paragraph above. Honest about what is known vs speculated.",
+  "paragraph": "${spec.paragraph}, describing the immediate consequence in the tone and depth above. Real names, real places, real causal logic. If refusing, explain why here.",
   "keyFacts": [
 ${numberedFacts(spec.facts)}
   ],
   "factExplanations": [
     exactly ${spec.facts} explanations, one per fact in the same order, each ${spec.explanation}, citing real mechanisms, forces or precedents
   ],
-  "reliabilityNotes": "${spec.note} flagging where your response is highly certain vs where it is educated speculation. Be honest.",
   "worldMood": "exactly one of: STABLE, TENSE, CRITICAL, AT WAR, CATASTROPHIC, REBUILDING, FLOURISHING",
   "divergenceScore": <integer 1-100. Start low for small changes. Compound upward for each additional what-if. A world where one small decision changed is maybe 15-25. A world where WW2 never happened is 70+. A world without the Industrial Revolution is 95+>,
   "year": "The year the alternate world has now reached. ${yearRule}",
@@ -212,7 +210,7 @@ ${numberedFacts(spec.facts)}
     exactly ${spec.suggestions} short follow-up questions the user could ask next, each starting with "What if", each a specific question about THIS alternate timeline (not a restatement of the question just asked), each under 20 words
   ]
 }
-The LAST key fact must be something that would NOT change, to show historical honesty. keyFacts must contain exactly ${spec.facts} items.`
+The LAST key fact must be something that would NOT change, to show historical honesty. keyFacts must contain exactly ${spec.facts} items and factExplanations exactly ${spec.facts} items.`
 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
@@ -242,6 +240,16 @@ The LAST key fact must be something that would NOT change, to show historical ho
     if (previousYear !== null && data && typeof data === 'object') {
       const y = parseYear(data.year)
       data.year = formatYear(y === null || y < previousYear ? previousYear : y)
+    }
+    if (data && typeof data === 'object') {
+      // These two fields were retired; keep them in the shape so older saved sessions and types still line up.
+      data.narration = ''
+      data.reliabilityNotes = ''
+      if (depth === 'simple') {
+        const plain = (t: unknown) => (typeof t === 'string' ? t.replace(/\s*[\u2014\u2013]\s*/g, ', ') : t)
+        for (const k of ['paragraph', 'year']) data[k] = plain(data[k])
+        for (const k of ['keyFacts', 'factExplanations', 'suggestions']) if (Array.isArray(data[k])) data[k] = data[k].map(plain)
+      }
     }
     if (data && typeof data === 'object') {
       data.suggestions = Array.isArray(data.suggestions)
