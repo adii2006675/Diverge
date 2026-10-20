@@ -32,33 +32,25 @@ export default function Nav({ active }: { active?: string }) {
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
         fontFamily: 'Inter, system-ui, sans-serif',
       }}>
-        {/* Left — logo mark and wordmark */}
-        <div
+        {/* Left — logo mark; hover spells out the name */}
+        <button
+          type="button"
+          className="dv-logo"
+          aria-label="Diverge home"
           onClick={() => router.push('/')}
-          style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', minWidth: 100 }}
         >
-        <svg viewBox="0 0 64 40" width="40" height="25" aria-hidden="true" style={{ flexShrink: 0 }}>
-          <path d="M4 23 H18 Q25 23 29 16 Q33 9 41 9 H60" fill="none" stroke="var(--accent)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M4 17 H18 Q25 17 29 24 Q33 31 41 31 H60" fill="none" stroke="var(--text)" strokeOpacity="0.7" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <div
-          style={{
-            fontSize: 17, fontWeight: 900, letterSpacing: '0.18em', textTransform: 'uppercase',
-            backgroundImage: 'linear-gradient(to right, var(--accent) 50%, var(--text) 50%)',
-            backgroundSize: '200% 100%',
-            backgroundPosition: 'right bottom',
-            WebkitBackgroundClip: 'text',
-            backgroundClip: 'text',
-            color: 'transparent',
-            display: 'inline-block',
-            transition: 'background-position 0.4s ease, transform 0.25s ease',
-          }}
-          onMouseEnter={e => { const el = e.currentTarget as HTMLDivElement; el.style.backgroundPosition = 'left bottom'; el.style.transform = 'scale(1.08)' }}
-          onMouseLeave={e => { const el = e.currentTarget as HTMLDivElement; el.style.backgroundPosition = 'right bottom'; el.style.transform = 'scale(1)' }}
-        >
-          DIVERGE
-        </div>
-        </div>
+          <svg className="dv-logo-mark" viewBox="0 0 64 40" width="40" height="25" aria-hidden="true">
+            <path className="dv-l1" pathLength={100} d="M4 23 H18 Q25 23 29 16 Q33 9 41 9 H60" fill="none" stroke="var(--accent)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+            <path className="dv-l2" pathLength={100} d="M4 17 H18 Q25 17 29 24 Q33 31 41 31 H60" fill="none" stroke="var(--text)" strokeOpacity="0.7" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+            <path className="dv-run" pathLength={100} d="M4 23 H18 Q25 23 29 16 Q33 9 41 9 H60" fill="none" stroke="#fff" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+            <path className="dv-run b" pathLength={100} d="M4 17 H18 Q25 17 29 24 Q33 31 41 31 H60" fill="none" stroke="var(--accent)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="dv-word" aria-hidden="true">
+            {'DIVERGE'.split('').map((ch, i) => (
+              <span key={i} style={{ ['--i' as string]: i }}>{ch}</span>
+            ))}
+          </span>
+        </button>
 
         {/* Center — nav links */}
         <div style={{ display: 'flex', gap: 4, alignItems: 'center', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>

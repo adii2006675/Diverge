@@ -231,3 +231,38 @@ body {
     transform: none;
   }
 }
+
+/* Logo: the parted lines run left to right while the name is spelled out letter by letter. */
+.dv-logo {
+  display: flex; align-items: center; gap: 12px; width: 190px; min-width: 100px;
+  background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; color: var(--text);
+}
+.dv-logo-mark { flex-shrink: 0; overflow: visible; transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1); }
+.dv-run { opacity: 0; stroke-dasharray: 16 84; stroke-dashoffset: 16; }
+.dv-word {
+  display: inline-flex; font-size: 17px; font-weight: 900; letter-spacing: 0.18em; text-transform: uppercase; white-space: nowrap;
+  clip-path: inset(0 100% 0 0); transition: clip-path 0.25s ease-in;
+}
+.dv-word span {
+  display: inline-block; opacity: 0; transform: translateX(-14px);
+  transition: opacity 0.2s ease-in, transform 0.2s ease-in;
+}
+.dv-logo:hover .dv-logo-mark, .dv-logo:focus-visible .dv-logo-mark { transform: scale(1.06); }
+.dv-logo:hover .dv-word { clip-path: inset(0 0 0 0); transition: clip-path 0.5s cubic-bezier(0.23, 1, 0.32, 1); }
+.dv-logo:hover .dv-word span {
+  opacity: 1; transform: none; color: var(--text);
+  transition: opacity 0.28s ease-out calc(var(--i) * 45ms), transform 0.42s cubic-bezier(0.23, 1, 0.32, 1) calc(var(--i) * 45ms);
+}
+.dv-logo:hover .dv-run { opacity: 1; animation: dv-run 0.9s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+.dv-logo:hover .dv-run.b { animation-delay: 0.12s; }
+@keyframes dv-run { from { stroke-dashoffset: 16; } to { stroke-dashoffset: -100; } }
+/* Keyboard focus shows the name immediately, with no motion. */
+.dv-logo:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: 6px; }
+.dv-logo:focus-visible .dv-word { clip-path: inset(0 0 0 0); transition: none; }
+.dv-logo:focus-visible .dv-word span { opacity: 1; transform: none; transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .dv-word, .dv-word span { transition: opacity 0.2s ease !important; }
+  .dv-word span, .dv-logo:hover .dv-word span { transform: none !important; }
+  .dv-logo:hover .dv-run { animation: none; opacity: 0; }
+  .dv-logo:hover .dv-logo-mark { transform: none; }
+}
