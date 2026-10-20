@@ -36,13 +36,19 @@ function pctToYear(p: number): number {
 
 export default function ExplorePage() {
   const router = useRouter()
-  const [selectedEra, setSelectedEra] = useState('All')
+  // Several eras can be on at once. An empty list means "All".
+  const [selectedEras, setSelectedEras] = useState<string[]>([])
+  const isOn = (era: string) => (era === 'All' ? selectedEras.length === 0 : selectedEras.includes(era))
+  function toggleEra(era: string) {
+    if (era === 'All') return setSelectedEras([])
+    setSelectedEras(list => (list.includes(era) ? list.filter(x => x !== era) : [...list, era]))
+  }
   const [yearMin, setYearMin] = useState(YEAR_MIN)
   const [yearMax, setYearMax] = useState(YEAR_MAX)
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const filtered = ALL_EVENTS.filter(e => {
-    const eraMatch = selectedEra === 'All' || e.era === selectedEra
+    const eraMatch = selectedEras.length === 0 || selectedEras.includes(e.era)
     const yearMatch = e.year >= yearMin && e.year <= yearMax
     return eraMatch && yearMatch
   })
@@ -87,16 +93,17 @@ export default function ExplorePage() {
           {ERAS.map(era => (
             <button
               key={era}
-              onClick={() => setSelectedEra(era)}
+              onClick={() => toggleEra(era)}
+              aria-pressed={isOn(era)}
               style={{
                 padding: '7px 16px', borderRadius: 999, cursor: 'pointer', fontFamily: 'inherit',
-                border: `1px solid ${selectedEra === era ? 'var(--accent)' : 'var(--border-color)'}`,
-                background: selectedEra === era ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'transparent',
-                color: selectedEra === era ? 'var(--accent)' : 'var(--text-dim)',
+                border: `1px solid ${isOn(era) ? 'var(--accent)' : 'var(--border-color)'}`,
+                background: isOn(era) ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'transparent',
+                color: isOn(era) ? 'var(--accent)' : 'var(--text-dim)',
                 fontSize: 'var(--font-scale)', fontWeight: 500, transition: 'all 0.18s',
               }}
-              onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.fontSize = 'calc(var(--font-scale) * 1.08)'; el.style.color = selectedEra === era ? 'var(--accent)' : 'var(--text)' }}
-              onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.fontSize = 'var(--font-scale)'; el.style.color = selectedEra === era ? 'var(--accent)' : 'var(--text-dim)' }}
+              onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.fontSize = 'calc(var(--font-scale) * 1.08)'; el.style.color = isOn(era) ? 'var(--accent)' : 'var(--text)' }}
+              onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.fontSize = 'var(--font-scale)'; el.style.color = isOn(era) ? 'var(--accent)' : 'var(--text-dim)' }}
             >
               {era}
             </button>
