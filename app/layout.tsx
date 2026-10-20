@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: 'Diverge',
   description: 'Pick a moment in history. Ask what if. Watch the world change.',
   icons: {
-    icon: '/icon.png',
+    icon: '/icon.svg',
   },
 }
 
