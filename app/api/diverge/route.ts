@@ -234,6 +234,9 @@ function finish(data: Answer, depth: AIDepth, spec: { facts: number; suggestions
 
 const line = (o: unknown) => JSON.stringify(o) + '\n'
 
+// Long answers stream for up to a minute or more; this keeps the host from cutting them off.
+export const maxDuration = 120
+
 export async function POST(req: NextRequest) {
   let body: Record<string, any>
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Bad request.', code: 'bad_request' }, { status: 400 }) }
