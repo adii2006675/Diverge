@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
+import { normalizeLength, normalizeDepth, normalizeTone, normalizePlausibility, type AILength, type AIDepth, type AITone, type AIPlausibility } from '@/lib/aiSettings'
 
 const client = new Anthropic()
 
@@ -85,6 +86,45 @@ TONE AND STYLE:
 - Do not lecture or moralize
 - Be direct and specific`
 
+// Per-length budgets. Word counts are targets the model is told to hit, so the three lengths differ clearly.
+const LENGTH_SPEC: Record<AILength, { facts: number; paragraph: string; narration: string; explanation: string; note: string; suggestions: number; maxTokens: number }> = {
+  short: { facts: 3, paragraph: 'about 40 words (2 sentences)', narration: 'about 25 words (1 sentence)', explanation: 'one sentence of about 20 words', note: 'one short sentence under 20 words', suggestions: 2, maxTokens: 2000 },
+  medium: { facts: 4, paragraph: 'about 110 words (4-5 sentences)', narration: 'about 60 words (2-3 sentences)', explanation: 'two or three sentences, about 50 words', note: 'one sentence of about 30 words', suggestions: 3, maxTokens: 3000 },
+  long: { facts: 5, paragraph: 'about 190 words (7-9 sentences)', narration: 'about 120 words (4-5 sentences)', explanation: 'four to six sentences, about 100 words', note: 'two sentences of about 50 words', suggestions: 3, maxTokens: 4000 },
+}
+
+const DEPTH_INSTRUCTION: Record<AIDepth, string> = {
+  simple: 'DEPTH: SIMPLE. Write for a curious reader with no history background, at roughly a 9th-grade reading level. Use short, everyday sentences and common words. Explain any name or term in a few words the first time it appears. Follow ONE main cause-and-effect chain at a time. Avoid jargon, avoid long lists of names, and skip scholarly debate unless it is essential.',
+  'in-depth': 'DEPTH: IN-DEPTH. Write for a well-read reader. Name the specific people, institutions, treaties, laws and numbers involved. Trace multi-step causal chains (A causes B, which makes C possible), separate short-term from long-term effects, and mention where historians disagree and why. Use precise vocabulary and longer, richer sentences.',
+}
+
+const TONE_INSTRUCTION: Record<AITone, string> = {
+  historian: 'TONE: NEUTRAL HISTORIAN. Measured, balanced and factual, as in your standard instructions.',
+  dramatic: 'TONE: DRAMATIC NARRATOR. Write vividly and cinematically, with tension, concrete scenes and emotional stakes, like a documentary narrator. This OVERRIDES the "do not dramatize" guidance in your instructions, but every fact must still be grounded in documented history and every speculation must still be flagged.',
+  academic: 'TONE: ACADEMIC. Formal and precise, as in a journal article. Hedge appropriately and use phrases such as "historical evidence suggests", "scholars debate" and "the documentary record indicates".',
+}
+
+const PLAUSIBILITY_INSTRUCTION: Record<AIPlausibility, string> = {
+  realistic: 'PLAUSIBILITY: REALISTIC. Prefer the most likely outcomes and respect overdetermination: much of history would have happened anyway. Do not stack unlikely consequences.',
+  speculative: 'PLAUSIBILITY: SPECULATIVE. Explore bolder, less likely but still historically grounded consequences and unexpected knock-on effects. Label each speculative leap clearly (for example "one possibility is...") and never present it as established.',
+}
+
+// "1968", "300 BC", "Approximately 1600 CE" -> a number, or null.
+function parseYear(text: unknown): number | null {
+  const m = /(\d{1,4})\s*(BC|BCE|AD|CE)?/i.exec(String(text ?? ''))
+  if (!m) return null
+  const n = parseInt(m[1], 10)
+  return m[2] && /^BC/i.test(m[2]) ? -n : n
+}
+
+function formatYear(n: number): string {
+  return n < 0 ? `${Math.abs(n)} BC` : String(n)
+}
+
+function numberedFacts(n: number): string {
+  return Array.from({ length: n }, (_, i) => `    "Fact ${i + 1} — a specific documented or reasonably predicted fact about the alternate world; flag speculation with 'most likely' or 'historians would debate'"`).join(',\n')
+}
+
 export async function POST(req: NextRequest) {
   try {
     const {
@@ -93,8 +133,21 @@ export async function POST(req: NextRequest) {
       currentWorldState,
       newQuestion,
       realFacts,
-      aiStyle
+      aiStyle,
+      length: lengthIn,
+      depth: depthIn,
+      tone: toneIn,
+      plausibility: plausibilityIn,
+      previousYear: previousYearIn,
     } = await req.json()
+
+    // aiStyle is the old name for length; accept it so older clients keep working.
+    const length = normalizeLength(lengthIn ?? aiStyle)
+    const depth = normalizeDepth(depthIn)
+    const tone = normalizeTone(toneIn ?? (aiStyle === 'academic' ? 'academic' : aiStyle === 'storytelling' ? 'dramatic' : undefined))
+    const plausibility = normalizePlausibility(plausibilityIn)
+    const spec = LENGTH_SPEC[length]
+    const previousYear = typeof previousYearIn === 'number' && Number.isFinite(previousYearIn) ? Math.round(previousYearIn) : parseYear(previousYearIn)
 
     const previousContext = previousWhatIfs.length > 0
       ? `PREVIOUSLY ESTABLISHED FACTS IN THIS ALTERNATE TIMELINE (treat these as locked — do not contradict them):
@@ -104,13 +157,15 @@ Current state of the alternate world based on all changes so far:
 ${currentWorldState}`
       : 'This is the first divergence from real history in this session.'
 
-    const styleInstruction = aiStyle === 'concise'
-      ? 'RESPONSE STYLE: Be brief and punchy. Short paragraph, tight facts. No unnecessary words.'
-      : aiStyle === 'academic'
-      ? 'RESPONSE STYLE: Use formal academic tone. Cite mechanisms, hedge appropriately, use phrases like "historical evidence suggests" and "scholars debate".'
-      : aiStyle === 'storytelling'
-      ? 'RESPONSE STYLE: Write cinematically. Make it feel like a documentary narration. Vivid, specific, emotionally resonant.'
-      : 'RESPONSE STYLE: Detailed and thorough. Full context, rich explanation, comprehensive facts.'
+    const styleInstruction = `RESPONSE SETTINGS (follow these exactly):
+${DEPTH_INSTRUCTION[depth]}
+${TONE_INSTRUCTION[tone]}
+${PLAUSIBILITY_INSTRUCTION[plausibility]}
+LENGTH: ${length.toUpperCase()}. Hit the word counts given in the JSON template below. Do not pad a short answer and do not trim a long one.`
+
+    const yearRule = previousYear !== null
+      ? `YEAR RULE: the "year" field must be a plain year such as "${formatYear(previousYear)}" or "${formatYear(previousYear + 4)}" (digits only, or digits plus BC). It must be ${formatYear(previousYear)} or LATER, never earlier, because the timeline has already reached ${formatYear(previousYear)}. Do not put words in the year field.`
+      : 'YEAR RULE: the "year" field must be a plain year such as "1968" (digits only, or digits plus BC), with no words.'
 
     const prompt = `${styleInstruction}
 
@@ -140,32 +195,28 @@ If this is a very large-scale what-if (Industrial Revolution, Roman Empire, inve
 
 NOW OUTPUT ONLY THIS JSON — no markdown, no backticks, no text outside the JSON:
 {
-  "paragraph": "2-3 sentences describing the immediate consequence. Cinematic and grounded. Real names, real places, real causal logic. If refusing, explain why here.",
-  "narration": "2-3 sentences written like a historian reflecting on this moment from the future. Different voice and perspective from paragraph above. Honest about what is known vs speculated.",
+  "paragraph": "${spec.paragraph} describing the immediate consequence. Grounded in the tone and depth above. Real names, real places, real causal logic. If refusing, explain why here.",
+  "narration": "${spec.narration} written like a historian reflecting on this moment from the future. Different voice and perspective from the paragraph above. Honest about what is known vs speculated.",
   "keyFacts": [
-    "Specific documented or reasonably predicted fact 1 about the alternate world",
-    "Fact 2 — use real names, institutions, numbers where documentable",
-    "Fact 3 — flag any speculation with 'most likely' or 'historians would debate'",
-    "Fact 4 — focus on political, economic, military, or social consequences",
-    "Fact 5 — include at least one thing that would NOT change to show historical honesty"
+${numberedFacts(spec.facts)}
   ],
   "factExplanations": [
-    "Historical reasoning for fact 1 — cite real mechanisms, forces, or precedents",
-    "Historical reasoning for fact 2",
-    "Historical reasoning for fact 3",
-    "Historical reasoning for fact 4",
-    "Historical reasoning for fact 5"
+    exactly ${spec.facts} explanations, one per fact in the same order, each ${spec.explanation}, citing real mechanisms, forces or precedents
   ],
-  "reliabilityNotes": "One sentence flagging where your response is highly certain vs where it is educated speculation. Be honest.",
+  "reliabilityNotes": "${spec.note} flagging where your response is highly certain vs where it is educated speculation. Be honest.",
   "worldMood": "exactly one of: STABLE, TENSE, CRITICAL, AT WAR, CATASTROPHIC, REBUILDING, FLOURISHING",
   "divergenceScore": <integer 1-100. Start low for small changes. Compound upward for each additional what-if. A world where one small decision changed is maybe 15-25. A world where WW2 never happened is 70+. A world without the Industrial Revolution is 95+>,
-  "year": "The effective year the alternate world has reached in its development — may be ahead or behind real history depending on consequences",
-  "uncertaintyLevel": "LOW, MEDIUM, or HIGH — how confident are you in these predictions based on historical evidence"
-}`
+  "year": "The year the alternate world has now reached. ${yearRule}",
+  "uncertaintyLevel": "LOW, MEDIUM, or HIGH — how confident are you in these predictions based on historical evidence",
+  "suggestions": [
+    exactly ${spec.suggestions} short follow-up questions the user could ask next, each starting with "What if", each a specific question about THIS alternate timeline (not a restatement of the question just asked), each under 20 words
+  ]
+}
+The LAST key fact must be something that would NOT change, to show historical honesty. keyFacts must contain exactly ${spec.facts} items.`
 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 4000,
+      max_tokens: spec.maxTokens,
       temperature: 0.3,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt }]
@@ -185,6 +236,17 @@ NOW OUTPUT ONLY THIS JSON — no markdown, no backticks, no text outside the JSO
       } else {
         throw new Error('Could not parse JSON from response')
       }
+    }
+
+    // Safety net for the year rule: if the model still went backwards, hold the timeline at the previous year.
+    if (previousYear !== null && data && typeof data === 'object') {
+      const y = parseYear(data.year)
+      data.year = formatYear(y === null || y < previousYear ? previousYear : y)
+    }
+    if (data && typeof data === 'object') {
+      data.suggestions = Array.isArray(data.suggestions)
+        ? data.suggestions.filter((q: unknown) => typeof q === 'string' && q.trim()).slice(0, 3)
+        : []
     }
 
     return NextResponse.json(data)

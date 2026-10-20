@@ -8,6 +8,8 @@ import { motion, AnimatePresence } from 'motion/react'
 import { supabase } from '@/lib/supabase'
 import EventImage from '@/components/EventImage'
 import Nav from '@/components/Nav'
+import AIResponseSettings from '@/components/AIResponseSettings'
+import { normalizeLength, normalizeDepth, normalizeTone, normalizePlausibility } from '@/lib/aiSettings'
 import './diverge.css'
 
 const MOOD_COLORS: Record<string, string> = {
@@ -134,7 +136,15 @@ export default function DivergePage() {
       const res = await fetch('/api/diverge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ startingEvent, previousWhatIfs, currentWorldState, newQuestion: question, realFacts, aiStyle: settings?.ai_response_style || 'detailed' })
+        body: JSON.stringify({
+          startingEvent, previousWhatIfs, currentWorldState, newQuestion: question, realFacts,
+          length: normalizeLength(settings?.ai_response_style),
+          depth: normalizeDepth(settings?.ai_depth),
+          tone: normalizeTone(settings?.ai_tone),
+          plausibility: normalizePlausibility(settings?.ai_plausibility),
+          // The timeline can only move forward: the next answer's year must not be earlier than this.
+          previousYear: latest ? parseYear(latest.response.year) : (event?.year ?? null),
+        })
       })
 
       const data = await res.json().catch(() => null)
@@ -654,76 +664,8 @@ export default function DivergePage() {
                 <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>Changes save automatically.</div>
               </div>
 
-              {/* Response length */}
-              <div style={{ marginBottom: 22 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Response Length</div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {['concise', 'detailed'].map(val => (
-                    <button
-                      key={val}
-                      onClick={() => updateSettings({ ai_response_style: val })}
-                      style={{
-                        flex: 1, padding: '9px', borderRadius: 9, cursor: 'pointer', fontFamily: 'inherit', textTransform: 'capitalize',
-                        border: `1px solid ${settings?.ai_response_style === val ? 'var(--accent)' : 'var(--border-color)'}`,
-                        background: settings?.ai_response_style === val ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--card-bg)',
-                        color: settings?.ai_response_style === val ? 'var(--accent)' : 'var(--text-dim)',
-                        fontSize: 13, fontWeight: settings?.ai_response_style === val ? 700 : 400,
-                      }}
-                    >
-                      {val}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Plausibility */}
-              <div style={{ marginBottom: 22 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Plausibility</div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {[
-                    { val: 'realistic', label: 'Realistic' },
-                    { val: 'speculative', label: 'Speculative' },
-                  ].map(opt => (
-                    <button
-                      key={opt.val}
-                      onClick={() => updateSettings({ ai_plausibility: opt.val })}
-                      style={{
-                        flex: 1, padding: '9px', borderRadius: 9, cursor: 'pointer', fontFamily: 'inherit',
-                        border: `1px solid ${settings?.ai_plausibility === opt.val ? 'var(--accent)' : 'var(--border-color)'}`,
-                        background: settings?.ai_plausibility === opt.val ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--card-bg)',
-                        color: settings?.ai_plausibility === opt.val ? 'var(--accent)' : 'var(--text-dim)',
-                        fontSize: 13, fontWeight: settings?.ai_plausibility === opt.val ? 700 : 400,
-                      }}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Tone */}
               <div style={{ marginBottom: 26 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Tone</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {[
-                    { val: 'historian', label: 'Neutral Historian', desc: 'Balanced, factual, measured' },
-                    { val: 'dramatic', label: 'Dramatic Narrator', desc: 'Vivid, cinematic storytelling' },
-                    { val: 'academic', label: 'Academic', desc: 'Formal, citation-minded, precise' },
-                  ].map(opt => (
-                    <button
-                      key={opt.val}
-                      onClick={() => updateSettings({ ai_tone: opt.val })}
-                      style={{
-                        padding: '10px 12px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
-                        border: `1px solid ${settings?.ai_tone === opt.val ? 'var(--accent)' : 'var(--border-color)'}`,
-                        background: settings?.ai_tone === opt.val ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'var(--card-bg)',
-                      }}
-                    >
-                      <div style={{ fontSize: 13, fontWeight: 600, color: settings?.ai_tone === opt.val ? 'var(--accent)' : 'var(--text)' }}>{opt.label}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>{opt.desc}</div>
-                    </button>
-                  ))}
-                </div>
+                <AIResponseSettings showDescriptions />
               </div>
 
               {/* Toggles */}

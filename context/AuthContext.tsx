@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
+import { normalizeLength, normalizeDepth, normalizeTone, normalizePlausibility, DEFAULT_LENGTH, DEFAULT_DEPTH, DEFAULT_TONE, DEFAULT_PLAUSIBILITY } from '@/lib/aiSettings'
 
 type UserSettings = {
   theme: string
@@ -14,6 +15,7 @@ type UserSettings = {
   font_size: string
   ai_plausibility: string
   ai_tone: string
+  ai_depth: string
 }
 
 type Profile = {
@@ -83,6 +85,39 @@ const THEME_VARS: Record<string, { bg: string; star: string; text: string; textD
   },
 }
 
+// Signed-out visitors keep their settings in this browser only.
+const GUEST_KEY = 'diverge_guest_settings'
+
+const GUEST_DEFAULTS: UserSettings = {
+  theme: 'dark',
+  language: 'English',
+  ai_response_style: DEFAULT_LENGTH,
+  show_confidence_level: true,
+  show_historians_note: true,
+  default_era: 'All',
+  accent_color: 'orange',
+  font_size: 'medium',
+  ai_plausibility: DEFAULT_PLAUSIBILITY,
+  ai_tone: DEFAULT_TONE,
+  ai_depth: DEFAULT_DEPTH,
+}
+
+function loadGuestSettings(): UserSettings {
+  try {
+    const saved = JSON.parse(localStorage.getItem(GUEST_KEY) || '{}')
+    return {
+      ...GUEST_DEFAULTS,
+      ...saved,
+      ai_response_style: normalizeLength(saved.ai_response_style),
+      ai_depth: normalizeDepth(saved.ai_depth),
+      ai_tone: normalizeTone(saved.ai_tone),
+      ai_plausibility: normalizePlausibility(saved.ai_plausibility),
+    }
+  } catch {
+    return { ...GUEST_DEFAULTS }
+  }
+}
+
 function applyThemeToDOM(theme: string, accentKey: string, fontSize: string) {
   const root = document.documentElement
   const themeVars = THEME_VARS[theme] || THEME_VARS.dark
@@ -127,14 +162,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const merged = {
         theme: data.theme === 'dim' ? 'dark' : (data.theme || 'dark'),
         language: data.language || 'English',
-        ai_response_style: data.ai_response_style || 'detailed',
+        ai_response_style: normalizeLength(data.ai_response_style),
         show_confidence_level: data.show_confidence_level ?? true,
         show_historians_note: data.show_historians_note ?? true,
         default_era: data.default_era || 'All',
         accent_color: data.accent_color || 'orange',
         font_size: data.font_size || 'medium',
-        ai_plausibility: data.ai_plausibility || 'realistic',
-        ai_tone: data.ai_tone || 'historian',
+        ai_plausibility: normalizePlausibility(data.ai_plausibility),
+        ai_tone: normalizeTone(data.ai_tone),
+        ai_depth: normalizeDepth(data.ai_depth),
       }
       setSettings(merged)
       applyThemeToDOM(merged.theme, merged.accent_color, merged.font_size)
@@ -143,7 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: userId,
         theme: 'dark',
         language: 'English',
-        ai_response_style: 'detailed',
+        ai_response_style: DEFAULT_LENGTH,
         show_confidence_level: true,
         show_historians_note: true,
         default_era: 'All',
@@ -153,9 +189,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         ai_tone: 'historian',
       }
       await supabase.from('user_settings').insert(defaults)
-      setSettings(defaults)
+      setSettings({ ...defaults, ai_depth: DEFAULT_DEPTH })
       applyThemeToDOM(defaults.theme, defaults.accent_color, defaults.font_size)
     }
+  }
+
+  function applyGuestSettings() {
+    const guest = loadGuestSettings()
+    setSettings(guest)
+    applyThemeToDOM(guest.theme, guest.accent_color, guest.font_size)
   }
 
   async function refreshProfile() {
@@ -166,15 +208,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut()
     setUser(null)
     setProfile(null)
-    setSettings(null)
-    applyThemeToDOM('dark', 'orange', 'medium')
+    applyGuestSettings()
   }
 
   async function updateSettings(updates: Partial<UserSettings>) {
-    if (!user) return
-    const newSettings = { ...settings, ...updates } as UserSettings
+    const newSettings = { ...(settings ?? GUEST_DEFAULTS), ...updates } as UserSettings
     setSettings(newSettings)
     applyThemeToDOM(newSettings.theme, newSettings.accent_color, newSettings.font_size)
+    if (!user) {
+      try { localStorage.setItem(GUEST_KEY, JSON.stringify(newSettings)) } catch {}
+      return
+    }
     await supabase
       .from('user_settings')
       .update({ ...updates, updated_at: new Date().toISOString() })
@@ -199,6 +243,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.user) {
         fetchProfile(session.user.id)
         fetchSettings(session.user.id)
+      } else {
+        applyGuestSettings()
       }
       setLoading(false)
     })
@@ -210,8 +256,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         fetchSettings(session.user.id)
       } else {
         setProfile(null)
-        setSettings(null)
-        applyThemeToDOM('dark', 'orange', 'medium')
+        applyGuestSettings()
       }
     })
 
