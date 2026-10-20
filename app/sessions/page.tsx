@@ -20,6 +20,16 @@ type Session = {
 
 type SortMode = 'newest' | 'oldest' | 'most_diverged' | 'least_diverged'
 
+// The what_ifs column is normally an array, but a row can hold a JSON string, a single object or null.
+function toWhatIfList(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value
+  if (typeof value === 'string') {
+    try { return toWhatIfList(JSON.parse(value)) } catch { return value.trim() ? [value] : [] }
+  }
+  if (value && typeof value === 'object') return Object.values(value as Record<string, unknown>)
+  return []
+}
+
 // Saved what-ifs are normally { question }, but older or hand-edited rows can be plain strings or other shapes.
 // Always return text so a strange row can never crash the page.
 function whatIfText(w: unknown): string {
@@ -57,7 +67,7 @@ export default function SessionsPage() {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(100)
-    setSessions(data || [])
+    setSessions((data || []).map((row: Session) => ({ ...row, what_ifs: toWhatIfList(row.what_ifs) })))
     setLoadingSessions(false)
   }
 
