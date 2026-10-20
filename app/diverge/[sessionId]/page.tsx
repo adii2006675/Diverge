@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase'
 import EventImage from '@/components/EventImage'
 import Nav from '@/components/Nav'
 import AIResponseSettings from '@/components/AIResponseSettings'
+import { streamAnswer, aiHeaders, AiError, setUserApiKey } from '@/lib/aiClient'
 import { normalizeLength, normalizeDepth, normalizeTone, normalizePlausibility } from '@/lib/aiSettings'
 import './diverge.css'
 
@@ -32,6 +33,13 @@ function firstSentence(text: string, max = 260) {
   return s.length > max ? s.slice(0, max - 1).trimEnd() + '…' : s
 }
 
+// While the JSON streams in, show just the paragraph text that has arrived so far.
+function liveParagraph(raw: string) {
+  const m = /"paragraph"\s*:\s*"((?:[^"\\]|\\.)*)/.exec(raw)
+  if (!m) return ''
+  return m[1].replace(/\\n/g, ' ').replace(/\\"/g, '"').replace(/\\\\/g, '\\')
+}
+
 function moodLabel(mood: string) {
   return mood.charAt(0) + mood.slice(1).toLowerCase()
 }
@@ -45,6 +53,7 @@ function confidenceInfo(level: string) {
 
 type AskError = { message: string; question: string }
 type Refusal = { message: string; question: string }
+type Gate = { code: string; message: string; question: string }
 
 const WAIT_STAGES = ['Reading the historical record', 'Tracing the causes', 'Weighing the ripple effects', 'Writing your answer']
 // Measured typical times for each length setting.
@@ -93,6 +102,9 @@ export default function DivergePage() {
   const [askError, setAskError] = useState<AskError | null>(null)
   const [refusal, setRefusal] = useState<Refusal | null>(null)
   const [summaryError, setSummaryError] = useState<string | null>(null)
+  const [gate, setGate] = useState<Gate | null>(null)
+  const [keyDraft, setKeyDraft] = useState('')
+  const [streamText, setStreamText] = useState('')
 
   const latest = whatIfs.length > 0 ? whatIfs[whatIfs.length - 1] : null
   const currentEntry = whatIfs[activeTimelineIdx] || null
@@ -157,6 +169,8 @@ export default function DivergePage() {
     setLoading(true)
     setAskError(null)
     setRefusal(null)
+    setGate(null)
+    setStreamText('')
     setPendingQuestion(question)
     setCurrentInput('')
 
@@ -166,23 +180,28 @@ export default function DivergePage() {
         ? latest.response.keyFacts.join('. ')
         : 'History as it really happened.'
 
-      const res = await fetch('/api/diverge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          startingEvent, previousWhatIfs, currentWorldState, newQuestion: question, realFacts,
-          length: normalizeLength(settings?.ai_response_style),
-          depth: normalizeDepth(settings?.ai_depth),
-          tone: normalizeTone(settings?.ai_tone),
-          plausibility: normalizePlausibility(settings?.ai_plausibility),
-          // The timeline can only move forward: the next answer's year must not be earlier than this.
-          previousYear: latest ? parseYear(latest.response.year) : (event?.year ?? null),
-        })
+      let data: any = null
+      let streamErr: { code: string; message: string } | null = null
+      await streamAnswer({
+        startingEvent, previousWhatIfs, currentWorldState, newQuestion: question, realFacts,
+        length: normalizeLength(settings?.ai_response_style),
+        depth: normalizeDepth(settings?.ai_depth),
+        tone: normalizeTone(settings?.ai_tone),
+        plausibility: normalizePlausibility(settings?.ai_plausibility),
+        // The timeline can only move forward: the next answer's year must not be earlier than this.
+        previousYear: latest ? parseYear(latest.response.year) : (event?.year ?? null),
+      }, ev => {
+        if (ev.t === 'delta') setStreamText(t => t + ev.text)
+        else if (ev.t === 'done') data = { ...ev.data }
+        else if (ev.t === 'error') streamErr = { code: ev.code, message: ev.message }
+        else if (ev.t === 'verify') {
+          // The second check runs after the answer is shown; mark the facts it could not confirm.
+          setWhatIfs(list => list.map((w, i) => (i === list.length - 1 ? { ...w, response: { ...w.response, unverified: ev.unverified } } : w)))
+        }
       })
-
-      const data = await res.json().catch(() => null)
-      if (!res.ok || !data || typeof data.paragraph !== 'string' || !Array.isArray(data.keyFacts)) {
-        throw new Error(data?.error || 'The answer came back in an unexpected format.')
+      if (streamErr) throw new AiError((streamErr as { message: string }).message, (streamErr as { code: string }).code)
+      if (!data || typeof data.paragraph !== 'string' || !Array.isArray(data.keyFacts)) {
+        throw new Error('The answer came back in an unexpected format.')
       }
 
       // Off-topic questions come back as a refusal with a divergence score of 0.
@@ -225,6 +244,13 @@ export default function DivergePage() {
       }
     } catch (err) {
       console.error(err)
+      if (err instanceof AiError && ['sign_in_required', 'free_limit_reached', 'invalid_api_key', 'usage_unavailable'].includes(err.code)) {
+        setGate({ code: err.code, message: err.message, question })
+        setCurrentInput(question)
+        setPendingQuestion(null)
+        setLoading(false)
+        return
+      }
       setAskError({
         message: err instanceof Error && err.message ? err.message : 'Something went wrong while generating the answer.',
         question,
@@ -269,7 +295,7 @@ export default function DivergePage() {
     try {
       const res = await fetch('/api/summary', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await aiHeaders(),
         body: JSON.stringify({
           startingEvent,
           whatIfs: whatIfs.map(w => w.question),
@@ -420,6 +446,12 @@ export default function DivergePage() {
                                   >
                                     <span className="dv-chip-n">{k + 1}</span>
                                     <span className="dv-chip-t">{f}</span>
+                                    {r.factTypes?.[k] && r.factTypes[k] !== 'documented' && (
+                                      <span className="dv-chip-kind" title={r.factTypes[k] === 'inference' ? 'A reasoned consequence of the change, not a recorded fact' : 'A bolder possibility, not a prediction'}>{r.factTypes[k]}</span>
+                                    )}
+                                    {r.factTypes?.[k] === 'documented' && r.unverified?.includes(k) && (
+                                      <span className="dv-chip-kind warn" title="A second check could not confirm this against the reference">unconfirmed</span>
+                                    )}
                                   </button>
                                   {expl && (
                                     <div className={`dv-collapse${factOpen ? ' open' : ''}`}>
@@ -430,6 +462,11 @@ export default function DivergePage() {
                               )
                             })}
                           </div>
+                          {r.sources && r.sources.length > 0 && (
+                            <p className="dv-sources">Grounded in: {r.sources.map((src, n) => (
+                              <span key={src.url}>{n > 0 && ', '}<a href={src.url} target="_blank" rel="noreferrer">{src.title} (Wikipedia)</a></span>
+                            ))}</p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -455,9 +492,15 @@ export default function DivergePage() {
                       })}
                     </div>
                     <span className="dv-bar-wait" aria-hidden="true" />
-                    <span className="dv-skel" style={{ width: '92%' }} />
-                    <span className="dv-skel" style={{ width: '84%' }} />
-                    <span className="dv-skel" style={{ width: '58%' }} />
+                    {streamText ? (
+                      <p className="dv-prose dv-para" style={{ marginTop: 10 }}>{liveParagraph(streamText)}</p>
+                    ) : (
+                      <>
+                        <span className="dv-skel" style={{ width: '92%' }} />
+                        <span className="dv-skel" style={{ width: '84%' }} />
+                        <span className="dv-skel" style={{ width: '58%' }} />
+                      </>
+                    )}
                   </div>
                 </div>
               )}
@@ -482,6 +525,40 @@ export default function DivergePage() {
                     <button className="dv-btn" type="button" onClick={() => handleAsk(askError.question)}>Try again</button>
                     <button className="dv-btn ghost" type="button" onClick={() => setAskError(null)}>Dismiss</button>
                   </div>
+                </div>
+              )}
+              {gate && !loading && (
+                <div className="dv-note" role="alert">
+                  <b>{gate.code === 'free_limit_reached' ? 'You’ve used your 2 free questions' : gate.code === 'sign_in_required' ? 'Sign in to ask' : gate.code === 'invalid_api_key' ? 'That API key didn’t work' : 'Free questions unavailable'}</b>
+                  <p>{gate.message}</p>
+                  <form
+                    className="dv-note-actions"
+                    style={{ flexWrap: 'wrap' }}
+                    onSubmit={e => {
+                      e.preventDefault()
+                      if (!keyDraft.trim()) return
+                      setUserApiKey(keyDraft)
+                      setKeyDraft('')
+                      const q = gate.question
+                      setGate(null)
+                      handleAsk(q)
+                    }}
+                  >
+                    <input
+                      type="password"
+                      autoComplete="off"
+                      spellCheck={false}
+                      value={keyDraft}
+                      onChange={e => setKeyDraft(e.target.value)}
+                      placeholder="sk-ant-… your Anthropic API key"
+                      aria-label="Your Anthropic API key"
+                      style={{ flex: '1 1 240px', minWidth: 0, padding: '9px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontSize: 13 }}
+                    />
+                    <button className="dv-btn" type="submit" disabled={!keyDraft.trim()}>Use my key</button>
+                    {!user && <button className="dv-btn ghost" type="button" onClick={() => router.push('/auth')}>Sign in</button>}
+                    <button className="dv-btn ghost" type="button" disabled title="Payments are coming soon">Pay (coming soon)</button>
+                  </form>
+                  <p style={{ fontSize: 12, opacity: 0.7, marginTop: 8 }}>Your key stays in this browser and is sent only with your own requests. It is never saved on the server.</p>
                 </div>
               )}
               {refusal && !loading && (

@@ -173,3 +173,8 @@
 .dv-chip.fresh{animation:dvRise .45s cubic-bezier(.23,1,.32,1) both}
 @keyframes dvRise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.dv-reveal.go,.dv-chip.fresh{animation:none!important}}
+
+.dv-chip-kind { flex: none; margin-left: 8px; padding: 1px 8px; border-radius: 999px; font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--text2); border: 1px solid var(--border); }
+.dv-chip-kind.warn { color: #F59E0B; border-color: #F59E0B; }
+.dv-sources { margin-top: 12px; font-size: 12px; color: var(--text2); }
+.dv-sources a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }

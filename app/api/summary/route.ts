@@ -1,11 +1,16 @@
-import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
-
-const client = new Anthropic()
+import { resolveCaller, isGateError } from '@/lib/aiServer'
 
 export async function POST(req: NextRequest) {
+  // Same rule as the answer route, except a summary does not use up a free question.
+  const caller = await resolveCaller(req, { consume: false })
+  if (isGateError(caller)) return NextResponse.json({ error: caller.message, code: caller.code }, { status: caller.status })
+  const client = caller.client
   try {
-    const { startingEvent, whatIfs, finalWorldState } = await req.json()
+    const raw = await req.json()
+    const startingEvent = String(raw.startingEvent ?? '').slice(0, 200)
+    const whatIfs: string[] = (Array.isArray(raw.whatIfs) ? raw.whatIfs : []).slice(0, 30).map((q: unknown) => String(q).slice(0, 500))
+    const finalWorldState = String(raw.finalWorldState ?? '').slice(0, 3000)
 
     const prompt = `You are a historian summarizing an alternate timeline for the game Diverge.
 
