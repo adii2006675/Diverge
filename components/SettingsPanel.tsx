@@ -1,7 +1,5 @@
 'use client'
 import { useAuth } from '@/context/AuthContext'
-import AIResponseSettings from '@/components/AIResponseSettings'
-import ApiKeyField from '@/components/ApiKeyField'
 
 const THEMES = ['light', 'dark']
 const LANGUAGES = ['English', 'Spanish', 'French', 'German', 'Japanese', 'Portuguese', 'Hindi', 'Chinese']
@@ -126,14 +124,6 @@ export default function SettingsPanel() {
           </div>
         </Section>
 
-        <Section title="AI Responses">
-          <AIResponseSettings showDescriptions />
-        </Section>
-
-        <Section title="Your API key">
-          <ApiKeyField />
-        </Section>
-
         <Section title="Display Options">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <Toggle
@@ -148,7 +138,7 @@ export default function SettingsPanel() {
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+export function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 36 }}>
       <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 14 }}>

@@ -188,6 +188,7 @@ export default function DivergePage() {
         depth: normalizeDepth(settings?.ai_depth),
         tone: normalizeTone(settings?.ai_tone),
         plausibility: normalizePlausibility(settings?.ai_plausibility),
+        language: settings?.language || 'English',
         // The timeline can only move forward: the next answer's year must not be earlier than this.
         previousYear: latest ? parseYear(latest.response.year) : (event?.year ?? null),
       }, ev => {
