@@ -9,8 +9,7 @@ import { usePathname } from 'next/navigation'
 export const BASE_WIDTH = 1440
 export const MAX_SCALE = 1.75
 
-export function computeScale(width: number, pathname: string): number {
-  if (pathname.startsWith('/diverge')) return 1 // the diverge page sizes itself
+export function computeScale(width: number): number {
   return Math.min(MAX_SCALE, Math.max(1, width / BASE_WIDTH))
 }
 
@@ -23,7 +22,7 @@ export default function ViewportScale() {
     let frame = 0
 
     function apply() {
-      const s = supported ? computeScale(window.innerWidth, pathname) : 1
+      const s = supported ? computeScale(window.innerWidth) : 1
       root.style.setProperty('--ui-scale', s.toFixed(3))
     }
     function onResize() {
