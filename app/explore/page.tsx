@@ -7,6 +7,8 @@ import { ALL_EVENTS, ERAS, formatEventYear } from '@/lib/events'
 import DualSlider from '@/components/DualSlider'
 import TiltCard from '@/components/TiltCard'
 import EventImage from '@/components/EventImage'
+import { useT } from '@/lib/useT'
+import { eventText } from '@/lib/localizeEvent'
 
 // The year slider covers 2600 BC to 2026. It is not linear: the ancient world gets 15% of the track and
 // the Middle Ages another 23%, so the modern centuries (most of the events) still have room to separate.
@@ -36,6 +38,8 @@ function pctToYear(p: number): number {
 
 export default function ExplorePage() {
   const router = useRouter()
+  const { t, language } = useT()
+  const fmtYear = (y: number) => (y < 0 ? `${Math.abs(y)} ${t('BC')}` : String(y))
   // Several eras can be on at once. An empty list means "All".
   const [selectedEras, setSelectedEras] = useState<string[]>([])
   const isOn = (era: string) => (era === 'All' ? selectedEras.length === 0 : selectedEras.includes(era))
@@ -76,10 +80,10 @@ export default function ExplorePage() {
           transition={{ duration: 0.5 }}
         >
           <h1 style={{ fontSize: 'clamp(36px, 5vw, 64px)', fontWeight: 900, letterSpacing: '-0.02em', marginBottom: 12 }}>
-            Explore history
+            {t('Explore history')}
           </h1>
           <p style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', marginBottom: 40 }}>
-            A list of major world events
+            {t('A list of major world events')}
           </p>
         </motion.div>
 
@@ -105,7 +109,7 @@ export default function ExplorePage() {
               onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.fontSize = 'calc(var(--font-scale) * 1.08)'; el.style.color = isOn(era) ? 'var(--accent)' : 'var(--text)' }}
               onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.fontSize = 'var(--font-scale)'; el.style.color = isOn(era) ? 'var(--accent)' : 'var(--text-dim)' }}
             >
-              {era}
+              {t(era)}
             </button>
           ))}
         </motion.div>
@@ -123,7 +127,7 @@ export default function ExplorePage() {
             toPct={yearToPct}
             fromPct={pctToYear}
             ticks={SLIDER_TICKS}
-            format={formatEventYear}
+            format={fmtYear}
             valueMin={yearMin}
             valueMax={yearMax}
             onChangeMin={setYearMin}
@@ -140,7 +144,7 @@ export default function ExplorePage() {
             animate={{ opacity: 1 }}
             style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-dim)', fontSize: 'var(--font-scale)' }}
           >
-            No events match your filters
+            {t('No events match your filters')}
           </motion.div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
@@ -161,13 +165,13 @@ export default function ExplorePage() {
                     <EventImage key={event.id} id={event.id} title={event.title} year={event.year} loading="lazy" />
                     <div style={{ position: 'absolute', top: 10, left: 12 }}>
                       <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', background: 'var(--bg)', padding: '2px 7px', borderRadius: 4 }}>
-                        {event.era.toUpperCase()} · {formatEventYear(event.year)}
+                        {t(event.era).toUpperCase()} · {fmtYear(event.year)}
                       </span>
                     </div>
                   </div>
                   <div style={{ padding: '12px 14px 14px' }}>
-                    <div style={{ fontSize: 'var(--font-scale)', fontWeight: 700, marginBottom: 5, color: 'var(--text)' }}>{event.title}</div>
-                    <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', lineHeight: 1.6, marginBottom: 0 }}>{event.shortDesc}</div>
+                    <div style={{ fontSize: 'var(--font-scale)', fontWeight: 700, marginBottom: 5, color: 'var(--text)' }}>{eventText(language, event).title}</div>
+                    <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', lineHeight: 1.6, marginBottom: 0 }}>{eventText(language, event).shortDesc}</div>
                   </div>
                 </div>
                 </TiltCard>
@@ -212,14 +216,14 @@ export default function ExplorePage() {
                     <EventImage key={expandedEvent.id} id={expandedEvent.id} title={expandedEvent.title} year={expandedEvent.year} />
                     <div style={{ position: 'absolute', top: 14, left: 16 }}>
                       <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', background: 'var(--bg)', padding: '3px 9px', borderRadius: 5 }}>
-                        {expandedEvent.era.toUpperCase()} · {formatEventYear(expandedEvent.year)}
+                        {t(expandedEvent.era).toUpperCase()} · {fmtYear(expandedEvent.year)}
                       </span>
                     </div>
                   </div>
                   <div style={{ padding: '20px 24px 24px' }}>
-                    <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 12, color: 'var(--text)' }}>{expandedEvent.title}</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 12, color: 'var(--text)' }}>{eventText(language, expandedEvent).title}</div>
                     <div style={{ fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: 24 }}>
-                      {expandedEvent.fullDesc}
+                      {eventText(language, expandedEvent).fullDesc}
                     </div>
                     <div style={{ display: 'flex', gap: 10 }}>
                       <button
@@ -229,14 +233,14 @@ export default function ExplorePage() {
                         onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)'}
                         onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)'}
                       >
-                        Back
+                        {t('Back')}
                       </button>
                       <button
                         className="modal-btn modal-btn-go"
                         onClick={() => router.push(`/diverge/${expandedEvent.id}`)}
                         style={{ flex: 1, padding: '12px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
                       >
-                        Diverge
+                        {t('Diverge')}
                       </button>
                     </div>
                   </div>

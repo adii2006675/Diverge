@@ -102,12 +102,23 @@ const GUEST_DEFAULTS: UserSettings = {
   ai_depth: DEFAULT_DEPTH,
 }
 
+// Only known values are kept, so the Profile page always shows a selected theme and accent colour.
+const THEME_KEYS = ['light', 'dark']
+function normalizeTheme(value: unknown): string {
+  return value === 'dim' ? 'dark' : THEME_KEYS.includes(value as string) ? (value as string) : 'dark'
+}
+function normalizeAccent(value: unknown): string {
+  return typeof value === 'string' && value in ACCENT_COLORS ? value : 'orange'
+}
+
 function loadGuestSettings(): UserSettings {
   try {
     const saved = JSON.parse(localStorage.getItem(GUEST_KEY) || '{}')
     return {
       ...GUEST_DEFAULTS,
       ...saved,
+      theme: normalizeTheme(saved.theme),
+      accent_color: normalizeAccent(saved.accent_color),
       ai_response_style: normalizeLength(saved.ai_response_style),
       ai_depth: normalizeDepth(saved.ai_depth),
       ai_tone: normalizeTone(saved.ai_tone),
@@ -160,13 +171,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (data) {
       const merged = {
-        theme: data.theme === 'dim' ? 'dark' : (data.theme || 'dark'),
+        theme: normalizeTheme(data.theme),
         language: data.language || 'English',
         ai_response_style: normalizeLength(data.ai_response_style),
         show_confidence_level: data.show_confidence_level ?? true,
         show_historians_note: data.show_historians_note ?? true,
         default_era: data.default_era || 'All',
-        accent_color: data.accent_color || 'orange',
+        accent_color: normalizeAccent(data.accent_color),
         font_size: data.font_size || 'medium',
         ai_plausibility: normalizePlausibility(data.ai_plausibility),
         ai_tone: normalizeTone(data.ai_tone),

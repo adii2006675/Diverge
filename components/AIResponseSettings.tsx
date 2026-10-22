@@ -1,5 +1,6 @@
 'use client'
 import { useAuth } from '@/context/AuthContext'
+import { useT } from '@/lib/useT'
 import { AI_OPTION_GROUPS, normalizeLength, normalizeDepth, normalizeTone, normalizePlausibility } from '@/lib/aiSettings'
 
 type GroupKey = keyof typeof AI_OPTION_GROUPS
@@ -8,6 +9,7 @@ type GroupKey = keyof typeof AI_OPTION_GROUPS
 // Values are saved through AuthContext: to Supabase when signed in, to this browser when signed out.
 export default function AIResponseSettings({ showDescriptions = false }: { showDescriptions?: boolean }) {
   const { settings, updateSettings } = useAuth()
+  const { t } = useT()
 
   const current: Record<GroupKey, string> = {
     length: normalizeLength(settings?.ai_response_style),
@@ -25,8 +27,8 @@ export default function AIResponseSettings({ showDescriptions = false }: { showD
         const group = AI_OPTION_GROUPS[key]
         const stacked = showDescriptions && group.options.length > 2
         return (
-          <div key={key} role="radiogroup" aria-label={group.title}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>{group.title}</div>
+          <div key={key} role="radiogroup" aria-label={t(group.title)}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>{t(group.title)}</div>
             <div style={{ display: 'flex', flexDirection: stacked ? 'column' : 'row', gap: 8 }}>
               {group.options.map(opt => {
                 const on = current[key] === opt.value
@@ -47,8 +49,8 @@ export default function AIResponseSettings({ showDescriptions = false }: { showD
                     onMouseUp={e => (e.currentTarget.style.transform = '')}
                     onMouseLeave={e => (e.currentTarget.style.transform = '')}
                   >
-                    <div style={{ fontSize: 13, fontWeight: on ? 700 : 600, color: on ? 'var(--accent)' : 'var(--text)' }}>{opt.label}</div>
-                    {showDescriptions && <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2, lineHeight: 1.45 }}>{opt.desc}</div>}
+                    <div style={{ fontSize: 13, fontWeight: on ? 700 : 600, color: on ? 'var(--accent)' : 'var(--text)' }}>{t(opt.label)}</div>
+                    {showDescriptions && <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2, lineHeight: 1.45 }}>{t(opt.desc)}</div>}
                   </button>
                 )
               })}

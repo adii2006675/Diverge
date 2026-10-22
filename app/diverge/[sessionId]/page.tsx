@@ -188,6 +188,7 @@ export default function DivergePage() {
         depth: normalizeDepth(settings?.ai_depth),
         tone: normalizeTone(settings?.ai_tone),
         plausibility: normalizePlausibility(settings?.ai_plausibility),
+        language: settings?.language || 'English',
         // The timeline can only move forward: the next answer's year must not be earlier than this.
         previousYear: latest ? parseYear(latest.response.year) : (event?.year ?? null),
       }, ev => {
@@ -313,6 +314,12 @@ export default function DivergePage() {
     }
     setSummaryLoading(false)
   }
+
+  // The nav logo runs its lines while an answer is being written.
+  useEffect(() => {
+    document.documentElement.classList.toggle('dv-thinking', loading)
+    return () => document.documentElement.classList.remove('dv-thinking')
+  }, [loading])
 
   // Seconds since the question was sent, for the waiting card.
   useEffect(() => {
@@ -479,7 +486,10 @@ export default function DivergePage() {
                   {pendingQuestion && <div className="dv-q">{pendingQuestion}</div>}
                   <div className="dv-ans dv-wait" role="status" aria-live="polite">
                     <div className="dv-wait-head">
-                      <span className="dv-orbit" aria-hidden="true"><i /><i /><i /></span>
+                      <svg className="dv-think" viewBox="0 0 64 40" aria-hidden="true">
+                        <path className="a" pathLength={100} d="M4 23 H18 Q25 23 29 16 Q33 9 41 9 H60" />
+                        <path className="b" pathLength={100} d="M4 17 H18 Q25 17 29 24 Q33 31 41 31 H60" />
+                      </svg>
                       <div>
                         <b>{WAIT_STAGES[Math.min(WAIT_STAGES.length - 1, Math.floor(elapsed / 7))]}…</b>
                         <span className="dv-wait-sub">{elapsed}s · usually {WAIT_USUAL[normalizeLength(settings?.ai_response_style)]} seconds</span>

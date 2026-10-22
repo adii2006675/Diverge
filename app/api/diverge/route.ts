@@ -159,7 +159,7 @@ const clipList = (a: unknown, max: number, n: number) => (Array.isArray(a) ? a.s
 
 function buildPrompt(i: {
   startingEvent: string; previousWhatIfs: string[]; currentWorldState: string; question: string; realFacts: string[]
-  length: AILength; depth: AIDepth; tone: AITone; plausibility: AIPlausibility; previousYear: number | null; ref: Reference | null
+  length: AILength; depth: AIDepth; tone: AITone; plausibility: AIPlausibility; previousYear: number | null; ref: Reference | null; language: string
 }) {
   const spec = LENGTH_SPEC[i.length]
   const yearRule = i.previousYear !== null
@@ -181,7 +181,8 @@ ${i.ref.extract}
 ${DEPTH_INSTRUCTION[i.depth]}
 ${TONE_INSTRUCTION[i.tone]}
 ${PLAUSIBILITY_INSTRUCTION[i.plausibility]}
-LENGTH: ${i.length.toUpperCase()}.
+${i.language === 'English' ? '' : `LANGUAGE: Write every text field (paragraph, keyFacts, factExplanations, suggestions) in ${i.language}. Keep the JSON keys, the enum values (documented/inference/speculation, worldMood, uncertaintyLevel) and the year in their original English/digit form. Keep proper names in their usual ${i.language} spelling.
+`}LENGTH: ${i.length.toUpperCase()}.
 
 STARTING HISTORICAL EVENT: ${i.startingEvent}
 DOCUMENTED REAL-HISTORY FACTS FOR THIS EVENT:
@@ -233,6 +234,9 @@ function finish(data: Answer, depth: AIDepth, spec: { facts: number; suggestions
 
 const line = (o: unknown) => JSON.stringify(o) + '\n'
 
+// Long answers stream for up to a minute or more; this keeps the host from cutting them off.
+export const maxDuration = 120
+
 export async function POST(req: NextRequest) {
   let body: Record<string, any>
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Bad request.', code: 'bad_request' }, { status: 400 }) }
@@ -248,6 +252,8 @@ export async function POST(req: NextRequest) {
   const depth = normalizeDepth(body.depth)
   const tone = normalizeTone(body.tone ?? (body.aiStyle === 'academic' ? 'academic' : body.aiStyle === 'storytelling' ? 'dramatic' : undefined))
   const plausibility = normalizePlausibility(body.plausibility)
+  const LANGS = ['English', 'Spanish', 'French', 'German', 'Japanese', 'Portuguese', 'Hindi', 'Chinese']
+  const language = LANGS.includes(body.language) ? (body.language as string) : 'English'
   const spec = LENGTH_SPEC[length]
   const previousYear = typeof body.previousYear === 'number' && Number.isFinite(body.previousYear) ? Math.round(body.previousYear) : parseYear(body.previousYear)
 
@@ -262,7 +268,7 @@ export async function POST(req: NextRequest) {
       let charged = true
       try {
         const ref = await getReference(realFacts.length > 0 ? startingEvent : question)
-        const prompt = buildPrompt({ startingEvent, previousWhatIfs, currentWorldState, question, realFacts, length, depth, tone, plausibility, previousYear, ref })
+        const prompt = buildPrompt({ startingEvent, previousWhatIfs, currentWorldState, question, realFacts, length, depth, tone, plausibility, previousYear, ref, language })
 
         const params: Record<string, any> = {
           model: MODEL,

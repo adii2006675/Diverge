@@ -4,10 +4,13 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
+import SettingsPanel from '@/components/SettingsPanel'
+import { useT } from '@/lib/useT'
 
 export default function ProfilePage() {
   const router = useRouter()
   const { user, profile, updateProfile, loading } = useAuth()
+  const { t, locale } = useT()
 
   const [username, setUsername] = useState('')
   const [saving, setSaving] = useState(false)
@@ -20,6 +23,8 @@ export default function ProfilePage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [avatarHover, setAvatarHover] = useState(false)
   const [showPasswordInfo, setShowPasswordInfo] = useState(false)
+  const [editingName, setEditingName] = useState(false)
+  const [nameError, setNameError] = useState('')
 
   useEffect(() => {
     if (profile?.username) setUsername(profile.username)
@@ -38,12 +43,20 @@ export default function ProfilePage() {
   }
 
   async function handleSaveProfile() {
-    if (!username.trim()) return
+    const next = username.trim()
+    if (!next) { setUsername(profile?.username || ''); setEditingName(false); return }
+    if (next === profile?.username) { setEditingName(false); return }
     setSaving(true)
-    await updateProfile({ username: username.trim() })
+    setNameError('')
+    try {
+      await updateProfile({ username: next })
+      setEditingName(false)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch {
+      setNameError(t('Couldn’t save that name. Try again.'))
+    }
     setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
   }
 
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -94,11 +107,11 @@ export default function ProfilePage() {
     const hasNumber = /[0-9]/.test(newPassword)
     const hasSpecial = /[^A-Za-z0-9]/.test(newPassword)
     if (!meetsLength || !hasUpper || !hasLower || !hasNumber || !hasSpecial) {
-      setPasswordError('Password must be 8-16 characters with 1 uppercase, 1 lowercase, 1 number, and 1 special character')
+      setPasswordError(t('Password must be 8-16 characters with 1 uppercase, 1 lowercase, 1 number, and 1 special character'))
       return
     }
     if (newPassword !== confirmPassword) {
-      setPasswordError('Passwords do not match')
+      setPasswordError(t('Passwords do not match'))
       return
     }
     setSavingPassword(true)
@@ -120,12 +133,12 @@ export default function ProfilePage() {
     <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
       <Nav active="profile" />
 
-      <div style={{ position: 'relative', zIndex: 1, maxWidth: 560, margin: '0 auto', padding: '140px 24px 60px' }}>
-        <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 8, letterSpacing: '-0.02em' }}>Profile</h1>
-        <p style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 40 }}>Changes save automatically to your account.</p>
+      <div style={{ position: 'relative', zIndex: 1, maxWidth: 640, margin: '0 auto', padding: '140px 24px 60px' }}>
+        <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 8, letterSpacing: '-0.02em' }}>{t('Profile')}</h1>
+        <p style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 40 }}>{t('Changes save automatically to your account.')}</p>
 
         {/* Avatar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 40, padding: '20px 24px', borderRadius: 16, border: '1px solid var(--border-color)', background: 'var(--card-bg)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 32, padding: '10px 20px', borderRadius: 16, border: '1px solid var(--border-color)', background: 'var(--card-bg)' }}>
           <div
             onMouseEnter={() => setAvatarHover(true)}
             onMouseLeave={() => setAvatarHover(false)}
@@ -174,55 +187,57 @@ export default function ProfilePage() {
             )}
           </div>
           <div>
-            <div style={{ fontSize: 'var(--font-scale)', fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{profile?.username || 'User'}</div>
-            <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)' }}>{user.email}</div>
-            <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', marginTop: 4, opacity: 0.7 }}>
-              Member since {new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-            </div>
+            {editingName ? (
+              <input
+                autoFocus
+                value={username}
+                maxLength={40}
+                onChange={e => setUsername(e.target.value)}
+                onBlur={handleSaveProfile}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') handleSaveProfile()
+                  if (e.key === 'Escape') { setUsername(profile?.username || ''); setEditingName(false) }
+                }}
+                aria-label="Display name"
+                style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', background: 'var(--card-bg)', border: '1px solid var(--accent)', borderRadius: 10, padding: '4px 10px', outline: 'none', fontFamily: 'inherit', width: 260 }}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setEditingName(true)}
+                aria-label={t('Click to change your name')}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, cursor: 'text', color: 'var(--text)', fontFamily: 'inherit', fontSize: 22, fontWeight: 800 }}
+              >
+                {profile?.username || t('User')}
+                {saved && <span style={{ fontSize: 12, fontWeight: 600, color: '#10B981' }}>{t('Saved')}</span>}
+              </button>
+            )}
+            {nameError && <div role="alert" style={{ fontSize: 12, color: '#EF4444', marginTop: 4 }}>{nameError}</div>}
           </div>
         </div>
 
-        {/* Username */}
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 12 }}>
-            Display Name
-          </div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <input
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSaveProfile()}
-              placeholder="Your display name"
-              style={{ flex: 1, padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text)', fontSize: 'var(--font-scale)', outline: 'none', fontFamily: 'inherit' }}
-            />
-            <button
-              onClick={handleSaveProfile}
-              disabled={saving || !username.trim()}
-              style={{ padding: '12px 20px', borderRadius: 10, border: 'none', background: saved ? '#10B981' : 'var(--accent)', color: '#fff', fontSize: 'var(--font-scale)', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', minWidth: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              {saving ? '...' : saved ? 'Saved ✓' : 'Save'}
-            </button>
-          </div>
-        </div>
+        <SettingsPanel />
+
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-dim)', margin: '8px 0 14px' }}>{t('Account')}</div>
 
         {/* Email — read only */}
         <div style={{ marginBottom: 32 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 12 }}>
-            Email
+            {t('Email')}
           </div>
           <input
             value={user.email || ''}
             disabled
             style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-dim)', fontSize: 'var(--font-scale)', outline: 'none', fontFamily: 'inherit', cursor: 'not-allowed' }}
           />
-          <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', marginTop: 6, opacity: 0.7 }}>Email cannot be changed</div>
+          <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', marginTop: 6, opacity: 0.7 }}>{t('Email cannot be changed.')} {t('Member since')} {new Date(user.created_at).toLocaleDateString(locale, { month: 'long', year: 'numeric' })}</div>
         </div>
 
         {/* Change password */}
         <div style={{ marginBottom: 40 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>
-              Change Password
+              {t('Change Password')}
             </div>
             <div
               style={{ position: 'relative', display: 'flex' }}
@@ -241,13 +256,13 @@ export default function ProfilePage() {
                   padding: '10px 12px', width: 220, fontSize: 11, fontWeight: 400, textTransform: 'none',
                   letterSpacing: 'normal', color: 'var(--text-dim)', lineHeight: 1.6,
                 }}>
-                  <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Minimum requirements</div>
+                  <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{t('Minimum requirements')}</div>
                   <ul style={{ margin: 0, paddingLeft: 16 }}>
-                    <li>8-16 characters</li>
-                    <li>1 uppercase</li>
-                    <li>1 lowercase</li>
-                    <li>1 number</li>
-                    <li>1 special character</li>
+                    <li>{t('8-16 characters')}</li>
+                    <li>{t('1 uppercase')}</li>
+                    <li>{t('1 lowercase')}</li>
+                    <li>{t('1 number')}</li>
+                    <li>{t('1 special character')}</li>
                   </ul>
                 </div>
               )}
@@ -258,14 +273,14 @@ export default function ProfilePage() {
               value={newPassword}
               onChange={e => setNewPassword(e.target.value)}
               type="password"
-              placeholder="New password"
+              placeholder={t('New password')}
               style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text)', fontSize: 'var(--font-scale)', outline: 'none', fontFamily: 'inherit' }}
             />
             <input
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
               type="password"
-              placeholder="Confirm new password"
+              placeholder={t('Confirm new password')}
               onKeyDown={e => e.key === 'Enter' && handleChangePassword()}
               style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: `1px solid ${passwordError ? 'rgba(239,68,68,0.5)' : 'var(--border-color)'}`, background: 'var(--card-bg)', color: 'var(--text)', fontSize: 'var(--font-scale)', outline: 'none', fontFamily: 'inherit' }}
             />
@@ -277,7 +292,7 @@ export default function ProfilePage() {
               disabled={savingPassword || !newPassword || !confirmPassword}
               style={{ padding: '12px', borderRadius: 10, border: 'none', background: passwordSaved ? '#10B981' : 'var(--card-bg)', color: passwordSaved ? '#fff' : 'var(--text-dim)', fontSize: 'var(--font-scale)', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              {savingPassword ? 'Updating...' : passwordSaved ? 'Password Updated ✓' : 'Update Password'}
+              {savingPassword ? t('Updating...') : passwordSaved ? t('Password Updated ✓') : t('Update Password')}
             </button>
           </div>
         </div>
@@ -289,7 +304,7 @@ export default function ProfilePage() {
           onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)'}
           onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)'}
         >
-          Home
+          {t('Home')}
         </button>
       </div>
     </main>

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveCaller, isGateError } from '@/lib/aiServer'
 
+// Long answers stream for up to a minute or more; this keeps the host from cutting them off.
+export const maxDuration = 60
+
 export async function POST(req: NextRequest) {
   // Same rule as the answer route, except a summary does not use up a free question.
   const caller = await resolveCaller(req, { consume: false })

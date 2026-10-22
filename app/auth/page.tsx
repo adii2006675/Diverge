@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import StarBackground from '@/components/StarBackground'
@@ -13,6 +13,82 @@ export default function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  // Forgot password: 'email' asks for the address, 'code' takes the emailed code and a new password.
+  const [reset, setReset] = useState<null | 'email' | 'code' | 'newpass'>(null)
+  const [code, setCode] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const boxRefs = useRef<(HTMLInputElement | null)[]>([])
+  const [cooldown, setCooldown] = useState(0)
+  const [showPwInfo, setShowPwInfo] = useState(false)
+
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const id = window.setTimeout(() => setCooldown(c => c - 1), 1000)
+    return () => window.clearTimeout(id)
+  }, [cooldown])
+
+  function startReset() {
+    setReset('email'); setError(''); setCode(''); setNewPassword(''); setConfirmPassword('')
+  }
+
+  function stopReset() {
+    setReset(null); setError('')
+  }
+
+  // Sends the email with a code. The answer is the same whether or not the address has an account.
+  async function sendCode() {
+    if (!email.trim()) { setError('Enter your email first'); return }
+    if (cooldown > 0) return
+    setLoading(true); setError('')
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim())
+    setLoading(false)
+    if (resetError) {
+      setError(/rate|too many|seconds/i.test(resetError.message) ? 'Too many requests. Wait a minute and try again.' : resetError.message)
+      return
+    }
+    setCooldown(45)
+    setCode('')
+    setReset('code')
+    window.setTimeout(() => boxRefs.current[0]?.focus(), 50)
+  }
+
+  // Runs by itself as soon as the sixth digit is in.
+  async function verifyCode(token: string) {
+    setLoading(true); setError('')
+    const { error: verifyError } = await supabase.auth.verifyOtp({ email: email.trim(), token, type: 'recovery' })
+    setLoading(false)
+    if (verifyError) {
+      setError(/expired|invalid/i.test(verifyError.message) ? 'That code is wrong or has expired. Try again or send a new one.' : verifyError.message)
+      setCode('')
+      window.setTimeout(() => boxRefs.current[0]?.focus(), 30)
+      return
+    }
+    setReset('newpass')
+  }
+
+  function setDigits(next: string) {
+    const clean = next.replace(/\D/g, '').slice(0, 6)
+    setCode(clean)
+    setError('')
+    if (clean.length === 6) verifyCode(clean)
+    else boxRefs.current[Math.min(clean.length, 5)]?.focus()
+  }
+
+  async function savePassword() {
+    setError('')
+    const okLength = newPassword.length >= 8 && newPassword.length <= 16
+    if (!okLength || !/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword)) {
+      setError('Password must be 8-16 characters with 1 uppercase, 1 lowercase, 1 number, and 1 special character')
+      return
+    }
+    if (newPassword !== confirmPassword) { setError('Passwords do not match'); return }
+    setLoading(true)
+    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword })
+    setLoading(false)
+    if (updateError) { setError(updateError.message); return }
+    router.push('/')
+  }
 
   async function handleAuth() {
     setLoading(true)
@@ -40,7 +116,10 @@ export default function AuthPage() {
         router.push('/')
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-        if (signInError) throw signInError
+        if (signInError) {
+          if (/invalid login credentials/i.test(signInError.message)) throw new Error('Incorrect email or password. Forgot your password? Use the link below.')
+          throw signInError
+        }
         router.push('/')
       }
     } catch (err: any) {
@@ -62,77 +141,219 @@ export default function AuthPage() {
           DIVERGE
         </div>
         <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginBottom: 28 }}>
-          {isSignUp ? 'Create an account to save your history' : 'Sign in to access your saved history'}
+          {reset === 'email' ? 'Enter your email and we will send you a code' : reset === 'code' ? `We sent a code to ${email.trim()}` : reset === 'newpass' ? 'Code confirmed. Choose a new password' : isSignUp ? 'Create an account to save your history' : 'Sign in to access your saved history'}
         </div>
 
+        {reset ? (
+          <>
+            {reset === 'email' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <input
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  type="email"
+                  placeholder="Email"
+                  style={inp}
+                  onKeyDown={e => e.key === 'Enter' && sendCode()}
+                />
+              </div>
+            )}
+
+            {reset === 'code' && (
+              <div role="group" aria-label="6-digit code" style={{ display: 'flex', gap: 8, justifyContent: 'space-between' }}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <input
+                    key={i}
+                    ref={el => { boxRefs.current[i] = el }}
+                    value={code[i] || ''}
+                    inputMode="numeric"
+                    autoComplete={i === 0 ? 'one-time-code' : 'off'}
+                    maxLength={6}
+                    disabled={loading}
+                    aria-label={`Digit ${i + 1}`}
+                    onChange={e => {
+                      const v = e.target.value.replace(/\D/g, '')
+                      if (!v) return
+                      // A pasted code fills every box; a single digit fills this one.
+                      if (v.length > 1) return setDigits(v)
+                      const arr = code.split('')
+                      arr[i] = v
+                      setDigits(arr.join('').slice(0, 6))
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Backspace') {
+                        e.preventDefault()
+                        const arr = code.split('')
+                        if (arr[i]) { arr[i] = ''; setCode(arr.join('')) }
+                        else if (i > 0) { arr[i - 1] = ''; setCode(arr.join('')); boxRefs.current[i - 1]?.focus() }
+                        setError('')
+                      }
+                      if (e.key === 'ArrowLeft' && i > 0) boxRefs.current[i - 1]?.focus()
+                      if (e.key === 'ArrowRight' && i < 5) boxRefs.current[i + 1]?.focus()
+                    }}
+                    onFocus={e => e.currentTarget.select()}
+                    style={{ ...inp, padding: '14px 0', width: 'calc((100% - 40px) / 6)', textAlign: 'center', fontSize: 22, fontWeight: 700, borderColor: error ? 'rgba(239,68,68,0.5)' : code[i] ? 'rgba(59,130,246,0.7)' : undefined }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {reset === 'newpass' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>New password</div>
+                  <div
+                    style={{ position: 'relative', display: 'flex' }}
+                    onMouseEnter={() => setShowPwInfo(true)}
+                    onMouseLeave={() => setShowPwInfo(false)}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" style={{ width: 14, height: 14, cursor: 'help' }} role="img" aria-label="Password requirements">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="17" x2="12" y2="11"></line>
+                      <circle cx="12" cy="8" r="0.5" fill="rgba(255,255,255,0.4)"></circle>
+                    </svg>
+                    {showPwInfo && (
+                      <div style={{ position: 'absolute', left: 0, top: 'calc(100% + 8px)', zIndex: 10, background: '#101018', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 12px', width: 220, fontSize: 11, fontWeight: 400, textTransform: 'none', letterSpacing: 'normal', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>
+                        <div style={{ fontWeight: 700, color: '#fff', marginBottom: 4 }}>Minimum requirements</div>
+                        <ul style={{ margin: 0, paddingLeft: 16 }}>
+                          <li>8-16 characters</li>
+                          <li>1 uppercase</li>
+                          <li>1 lowercase</li>
+                          <li>1 number</li>
+                          <li>1 special character</li>
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <input value={newPassword} onChange={e => setNewPassword(e.target.value)} type="password" placeholder="New password" style={inp} autoFocus />
+                <input
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  type="password"
+                  placeholder="Confirm new password"
+                  style={inp}
+                  onKeyDown={e => e.key === 'Enter' && savePassword()}
+                />
+              </div>
+            )}
+
+            {error && (
+              <div role="alert" style={{ fontSize: 13, color: '#EF4444', marginTop: 12, padding: '8px 12px', borderRadius: 8, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                {error}
+              </div>
+            )}
+
+            {reset === 'email' && (
+              <button
+                onClick={sendCode}
+                disabled={loading}
+                style={{ width: '100%', marginTop: 20, padding: '13px', borderRadius: 10, border: 'none', background: '#3B82F6', color: '#fff', fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, fontFamily: 'inherit' }}
+              >
+                {loading ? 'Loading...' : 'Send code'}
+              </button>
+            )}
+
+            {reset === 'newpass' && (
+              <button
+                onClick={savePassword}
+                disabled={loading}
+                style={{ width: '100%', marginTop: 20, padding: '13px', borderRadius: 10, border: 'none', background: '#3B82F6', color: '#fff', fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, fontFamily: 'inherit' }}
+              >
+                {loading ? 'Loading...' : 'Change password'}
+              </button>
+            )}
+
+            {reset === 'code' && (
+              <div style={{ marginTop: 18, textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>
+                {loading ? 'Checking...' : cooldown > 0 ? `Send a new code in ${cooldown}s` : (
+                  <span onClick={sendCode} style={{ color: '#3B82F6', cursor: 'pointer', fontWeight: 600 }}>Send a new code</span>
+                )}
+              </div>
+            )}
+
+            <div style={{ marginTop: 14, textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
+              <span onClick={stopReset} style={{ color: '#3B82F6', cursor: 'pointer', fontWeight: 600 }}>Back to sign in</span>
+            </div>
+          </>
+        ) : (
+          <>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {isSignUp && (
-            <>
+              {isSignUp && (
+                <>
+                  <input
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    type="text"
+                    placeholder="Your name"
+                    style={inp}
+                  />
+                  <input
+                    value={age}
+                    onChange={e => setAge(e.target.value)}
+                    type="number"
+                    placeholder="Your age"
+                    min={8}
+                    max={120}
+                    style={inp}
+                  />
+                </>
+              )}
               <input
-                value={name}
-                onChange={e => setName(e.target.value)}
-                type="text"
-                placeholder="Your name"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                type="email"
+                placeholder="Email"
                 style={inp}
               />
               <input
-                value={age}
-                onChange={e => setAge(e.target.value)}
-                type="number"
-                placeholder="Your age"
-                min={8}
-                max={120}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                type="password"
+                placeholder="Password"
                 style={inp}
+                onKeyDown={e => e.key === 'Enter' && handleAuth()}
               />
-            </>
-          )}
-          <input
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            type="email"
-            placeholder="Email"
-            style={inp}
-          />
-          <input
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            type="password"
-            placeholder="Password"
-            style={inp}
-            onKeyDown={e => e.key === 'Enter' && handleAuth()}
-          />
-        </div>
+            </div>
+    
+            {error && (
+              <div style={{ fontSize: 13, color: '#EF4444', marginTop: 12, padding: '8px 12px', borderRadius: 8, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                {error}
+              </div>
+            )}
+    
+            <button
+              onClick={handleAuth}
+              disabled={loading}
+              style={{ width: '100%', marginTop: 20, padding: '13px', borderRadius: 10, border: 'none', background: '#3B82F6', color: '#fff', fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, fontFamily: 'inherit', transition: 'all 0.2s' }}
+            >
+              {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
+            </button>
+    
+            <button
+              onClick={() => router.push('/')}
+              style={{ width: '100%', marginTop: 10, padding: '13px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: 'rgba(255,255,255,0.5)', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              Continue without account
+            </button>
+    
+            <div style={{ marginTop: 16, textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
+              {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+              <span
+                onClick={() => { setIsSignUp(!isSignUp); setError('') }}
+                style={{ color: '#3B82F6', cursor: 'pointer', fontWeight: 600 }}
+              >
+                {isSignUp ? 'Sign in' : 'Sign up'}
+              </span>
+            </div>
 
-        {error && (
-          <div style={{ fontSize: 13, color: '#EF4444', marginTop: 12, padding: '8px 12px', borderRadius: 8, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
-            {error}
-          </div>
+            {!isSignUp && (
+              <div style={{ marginTop: 10, textAlign: 'center', fontSize: 13 }}>
+                <span onClick={startReset} style={{ color: '#3B82F6', cursor: 'pointer', fontWeight: 600 }}>Forgot password?</span>
+              </div>
+            )}
+          </>
         )}
-
-        <button
-          onClick={handleAuth}
-          disabled={loading}
-          style={{ width: '100%', marginTop: 20, padding: '13px', borderRadius: 10, border: 'none', background: '#3B82F6', color: '#fff', fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, fontFamily: 'inherit', transition: 'all 0.2s' }}
-        >
-          {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
-        </button>
-
-        <button
-          onClick={() => router.push('/')}
-          style={{ width: '100%', marginTop: 10, padding: '13px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: 'rgba(255,255,255,0.5)', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}
-        >
-          Continue without account
-        </button>
-
-        <div style={{ marginTop: 16, textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
-          {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
-          <span
-            onClick={() => { setIsSignUp(!isSignUp); setError('') }}
-            style={{ color: '#3B82F6', cursor: 'pointer', fontWeight: 600 }}
-          >
-            {isSignUp ? 'Sign in' : 'Sign up'}
-          </span>
-        </div>
       </div>
     </main>
   )

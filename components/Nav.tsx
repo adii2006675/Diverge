@@ -2,10 +2,12 @@
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useState } from 'react'
+import { useT } from '@/lib/useT'
 
 export default function Nav({ active }: { active?: string }) {
   const router = useRouter()
   const { user, profile, signOut } = useAuth()
+  const { t } = useT()
   const [showUserMenu, setShowUserMenu] = useState(false)
 
   async function handleSignOut() {
@@ -30,25 +32,25 @@ export default function Nav({ active }: { active?: string }) {
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
         fontFamily: 'Inter, system-ui, sans-serif',
       }}>
-        {/* Left — wordmark */}
-        <div
+        {/* Left — logo mark; hover spells out the name */}
+        <button
+          type="button"
+          className="dv-logo"
+          aria-label="Diverge home"
           onClick={() => router.push('/')}
-          style={{
-            fontSize: 17, fontWeight: 900, letterSpacing: '0.18em', textTransform: 'uppercase', cursor: 'pointer', minWidth: 100,
-            backgroundImage: 'linear-gradient(to right, var(--accent) 50%, var(--text) 50%)',
-            backgroundSize: '200% 100%',
-            backgroundPosition: 'right bottom',
-            WebkitBackgroundClip: 'text',
-            backgroundClip: 'text',
-            color: 'transparent',
-            display: 'inline-block',
-            transition: 'background-position 0.4s ease, transform 0.25s ease',
-          }}
-          onMouseEnter={e => { const el = e.currentTarget as HTMLDivElement; el.style.backgroundPosition = 'left bottom'; el.style.transform = 'scale(1.08)' }}
-          onMouseLeave={e => { const el = e.currentTarget as HTMLDivElement; el.style.backgroundPosition = 'right bottom'; el.style.transform = 'scale(1)' }}
         >
-          DIVERGE
-        </div>
+          <svg className="dv-logo-mark" viewBox="0 0 64 40" width="40" height="25" aria-hidden="true">
+            <path className="dv-l1" pathLength={100} d="M4 23 H18 Q25 23 29 16 Q33 9 41 9 H60" fill="none" stroke="var(--accent)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+            <path className="dv-l2" pathLength={100} d="M4 17 H18 Q25 17 29 24 Q33 31 41 31 H60" fill="none" stroke="var(--text)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+            <path className="dv-run" pathLength={100} d="M4 23 H18 Q25 23 29 16 Q33 9 41 9 H60" fill="none" stroke="#fff" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+            <path className="dv-run b" pathLength={100} d="M4 17 H18 Q25 17 29 24 Q33 31 41 31 H60" fill="none" stroke="var(--accent)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="dv-word" aria-hidden="true">
+            {'DIVERGE'.split('').map((ch, i) => (
+              <span key={i} style={{ ['--i' as string]: i }}>{ch}</span>
+            ))}
+          </span>
+        </button>
 
         {/* Center — nav links */}
         <div style={{ display: 'flex', gap: 4, alignItems: 'center', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
@@ -66,7 +68,7 @@ export default function Nav({ active }: { active?: string }) {
               onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)'}
               onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.color = active === label.toLowerCase() ? 'var(--text)' : 'var(--text-dim)'}
             >
-              {label}
+              {t(label)}
             </button>
           ))}
           <button
@@ -81,7 +83,7 @@ export default function Nav({ active }: { active?: string }) {
             onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)'}
             onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.color = active === 'sessions' ? 'var(--text)' : 'var(--text-dim)'}
           >
-            Sessions
+            {t('Sessions')}
           </button>
         </div>
 
@@ -92,7 +94,7 @@ export default function Nav({ active }: { active?: string }) {
               onClick={() => router.push('/auth')}
               style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
             >
-              Sign In
+              {t('Sign In')}
             </button>
           ) : (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -107,7 +109,7 @@ export default function Nav({ active }: { active?: string }) {
                   }}
                   onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)'}
                   onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)'}
-                  title="Profile"
+                  title={t('Profile')}
                 >
                   {!profile?.avatar_url && (profile?.username?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?')}
                 </button>
@@ -115,7 +117,7 @@ export default function Nav({ active }: { active?: string }) {
                 {showUserMenu && (
                   <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '8px', minWidth: 200, zIndex: 100, animation: 'fadeIn 0.15s ease' }}>
                     <div style={{ padding: '8px 12px 12px', borderBottom: '1px solid var(--border-color)', marginBottom: 6 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{profile?.username || 'User'}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{profile?.username || t('User')}</div>
                       <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>{user.email}</div>
                     </div>
 
@@ -130,7 +132,7 @@ export default function Nav({ active }: { active?: string }) {
                         onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'var(--card-bg)'}
                         onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
                       >
-                        {item.label}
+                        {t(item.label)}
                       </button>
                     ))}
 
@@ -141,7 +143,7 @@ export default function Nav({ active }: { active?: string }) {
                         onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.08)'}
                         onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
                       >
-                        Sign Out
+                        {t('Sign Out')}
                       </button>
                     </div>
                   </div>
