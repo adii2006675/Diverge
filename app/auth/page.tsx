@@ -1,4 +1,7 @@
 'use client'
+import PasswordInput from '@/components/PasswordInput'
+import { PasswordChecklist, MatchHint } from '@/components/PasswordChecklist'
+import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -20,7 +23,6 @@ export default function AuthPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const boxRefs = useRef<(HTMLInputElement | null)[]>([])
   const [cooldown, setCooldown] = useState(0)
-  const [showPwInfo, setShowPwInfo] = useState(false)
 
   useEffect(() => {
     if (cooldown <= 0) return
@@ -132,7 +134,7 @@ export default function AuthPage() {
   return (
     <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: '#080810', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
       <StarBackground />
-      <div style={{ width: '100%', maxWidth: 420, padding: 32, borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', position: 'relative', zIndex: 1 }}>
+      <div style={{ width: '100%', maxWidth: 420, padding: 32, borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)', background: '#0d0d16', position: 'relative', zIndex: 1 }}>
 
         <div
           onClick={() => router.push('/')}
@@ -202,39 +204,18 @@ export default function AuthPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>New password</div>
-                  <div
-                    style={{ position: 'relative', display: 'flex' }}
-                    onMouseEnter={() => setShowPwInfo(true)}
-                    onMouseLeave={() => setShowPwInfo(false)}
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" style={{ width: 14, height: 14, cursor: 'help' }} role="img" aria-label="Password requirements">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="12" y1="17" x2="12" y2="11"></line>
-                      <circle cx="12" cy="8" r="0.5" fill="rgba(255,255,255,0.4)"></circle>
-                    </svg>
-                    {showPwInfo && (
-                      <div style={{ position: 'absolute', left: 0, top: 'calc(100% + 8px)', zIndex: 10, background: '#101018', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 12px', width: 220, fontSize: 11, fontWeight: 400, textTransform: 'none', letterSpacing: 'normal', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>
-                        <div style={{ fontWeight: 700, color: '#fff', marginBottom: 4 }}>Minimum requirements</div>
-                        <ul style={{ margin: 0, paddingLeft: 16 }}>
-                          <li>8-16 characters</li>
-                          <li>1 uppercase</li>
-                          <li>1 lowercase</li>
-                          <li>1 number</li>
-                          <li>1 special character</li>
-                        </ul>
-                      </div>
-                    )}
-                  </div>
                 </div>
-                <input value={newPassword} onChange={e => setNewPassword(e.target.value)} type="password" placeholder="New password" style={inp} autoFocus />
-                <input
+                <PasswordInput value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="New password" style={inp} autoFocus autoComplete="new-password" />
+                <PasswordChecklist password={newPassword} />
+                <PasswordInput
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
-                  type="password"
                   placeholder="Confirm new password"
+                  autoComplete="new-password"
                   style={inp}
                   onKeyDown={e => e.key === 'Enter' && savePassword()}
                 />
+                <MatchHint password={newPassword} confirm={confirmPassword} />
               </div>
             )}
 
@@ -306,14 +287,15 @@ export default function AuthPage() {
                 placeholder="Email"
                 style={inp}
               />
-              <input
+              <PasswordInput
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                type="password"
                 placeholder="Password"
+                autoComplete={isSignUp ? 'new-password' : 'current-password'}
                 style={inp}
                 onKeyDown={e => e.key === 'Enter' && handleAuth()}
               />
+              {isSignUp && <PasswordChecklist password={password} />}
             </div>
     
             {error && (
@@ -354,6 +336,9 @@ export default function AuthPage() {
             )}
           </>
         )}
+      </div>
+      <div style={{ position: 'absolute', bottom: 20, left: 0, right: 0, textAlign: 'center', fontSize: 12 }}>
+        <Link href="/privacy" style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>Privacy</Link>
       </div>
     </main>
   )

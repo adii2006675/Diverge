@@ -8,6 +8,7 @@ import CardBorderTrace from '@/components/CardBorderTrace'
 import EventImage from '@/components/EventImage'
 import { ALL_EVENTS } from '@/lib/events'
 import { motion, AnimatePresence } from 'motion/react'
+import { useToast } from '@/components/useToast'
 
 type Session = {
   id: string
@@ -53,6 +54,7 @@ export default function SessionsPage() {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('newest')
+  const { toast, showToast } = useToast()
 
   useEffect(() => {
     if (user) loadSessions()
@@ -73,13 +75,15 @@ export default function SessionsPage() {
 
   async function handleRename(id: string) {
     if (!renameValue.trim()) { setRenamingId(null); return }
-    await supabase.from('sessions').update({ event_title: renameValue.trim() }).eq('id', id)
+    const { error } = await supabase.from('sessions').update({ event_title: renameValue.trim() }).eq('id', id)
+    if (error) { console.error(error); showToast('Could not rename this session.'); setRenamingId(null); return }
     setSessions(prev => prev.map(s => s.id === id ? { ...s, event_title: renameValue.trim() } : s))
     setRenamingId(null)
+    showToast('Renamed.')
   }
 
   async function handleDuplicate(session: Session) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('sessions')
       .insert({
         user_id: user!.id,
@@ -90,7 +94,8 @@ export default function SessionsPage() {
       })
       .select()
       .single()
-    if (data) setSessions(prev => [data, ...prev])
+    if (data) { setSessions(prev => [data, ...prev]); showToast('Session duplicated.') }
+    else { if (error) console.error(error); showToast('Could not duplicate this session.') }
     setOpenMenuId(null)
   }
 
@@ -100,6 +105,7 @@ export default function SessionsPage() {
     console.log('delete result:', { error, data, count })
     if (error) {
       console.error('Failed to delete session:', error)
+      showToast('Could not delete this session.')
       return
     }
     if (!data || data.length === 0) {
@@ -107,6 +113,7 @@ export default function SessionsPage() {
     }
     setSessions(prev => prev.filter(s => s.id !== id))
     setDeleteTargetId(null)
+    showToast('Session deleted.')
     await loadSessions()
   }
 
@@ -177,8 +184,8 @@ export default function SessionsPage() {
         {/* Filter bar removed for now */}
 
         {loadingSessions ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ width: 24, height: 24, borderRadius: '50%', border: '2px solid var(--border-color)', borderTopColor: 'var(--accent)', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} role="status" aria-label="Loading your sessions">
+            <div className="skel-row" /><div className="skel-row" style={{ opacity: 0.75 }} /><div className="skel-row" style={{ opacity: 0.5 }} />
           </div>
         ) : filteredSorted.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
@@ -190,7 +197,7 @@ export default function SessionsPage() {
                 <div style={{ fontSize: 16, color: 'var(--text-dim)', marginTop: 8, opacity: 0.7 }}>Start exploring history to save your timelines</div>
                 <button
                   onClick={() => router.push('/explore')}
-                  style={{ marginTop: 20, padding: '10px 20px', borderRadius: 10, border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)', background: 'color-mix(in srgb, var(--accent) 8%, transparent)', color: 'var(--accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
+                  style={{ marginTop: 20, padding: '10px 20px', borderRadius: 10, border: '1px solid color-mix(in srgb, var(--accent) 30%, var(--card-bg))', background: 'color-mix(in srgb, var(--accent) 8%, var(--card-bg))', color: 'var(--accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
                   onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.fontSize = '15px'; el.style.color = 'var(--text)' }}
                   onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.fontSize = '13px'; el.style.color = 'var(--accent)' }}
                 >
@@ -209,12 +216,13 @@ export default function SessionsPage() {
                   key={session.id}
                   className="event-card"
                   whileHover={{ scale: 1.015 }}
+                  whileTap={{ scale: 0.99 }}
                   transition={{ duration: 0.15, ease: 'easeOut' }}
                   onClick={() => !isRenaming && setExpandedSession(isExpanded ? null : session.id)}
                   style={{
                     borderRadius: 14, cursor: 'pointer', position: 'relative', isolation: 'isolate',
-                    border: `1px solid ${isExpanded ? 'color-mix(in srgb, var(--accent) 35%, transparent)' : 'var(--border-color)'}`,
-                    background: isExpanded ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : 'var(--card-bg)',
+                    border: `1px solid ${isExpanded ? 'color-mix(in srgb, var(--accent) 35%, var(--card-bg))' : 'var(--border-color)'}`,
+                    background: isExpanded ? 'color-mix(in srgb, var(--accent) 6%, var(--card-bg))' : 'var(--card-bg)',
                     overflow: 'visible',
                   }}
                 >
@@ -268,7 +276,7 @@ export default function SessionsPage() {
                       {openMenuId === session.id && (
                         <div
                           onClick={e => e.stopPropagation()}
-                          style={{ position: 'absolute', left: '100%', marginLeft: 25, top: -16, background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 10, padding: 6, minWidth: 140, zIndex: 50 }}
+                          style={{ position: 'absolute', left: '100%', marginLeft: 25, top: -16, background: 'var(--surface)', border: '1px solid var(--border-color)', borderRadius: 10, padding: 6, minWidth: 140, zIndex: 50 }}
                         >
                           <button
                             onClick={() => { setRenamingId(session.id); setRenameValue(session.event_title || ''); setOpenMenuId(null) }}
@@ -311,7 +319,7 @@ export default function SessionsPage() {
                       ))}
                       <button
                         onClick={e => { e.stopPropagation(); router.push(`/diverge/${session.event_id || 'custom'}?session=${session.id}`) }}
-                        style={{ marginTop: 12, width: '100%', padding: '9px', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)', background: 'transparent', color: 'var(--accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
+                        style={{ marginTop: 12, width: '100%', padding: '9px', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--accent) 30%, var(--card-bg))', background: 'transparent', color: 'var(--accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
                         onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.12)'}
                         onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
                       >
@@ -325,6 +333,8 @@ export default function SessionsPage() {
           </div>
         )}
       </div>
+
+      {toast}
 
       {/* Delete confirmation modal */}
       <AnimatePresence>
@@ -341,7 +351,7 @@ export default function SessionsPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 10 }}
               transition={{ type: 'spring', stiffness: 320, damping: 30 }}
-              style={{ background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 18, padding: '36px', maxWidth: 560, width: '100%' }}
+              style={{ background: 'var(--surface)', border: '1px solid var(--border-color)', borderRadius: 18, padding: '36px', maxWidth: 560, width: '100%' }}
               onClick={e => e.stopPropagation()}
             >
               <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)', marginBottom: 10 }}>Delete this session?</div>

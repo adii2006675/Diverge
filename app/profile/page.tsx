@@ -1,4 +1,5 @@
 'use client'
+import PasswordInput from '@/components/PasswordInput'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
@@ -146,8 +147,8 @@ export default function ProfilePage() {
           >
             <div style={{
               width: 64, height: 64, borderRadius: '50%',
-              background: profile?.avatar_url ? `url(${profile.avatar_url}) center/cover` : 'color-mix(in srgb, var(--accent) 25%, transparent)',
-              border: '2px solid color-mix(in srgb, var(--accent) 40%, transparent)',
+              background: profile?.avatar_url ? `url(${profile.avatar_url}) center/cover` : 'color-mix(in srgb, var(--accent) 25%, var(--card-bg))',
+              border: '2px solid color-mix(in srgb, var(--accent) 40%, var(--card-bg))',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 'var(--font-scale)', fontWeight: 800, color: 'var(--accent)',
             }}>
@@ -252,7 +253,7 @@ export default function ProfilePage() {
               {showPasswordInfo && (
                 <div style={{
                   position: 'absolute', left: 0, top: 'calc(100% + 8px)', zIndex: 10,
-                  background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 8,
+                  background: 'var(--surface)', border: '1px solid var(--border-color)', borderRadius: 8,
                   padding: '10px 12px', width: 220, fontSize: 11, fontWeight: 400, textTransform: 'none',
                   letterSpacing: 'normal', color: 'var(--text-dim)', lineHeight: 1.6,
                 }}>
@@ -269,17 +270,21 @@ export default function ProfilePage() {
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <input
+            <PasswordInput
               value={newPassword}
               onChange={e => setNewPassword(e.target.value)}
-              type="password"
+              autoComplete="new-password"
+              showLabel={t('Show password')}
+              hideLabel={t('Hide password')}
               placeholder={t('New password')}
               style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text)', fontSize: 'var(--font-scale)', outline: 'none', fontFamily: 'inherit' }}
             />
-            <input
+            <PasswordInput
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
-              type="password"
+              autoComplete="new-password"
+              showLabel={t('Show password')}
+              hideLabel={t('Hide password')}
               placeholder={t('Confirm new password')}
               onKeyDown={e => e.key === 'Enter' && handleChangePassword()}
               style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: `1px solid ${passwordError ? 'rgba(239,68,68,0.5)' : 'var(--border-color)'}`, background: 'var(--card-bg)', color: 'var(--text)', fontSize: 'var(--font-scale)', outline: 'none', fontFamily: 'inherit' }}

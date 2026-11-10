@@ -40,7 +40,7 @@ export default function SettingsPanel() {
                 style={{
                   flex: 1, padding: '10px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
                   border: `1px solid ${settings?.theme === theme ? 'var(--accent)' : 'var(--border-color)'}`,
-                  background: settings?.theme === theme ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--card-bg)',
+                  background: settings?.theme === theme ? 'color-mix(in srgb, var(--accent) 15%, var(--card-bg))' : 'var(--card-bg)',
                   color: settings?.theme === theme ? 'var(--accent)' : 'var(--text-dim)',
                   fontSize: 'var(--font-scale)', fontWeight: settings?.theme === theme ? 700 : 400,
                   transition: 'all 0.18s',
@@ -88,7 +88,7 @@ export default function SettingsPanel() {
                 style={{
                   flex: 1, padding: '10px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
                   border: `1px solid ${settings?.font_size === f.value ? 'var(--accent)' : 'var(--border-color)'}`,
-                  background: settings?.font_size === f.value ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--card-bg)',
+                  background: settings?.font_size === f.value ? 'color-mix(in srgb, var(--accent) 15%, var(--card-bg))' : 'var(--card-bg)',
                   color: settings?.font_size === f.value ? 'var(--accent)' : 'var(--text-dim)',
                   fontSize: 'var(--font-scale)', fontWeight: settings?.font_size === f.value ? 700 : 400,
                   transition: 'all 0.18s',
@@ -112,7 +112,7 @@ export default function SettingsPanel() {
                   flex: '1 1 140px', minWidth: 140,
                   padding: '8px 16px', borderRadius: 999, cursor: 'pointer', fontFamily: 'inherit',
                   border: `1px solid ${settings?.language === lang ? 'var(--accent)' : 'var(--border-color)'}`,
-                  background: settings?.language === lang ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'transparent',
+                  background: settings?.language === lang ? 'color-mix(in srgb, var(--accent) 15%, var(--card-bg))' : 'transparent',
                   color: settings?.language === lang ? 'var(--accent)' : 'var(--text-dim)',
                   fontSize: 'var(--font-scale)', fontWeight: settings?.language === lang ? 600 : 400,
                   transition: 'all 0.18s',
@@ -172,7 +172,7 @@ function Toggle({ label, desc, value, onChange }: { label: string; desc: string;
       }}>
         <div style={{
           position: 'absolute', top: 3, left: value ? 23 : 3,
-          width: 18, height: 18, borderRadius: '50%', background: '#fff',
+          width: 18, height: 18, borderRadius: '50%', background: 'var(--on-accent, #fff)',
           transition: 'left 0.2s',
           boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
         }} />

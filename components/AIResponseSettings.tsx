@@ -42,7 +42,7 @@ export default function AIResponseSettings({ showDescriptions = false }: { showD
                     style={{
                       flex: stacked ? undefined : 1, padding: showDescriptions ? '10px 12px' : '9px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', textAlign: showDescriptions ? 'left' : 'center',
                       border: `1px solid ${on ? 'var(--accent)' : 'var(--border-color)'}`,
-                      background: on ? 'color-mix(in srgb, var(--accent) 14%, transparent)' : 'var(--card-bg)',
+                      background: on ? 'color-mix(in srgb, var(--accent) 14%, var(--card-bg))' : 'var(--card-bg)',
                       transition: 'transform 0.16s cubic-bezier(0.23, 1, 0.32, 1), border-color 0.16s, background 0.16s',
                     }}
                     onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.98)')}

@@ -4,13 +4,18 @@ import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { ALL_EVENTS, formatEventYear } from '@/lib/events'
 import { WhatIfEntry, WhatIfResponse, WorldMood } from '@/types'
 import { useAuth } from '@/context/AuthContext'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import { supabase } from '@/lib/supabase'
 import EventImage from '@/components/EventImage'
+import CountUp from '@/components/CountUp'
+import TwoTimelines from '@/components/TwoTimelines'
 import Nav from '@/components/Nav'
 import AIResponseSettings from '@/components/AIResponseSettings'
 import { streamAnswer, aiHeaders, AiError, setUserApiKey } from '@/lib/aiClient'
+import { createShare, revokeShare, shareUrl } from '@/lib/share'
+import { renderTimelineImage, downloadBlob } from '@/lib/exportImage'
 import { normalizeLength, normalizeDepth, normalizeTone, normalizePlausibility } from '@/lib/aiSettings'
+import { LOCALES, normalizeLanguage } from '@/lib/i18n'
 import './diverge.css'
 
 const MOOD_COLORS: Record<string, string> = {
@@ -54,6 +59,7 @@ function confidenceInfo(level: string) {
 type AskError = { message: string; question: string }
 type Refusal = { message: string; question: string }
 type Gate = { code: string; message: string; question: string }
+type Toast = { id: number; message: string; undo?: () => void; actionLabel?: string }
 
 const WAIT_STAGES = ['Reading the historical record', 'Tracing the causes', 'Weighing the ripple effects', 'Writing your answer']
 // Measured typical times for each length setting.
@@ -105,6 +111,27 @@ export default function DivergePage() {
   const [gate, setGate] = useState<Gate | null>(null)
   const [keyDraft, setKeyDraft] = useState('')
   const [streamText, setStreamText] = useState('')
+  const [toast, setToast] = useState<Toast | null>(null)
+  const toastTimer = useRef<number | null>(null)
+  const toastSeq = useRef(0)
+  const instantScroll = useRef(false)
+  const lastShare = useRef<{ signature: string; id: string } | null>(null)
+  const [sharing, setSharing] = useState(false)
+  const [branching, setBranching] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [speakingIdx, setSpeakingIdx] = useState<number | null>(null)
+  const speakToken = useRef(0)
+  const reduceMotion = useReducedMotion()
+
+  function showToast(message: string, undo?: () => void, actionLabel?: string) {
+    if (toastTimer.current) window.clearTimeout(toastTimer.current)
+    setToast({ id: ++toastSeq.current, message, undo, actionLabel })
+    toastTimer.current = window.setTimeout(() => setToast(null), undo ? 8000 : 3000)
+  }
+  function dismissToast() {
+    if (toastTimer.current) window.clearTimeout(toastTimer.current)
+    setToast(null)
+  }
 
   const latest = whatIfs.length > 0 ? whatIfs[whatIfs.length - 1] : null
   const currentEntry = whatIfs[activeTimelineIdx] || null
@@ -166,6 +193,7 @@ export default function DivergePage() {
   async function handleAsk(override?: string) {
     const question = (override ?? currentInput).trim()
     if (!question || loading) return
+    dismissToast()
     setLoading(true)
     setAskError(null)
     setRefusal(null)
@@ -330,31 +358,210 @@ export default function DivergePage() {
     return () => window.clearInterval(id)
   }, [loading])
 
-  // Escape closes the top-most layer. Keyboard action, so no animation is added for it.
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key !== 'Escape') return
-      if (showAISettings) setShowAISettings(false)
-      else if (showSummary) setShowSummary(false)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [showAISettings, showSummary])
-
   // After a new answer arrives, bring its question to the top of the thread.
   useEffect(() => {
     if (scrollTarget === null) return
-    document.getElementById(`ans-${scrollTarget}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    const behavior: ScrollBehavior = instantScroll.current || reduceMotion ? 'instant' : 'smooth'
+    document.getElementById(`ans-${scrollTarget}`)?.scrollIntoView({ behavior, block: 'start' })
+    instantScroll.current = false
     setScrollTarget(null)
-  }, [scrollTarget])
+  }, [scrollTarget, reduceMotion])
 
   // Selecting a dot (or prev/next) opens that answer and scrolls to it.
-  function selectAnswer(i: number) {
+  function selectAnswer(i: number, viaKeyboard = false) {
     if (i < 0 || i >= whatIfs.length) return
+    instantScroll.current = viaKeyboard
     setActiveTimelineIdx(i)
     setOpenAnswers(m => ({ ...m, [i]: true }))
     setScrollTarget(i)
   }
+
+  // Keeps the saved Supabase row in step with the timeline after a rewind or an undo.
+  async function persistTimeline(list: WhatIfEntry[]) {
+    if (!user || !currentSessionId) return true
+    const { error } = await supabase.from('sessions').update({
+      what_ifs: list.map(w => ({ question: w.question, response: w.response, timestamp: w.timestamp })),
+      divergence_score: list.length > 0 ? list[list.length - 1].response.divergenceScore : 0,
+      updated_at: new Date().toISOString(),
+    }).eq('id', currentSessionId)
+    if (error) console.error(error)
+    return !error
+  }
+
+  // Cuts the on-screen timeline back to its first i + 1 answers.
+  function truncateLocal(kept: WhatIfEntry[], i: number) {
+    stopSpeaking()
+    setWhatIfs(kept)
+    setActiveTimelineIdx(i)
+    setFreshIdx(null)
+    setOpenAnswers(m => Object.fromEntries(Object.entries(m).filter(([k]) => Number(k) <= i)))
+    setOpenFacts(m => Object.fromEntries(Object.entries(m).filter(([k]) => Number(k.split('-')[0]) <= i)))
+    setAskedEvents(list => list.filter(id => {
+      const e = ALL_EVENTS.find(x => x.id === id)
+      return !!e && kept.some(w => w.question.startsWith(`What if ${e.title} (`))
+    }))
+  }
+
+  // Drops every answer after index i so the user can continue from there. Undo puts them back.
+  async function rewindTo(i: number) {
+    if (loading || i < 0 || i >= whatIfs.length - 1) return
+    const before = whatIfs
+    const kept = before.slice(0, i + 1)
+    truncateLocal(kept, i)
+    showToast(`Rewound to question ${i + 1}. ${before.length - 1 - i} removed.`, async () => {
+      setWhatIfs(before)
+      setActiveTimelineIdx(i)
+      dismissToast()
+      if (!(await persistTimeline(before))) showToast('Restored here, but the saved copy could not be updated.')
+    })
+    if (!(await persistTimeline(kept))) showToast('Rewound here, but the saved copy could not be updated.')
+  }
+
+  // Copies the timeline up to answer i into a new saved session and carries on there. The original stays in Sessions.
+  async function branchFrom(i: number) {
+    if (loading || branching || i < 0 || i >= whatIfs.length - 1) return
+    if (!user) { showToast('Sign in to branch a timeline.'); return }
+    const kept = whatIfs.slice(0, i + 1)
+    setBranching(true)
+    const { data, error } = await supabase.from('sessions').insert({
+      user_id: user.id,
+      event_id: sessionId,
+      event_title: `${startingEvent} (branch)`,
+      what_ifs: kept.map(w => ({ question: w.question, response: w.response, timestamp: w.timestamp })),
+      divergence_score: kept[i].response.divergenceScore,
+      updated_at: new Date().toISOString(),
+    }).select('id').single()
+    setBranching(false)
+    if (error || !data) { console.error(error); showToast('Could not branch this timeline. Try again.'); return }
+    truncateLocal(kept, i)
+    setCurrentSessionId(data.id)
+    window.history.replaceState(null, '', `?session=${data.id}`)
+    showToast(`Branched from question ${i + 1}. The original is still in Sessions.`)
+  }
+
+  // Publishes a frozen copy of the timeline and copies its link. The same unchanged timeline reuses its link.
+  async function handleShare() {
+    if (whatIfs.length === 0 || sharing) return
+    if (!user) { showToast('Sign in to share this timeline.'); return }
+    const last = whatIfs[whatIfs.length - 1]
+    const signature = `${whatIfs.length}:${last.timestamp}`
+    setSharing(true)
+    try {
+      let id = lastShare.current?.signature === signature ? lastShare.current.id : null
+      const isNew = !id
+      if (!id) {
+        id = await createShare({ userId: user.id, eventId: sessionId, title: startingEvent, whatIfs, divergence: last.response.divergenceScore })
+        lastShare.current = { signature, id }
+      }
+      const link = shareUrl(id)
+      let copied = true
+      try { await navigator.clipboard.writeText(link) } catch { copied = false }
+      const shareId = id
+      showToast(
+        copied ? 'Link copied. Anyone with it can read this timeline.' : `Share link: ${link}`,
+        isNew ? async () => {
+          dismissToast()
+          try { await revokeShare(shareId); if (lastShare.current?.id === shareId) lastShare.current = null; showToast('Sharing stopped. The link no longer works.') }
+          catch (err) { console.error(err); showToast('Could not stop sharing. Try again.') }
+        } : undefined,
+        'Stop sharing',
+      )
+    } catch (err) {
+      console.error(err)
+      showToast('Could not create a share link. Please try again.')
+    }
+    setSharing(false)
+  }
+
+  function stopSpeaking() {
+    speakToken.current++
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.cancel()
+    setSpeakingIdx(null)
+  }
+
+  // Reads an answer aloud with the browser's own voice, one sentence at a time (long utterances get cut off otherwise).
+  function toggleSpeak(i: number) {
+    if (!('speechSynthesis' in window)) return
+    if (speakingIdx === i) { stopSpeaking(); return }
+    window.speechSynthesis.cancel()
+    const r = whatIfs[i]?.response
+    if (!r) return
+    const token = ++speakToken.current
+    const text = [r.paragraph, ...r.keyFacts.map((f, k) => `Point ${k + 1}: ${f}`)].join('\n')
+    const chunks = text.split(/(?<=[.!?])\s+|\n+/).map(c => c.trim()).filter(Boolean)
+    const lang = LOCALES[normalizeLanguage(settings?.language)]
+    chunks.forEach((chunk, k) => {
+      const u = new SpeechSynthesisUtterance(chunk)
+      u.lang = lang
+      u.rate = 1
+      const done = () => { if (speakToken.current === token && k === chunks.length - 1) setSpeakingIdx(null) }
+      u.onend = done
+      u.onerror = () => { if (speakToken.current === token) setSpeakingIdx(null) }
+      window.speechSynthesis.speak(u)
+    })
+    setSpeakingIdx(i)
+  }
+
+  // Stop talking when leaving the page.
+  useEffect(() => () => { if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.cancel() }, [])
+
+  async function handleExportImage() {
+    if (!event || whatIfs.length === 0 || exporting) return
+    setExporting(true)
+    try {
+      const blob = await renderTimelineImage({
+        title: event.title,
+        startYear: event.year,
+        excludeEventId: event.id,
+        nodes: whatIfs.map(w => ({ question: w.question, year: w.response.year, score: w.response.divergenceScore, yearNum: parseYear(w.response.year) })),
+      })
+      downloadBlob(blob, `diverge-${event.id}.png`)
+      showToast('Image saved to your downloads.')
+    } catch (err) {
+      console.error(err)
+      showToast('Could not create the image.')
+    }
+    setExporting(false)
+  }
+
+  async function copySummary() {
+    if (!summary) return
+    const rows = (summary.comparisonTable || []).map((r: { category: string; realWorld: string; alternateWorld: string }) => `- ${r.category}: ${r.realWorld} -> ${r.alternateWorld}`)
+    const text = [summary.title, `Divergence: ${divergence}% from real history`, '', summary.summary, '', ...(rows.length ? ['Real world -> Your world', ...rows] : [])].join('\n')
+    try {
+      await navigator.clipboard.writeText(text)
+      showToast('Summary copied to clipboard.')
+    } catch {
+      showToast('Could not copy. Select the text and copy it instead.')
+    }
+  }
+
+  // Keyboard: Escape closes the top-most layer, "/" focuses the question box, "[" and "]" step through answers.
+  // Keyboard actions never animate, so they scroll instantly.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        if (showAISettings) setShowAISettings(false)
+        else if (showSummary) setShowSummary(false)
+        else if (toast) dismissToast()
+        return
+      }
+      if (e.metaKey || e.ctrlKey || e.altKey || showAISettings || showSummary) return
+      const t = e.target as HTMLElement | null
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return
+      if (e.key === '/') {
+        e.preventDefault()
+        inputRef.current?.focus()
+      } else if (e.key === '[' || e.key === ']') {
+        const next = activeTimelineIdx + (e.key === ']' ? 1 : -1)
+        if (next < 0 || next >= whatIfs.length) return
+        e.preventDefault()
+        selectAnswer(next, true)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [showAISettings, showSummary, toast, activeTimelineIdx, whatIfs.length])
 
   function askAboutEvent(e: (typeof ALL_EVENTS)[number]) {
     setAskedEvents(list => [...list, e.id])
@@ -379,6 +586,12 @@ export default function DivergePage() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
           AI settings
         </button>
+        {whatIfs.length > 0 && (
+          <button className="dv-btn" type="button" onClick={handleShare} disabled={sharing} title="Copy a public link to this timeline">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
+            {sharing ? 'Sharing…' : 'Share'}
+          </button>
+        )}
         {whatIfs.length > 0 && (
           <button
             className="dv-btn pri"
@@ -474,6 +687,46 @@ export default function DivergePage() {
                               <span key={src.url}>{n > 0 && ', '}<a href={src.url} target="_blank" rel="noreferrer">{src.title} (Wikipedia)</a></span>
                             ))}</p>
                           )}
+                          <div className="dv-ans-foot">
+                            {typeof window !== 'undefined' && 'speechSynthesis' in window && (
+                              <button
+                                type="button"
+                                className="dv-btn ghost sm"
+                                aria-pressed={speakingIdx === i}
+                                onClick={() => toggleSpeak(i)}
+                                title={speakingIdx === i ? 'Stop reading' : 'Read this answer aloud'}
+                              >
+                                {speakingIdx === i ? (
+                                  <span className="dv-wave" aria-hidden="true"><i /><i /><i /></span>
+                                ) : (
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4V5z" /><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" /></svg>
+                                )}
+                                {speakingIdx === i ? 'Stop' : 'Listen'}
+                              </button>
+                            )}
+                            {i < whatIfs.length - 1 && (<>
+                              <button
+                                type="button"
+                                className="dv-btn ghost sm"
+                                disabled={loading || branching}
+                                onClick={() => branchFrom(i)}
+                                title="Start a new saved timeline from this answer and keep the original"
+                              >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="6" cy="5" r="2.2" /><circle cx="6" cy="19" r="2.2" /><circle cx="18" cy="9" r="2.2" /><path d="M6 7.2v9.6M18 11.2c0 4-6 3-12 6" /></svg>
+                                {branching ? 'Branching…' : 'Branch from here'}
+                              </button>
+                              <button
+                                type="button"
+                                className="dv-btn ghost sm"
+                                disabled={loading}
+                                onClick={() => rewindTo(i)}
+                                title="Remove the answers after this one and continue from here"
+                              >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></svg>
+                                Rewind to here
+                              </button>
+                            </>)}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -627,6 +880,8 @@ export default function DivergePage() {
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAsk() } }}
                   placeholder="What if…"
                   aria-label="Ask a what-if question"
+                  aria-keyshortcuts="/"
+                  title="Press / to jump here"
                   disabled={loading}
                 />
                 <span className="dv-cnt">{currentInput.length}/500</span>
@@ -641,7 +896,7 @@ export default function DivergePage() {
         <aside className="dv-world" aria-label="World state">
           <div className="dv-card gauge-card" style={{ ['--mood' as string]: MOOD_COLORS[mood] || '#F59E0B' }}>
             <div className="dv-gauge" style={{ ['--p' as string]: divergence }} role="img" aria-label={`${divergence}% diverged from real history`}>
-              <div><b>{divergence}%</b><small>diverged</small></div>
+              <div><b><CountUp value={divergence} />%</b><small>diverged</small></div>
             </div>
             <div className="dv-tags center">
               {currentYear !== '?' && <span className="dv-tag">{currentYear}</span>}
@@ -657,6 +912,19 @@ export default function DivergePage() {
               )}
             </div>
           </div>
+
+          {event && whatIfs.length > 0 && (
+            <TwoTimelines
+              startYear={event.year}
+              excludeEventId={event.id}
+              onExport={handleExportImage}
+              exporting={exporting}
+              nodes={whatIfs.map(w => ({ question: w.question, year: w.response.year, score: w.response.divergenceScore, yearNum: parseYear(w.response.year) }))}
+              activeIdx={activeTimelineIdx}
+              onSelect={i => selectAnswer(i)}
+              onSelectStart={() => { setActiveTimelineIdx(-1); threadRef.current?.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }) }}
+            />
+          )}
 
           {suggestions.length > 0 && (
             <div className="dv-card">
@@ -724,7 +992,7 @@ export default function DivergePage() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-            style={{ background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 20, padding: 32, maxWidth: 680, width: '100%', maxHeight: 'calc(88vh / var(--ui-scale, 1))', overflowY: 'auto' }}
+            style={{ background: 'var(--surface)', border: '1px solid var(--border-color)', borderRadius: 20, padding: 32, maxWidth: 680, width: '100%', maxHeight: 'calc(88vh / var(--ui-scale, 1))', overflowY: 'auto' }}
             onClick={e => e.stopPropagation()}
           >
             <button onClick={() => setShowSummary(false)} style={{ float: 'right', background: 'var(--card-bg)', border: 'none', color: 'var(--text-dim)', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 14 }}>×</button>
@@ -768,10 +1036,13 @@ export default function DivergePage() {
                 </div>
 
                 <div style={{ display: 'flex', gap: 8, marginTop: 22 }}>
+                  <button onClick={copySummary} style={{ flex: 1, padding: '11px', borderRadius: 9, border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    Copy summary
+                  </button>
                   <button onClick={() => setShowSummary(false)} style={{ flex: 1, padding: '11px', borderRadius: 9, border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                     Keep Exploring
                   </button>
-                  <button onClick={() => router.push('/')} style={{ flex: 1, padding: '11px', borderRadius: 9, border: 'none', background: 'var(--accent)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  <button onClick={() => router.push('/')} style={{ flex: 1, padding: '11px', borderRadius: 9, border: 'none', background: 'var(--accent)', color: 'var(--on-accent, #fff)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                     Pick another event
                   </button>
                 </div>
@@ -797,7 +1068,7 @@ export default function DivergePage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 10 }}
               transition={{ type: 'spring', stiffness: 320, damping: 30 }}
-              style={{ background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 20, padding: '28px 32px', maxWidth: 460, width: '100%', maxHeight: 'calc(85vh / var(--ui-scale, 1))', overflowY: 'auto', position: 'relative' }}
+              style={{ background: 'var(--surface)', border: '1px solid var(--border-color)', borderRadius: 20, padding: '28px 32px', maxWidth: 460, width: '100%', maxHeight: 'calc(85vh / var(--ui-scale, 1))', overflowY: 'auto', position: 'relative' }}
               onClick={e => e.stopPropagation()}
             >
               <button
@@ -828,6 +1099,24 @@ export default function DivergePage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <div className="dv-toast-wrap" aria-live="polite" role="status">
+        <AnimatePresence>
+          {toast && (
+            <motion.div
+              key={toast.id}
+              className="dv-toast"
+              initial={{ opacity: 0, y: reduceMotion ? 0 : 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: reduceMotion ? 0 : 6 }}
+              transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+            >
+              <span>{toast.message}</span>
+              {toast.undo && <button type="button" onClick={toast.undo}>{toast.actionLabel || 'Undo'}</button>}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       <style>{`
         @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
@@ -863,7 +1152,7 @@ function AIToggle({ label, value, onChange }: { label: string; value: boolean; o
       }}>
         <div style={{
           position: 'absolute', top: 2, left: value ? 20 : 2,
-          width: 18, height: 18, borderRadius: '50%', background: '#fff',
+          width: 18, height: 18, borderRadius: '50%', background: 'var(--on-accent, #fff)',
           transition: 'left 0.2s',
         }} />
       </div>

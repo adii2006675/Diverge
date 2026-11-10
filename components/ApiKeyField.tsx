@@ -31,7 +31,7 @@ export default function ApiKeyField() {
         <form onSubmit={e => { e.preventDefault(); save() }} style={{ display: 'flex', gap: 10 }}>
           <input type="password" autoComplete="off" spellCheck={false} value={draft} onChange={e => setDraft(e.target.value)} placeholder="sk-ant-…" aria-label={t('Anthropic API key')}
             style={{ flex: 1, minWidth: 0, padding: '9px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontSize: 13 }} />
-          <button type="submit" disabled={!draft.trim()} style={{ padding: '9px 16px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: '#fff', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('Save key')}</button>
+          <button type="submit" disabled={!draft.trim()} style={{ padding: '9px 16px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: 'var(--on-accent, #fff)', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('Save key')}</button>
         </form>
       )}
       {msg && <p role="status" style={{ fontSize: 12, color: 'var(--text2)', margin: '8px 0 0' }}>{msg}</p>}

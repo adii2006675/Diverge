@@ -1,42 +1,134 @@
 'use client'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
-import { motion } from 'motion/react'
+import { useId, useState } from 'react'
+import { motion, useReducedMotion } from 'motion/react'
+import { EASE_OUT } from '@/lib/motion'
+
+const SOFT = { type: 'spring', stiffness: 130, damping: 22, mass: 0.9 } as const
+
+type Point = { lead: string; text: string }
+
+const DIFF: Point[] = [
+  { lead: "It starts from real history.", text: "You pick a real event, and the real facts and Wikipedia text for it are already attached to your question. In regular Claude you would have to know all that and paste it in yourself." },
+  { lead: "Every answer has the same structure.", text: "You always get the year, a divergence score, the world mood, a confidence level and a list of key facts, so answers are easy to compare. A normal chat just gives you a wall of text." },
+  { lead: "Facts are labeled and checked.", text: "Each fact is marked as documented, inference or speculation, and a second AI flags the ones it can't confirm. A normal chat won't show you which parts are guesses unless you ask." },
+  { lead: "Your timeline stays consistent.", text: "Earlier answers are locked in and the year only moves forward, so your alternate world holds together. In a long normal chat, the AI can forget things or contradict itself." },
+  { lead: "You can see it, not just read it.", text: "There is a view next to real history, a timeline graphic and a summary that compares the two worlds. You can also rewind, branch, save, listen to and share your timelines." },
+  { lead: "It is built for this one job.", text: "Settings let you pick the length, depth, tone and how bold the guesses are, and there is a library of real events to start from so you are never staring at a blank box." },
+]
+
+const HOW: Point[] = [
+  { lead: "Strict rules first.", text: "Every question starts with a long set of instructions, about 1,000 words. They tell the AI to act like a historian, stick to history, never invent numbers, dates or quotes, and say when it is guessing." },
+  { lead: "Real facts go in with your question.", text: "Each event comes with real facts that I wrote in ahead of time. The AI also gets the opening part of the topic's Wikipedia article, up to 3,200 characters, so it starts from real history and not just memory." },
+  { lead: "A set way of thinking.", text: "The rules make it work in steps: what changes right away (0 to 2 years), the ripple effects (2 to 10 years), the long term (10 to 50 years), what would have happened anyway, and where it is unsure." },
+  { lead: "Every fact gets a label.", text: "Each key fact is marked as documented, inference or speculation, so you can tell a real record from a reasonable guess. Every answer also shows a confidence level." },
+  { lead: "A second AI checks the first one.", text: "After an answer shows up, a smaller AI looks over the facts labeled documented and flags the ones it can't confirm as unconfirmed." },
+  { lead: "Your timeline stays consistent.", text: "Your earlier questions are locked in so a new answer can't contradict them, and the year can only move forward." },
+  { lead: "It stays on topic and on guard.", text: "Questions that aren't about history get refused. Your question is treated as a question and not as orders, which blocks most tricks. There is also a test script with 17 checks for facts, refusals, tricks and false premises." },
+  { lead: "You can tune it.", text: "Settings let you pick how long the answer is, how simple or detailed, the tone, and whether the guesses are realistic or bolder." },
+]
+
+const NUMBERS: Point[] = [
+  { lead: "Model:", text: "Claude Sonnet 4.6, made by Anthropic, writes the answers and the final summary. Claude Haiku 4.5 does the fact check." },
+  { lead: "Randomness:", text: "The temperature is set to 0.2, so answers stay steady instead of wild." },
+  { lead: "Tokens in:", text: "Roughly 3,500 to 4,500 tokens go in with every question. That covers the rules (about 1,750), the instructions for your settings (about 800), the event facts and Wikipedia text (about 900) and your earlier questions." },
+  { lead: "Tokens out:", text: "Up to 2,000 for Short answers, 3,500 for Medium and 7,000 for Long. The fact check uses at most 600." },
+  { lead: "Speed and cost:", text: "The long rules are set up to be cached, so follow-up questions can reuse them. These counts are estimates based on the size of my prompts." },
+]
+
+const WHY: Point[] = [
+  { lead: "It predicts, it doesn't know.", text: "The AI writes the words that seem most likely to come next. It can sound completely sure and still be wrong, and it can mix up names, dates and numbers." },
+  { lead: "There is no answer key.", text: "Nobody knows what would really have happened, and even expert historians would disagree about these what ifs." },
+  { lead: "The checker has blind spots too.", text: "The second AI is smaller, only looks at facts labeled documented, and works from a short Wikipedia excerpt that does not always match your question. It can miss mistakes, and the first AI can label a guess as a fact." },
+  { lead: "Mistakes pile up.", text: "Every answer builds on the last one, so a small error early on can grow the longer you keep going." },
+  { lead: "Its knowledge has limits.", text: "It may not know about very recent events, and what it learned from the internet can be biased or incomplete." },
+]
+
+// A plain list. It sits inside a dropdown, which does the reveal.
+function PointList({ items }: { items: Point[] }) {
+  return (
+    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {items.map(it => (
+        <li key={it.lead} style={{ position: 'relative', paddingLeft: 20, fontSize: 'calc(var(--font-scale) * 1.2)', lineHeight: 1.7, color: 'var(--text-dim)' }}>
+          <span aria-hidden="true" style={{ position: 'absolute', left: 0, top: '0.72em', width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)' }} />
+          <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{it.lead}</strong> {it.text}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+// A headline with a chevron that opens and closes the content under it.
+function Dropdown({ title, defaultOpen = false, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen)
+  const id = useId()
+  return (
+    <div className="about-acc">
+      <button type="button" className="about-acc-head" aria-expanded={open} aria-controls={id} onClick={() => setOpen(o => !o)}>
+        <span>{title}</span>
+        <svg className={`about-chev${open ? ' open' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+      </button>
+      <div id={id} role="region" aria-label={title} className={`about-collapse${open ? ' open' : ''}`}>
+        <div><div style={{ padding: '6px 4px 22px' }}>{children}</div></div>
+      </div>
+    </div>
+  )
+}
+
+// The headline lands one word at a time, each coming into focus.
+function Words({ text, reduce }: { text: string; reduce: boolean | null }) {
+  return (
+    <>
+      {text.split(' ').map((w, i, all) => (
+        <span key={i}>
+        <motion.span
+          style={{ display: 'inline-block' }}
+          initial={{ opacity: 0, y: reduce ? 0 : 22, filter: reduce ? 'blur(0px)' : 'blur(10px)' }}
+          whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ ...SOFT, delay: i * 0.07 }}
+        >
+          {w}
+        </motion.span>
+        {i < all.length - 1 ? ' ' : ''}
+        </span>
+      ))}
+    </>
+  )
+}
 
 export default function AboutPage() {
   const router = useRouter()
 
-  const fadeUp = {
-    hidden: { opacity: 0, y: 24 },
-    show: { opacity: 1, y: 0 },
-  }
+  const reduce = useReducedMotion()
+  // A lighter reveal for the very tall accuracy section.
+  const fadeLight = reduce
+    ? { hidden: { opacity: 0 }, show: { opacity: 1 } }
+    : { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }
+  // Content rises in from slightly soft and small; with reduced motion it only fades.
+  const fadeUp = reduce
+    ? { hidden: { opacity: 0 }, show: { opacity: 1 } }
+    : { hidden: { opacity: 0, y: 30, scale: 0.985, filter: 'blur(10px)' }, show: { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' } }
 
   return (
     <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
       <Nav active="about" />
 
       <div className="font-scale-wrapper" style={{ position: 'relative', zIndex: 1, maxWidth: 680, margin: '0 auto', padding: '120px 24px 80px' }}>
-        <motion.h1
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.4 }}
-          variants={fadeUp}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-          style={{ fontSize: 'calc(var(--font-scale) * 3.5)', fontWeight: 900, marginBottom: 24, letterSpacing: '-0.02em', textAlign: 'center' }}
-        >
-          What is Diverge?
-        </motion.h1>
+        <h1 style={{ fontSize: 'calc(var(--font-scale) * 3.5)', fontWeight: 900, marginBottom: 24, letterSpacing: '-0.02em', textAlign: 'center' }}>
+          <Words text="What is Diverge?" reduce={reduce} />
+        </h1>
 
         <motion.p
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, amount: 0.4 }}
           variants={fadeUp}
-          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.05 }}
+          transition={{ ...SOFT, delay: 0.05 }}
           style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.85, color: 'var(--text-dim)', marginBottom: 24 }}
         >
-          Diverge is an AI-powered alternate history exploration tool. Pick any moment in human history, ask what would have changed if one thing had gone differently, and watch the world transform in real time next to what actually happened.
+          Diverge is a site where you pick a moment in history and ask what would have happened if it went a different way. You get an answer right away, and you can see how it compares to what really happened.
         </motion.p>
 
         <motion.p
@@ -44,10 +136,10 @@ export default function AboutPage() {
           whileInView="show"
           viewport={{ once: true, amount: 0.4 }}
           variants={fadeUp}
-          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
+          transition={{ ...SOFT, delay: 0.1 }}
           style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.85, color: 'var(--text-dim)', marginBottom: 24 }}
         >
-          Every response is generated by Claude — Anthropic's AI — reasoning from real historical knowledge. It draws on documented alliances, military capabilities, economic systems, and human psychology to model how your change would ripple forward through time. It isn't guessing. It's applying the same kind of causal reasoning a historian would use, at scale and in real time.
+          The answers come from Claude, an AI made by Anthropic. It uses real history, like who was allied with who, how strong each army was, and how the economy worked, to figure out what would change. It&apos;s not just making stuff up. It&apos;s trying to think through cause and effect the way a historian would.
         </motion.p>
 
         <motion.p
@@ -55,10 +147,10 @@ export default function AboutPage() {
           whileInView="show"
           viewport={{ once: true, amount: 0.4 }}
           variants={fadeUp}
-          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.15 }}
+          transition={{ ...SOFT, delay: 0.15 }}
           style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.85, color: 'var(--text-dim)', marginBottom: 40 }}
         >
-          You can chain what ifs together — each answer builds the context for the next question, creating a coherent alternate world that diverges further from reality with every decision you make. At the end, a summary shows you exactly how different the world you created is from the one we actually live in.
+          You can keep going, too. Each answer builds on the one before it, so your what ifs stack up into one alternate world that gets further from ours with every question. When you&apos;re done, a summary shows how different your world turned out.
         </motion.p>
 
         <div style={{ borderTop: '1px solid var(--accent)', paddingTop: 40, marginBottom: 40 }}>
@@ -67,40 +159,59 @@ export default function AboutPage() {
             whileInView="show"
             viewport={{ once: true, amount: 0.5, margin: '-15% 0px -15% 0px' }}
             variants={fadeUp}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
+            transition={{ ...SOFT }}
             style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 16, textAlign: 'center' }}
           >
             How it works
           </motion.h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {[
-              { step: '01', title: 'Pick a moment', desc: 'Choose any event from human history — or type your own starting point.' },
-              { step: '02', title: 'Ask what if', desc: 'Type any change you want to make. The AI reasons through what would actually happen next, based on real historical knowledge.' },
-              { step: '03', title: 'Watch it diverge', desc: 'The split screen shows real history on the right and your alternate timeline on the left, updating with every question.' },
-              { step: '04', title: 'Keep going', desc: 'Chain follow-up what ifs. Each one builds on the last, creating a coherent alternate world.' },
-              { step: '05', title: 'Get your summary', desc: "When you're done, a full comparison shows how different your world is from ours — across population, technology, power, and more." },
+              { step: '01', title: 'Pick a moment', desc: "Pick any event from history, or just type in your own starting point if you already know exactly what you want to ask about." },
+              { step: '02', title: 'Ask what if', desc: "Type the change you want to make. The AI thinks through what would really happen next, using what we know about that time." },
+              { step: '03', title: 'Watch it diverge', desc: "Your answers show up on the left and real history stays on the right, so you can easily compare the two as you keep asking." },
+              { step: '04', title: 'Keep going', desc: "Ask follow-up what ifs. Each one builds on the last one, so your alternate world keeps growing and drifting further away." },
+              { step: '05', title: 'Get your summary', desc: "When you finish, you get a side by side comparison of your world and ours, covering things like population, tech and power." },
             ].map((item, i) => (
               <motion.div
                 key={item.step}
-                initial={{ opacity: 0, x: -16 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, x: reduce ? 0 : -32, filter: reduce ? 'blur(0px)' : 'blur(8px)' }}
+                whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
                 viewport={{ once: true, amount: 0.5, margin: '-15% 0px -15% 0px' }}
-                transition={{ duration: 0.45, ease: 'easeOut', delay: i * 0.06 }}
+                transition={{ ...SOFT, delay: 0.04 }}
                 style={{
                   display: 'flex', gap: 20, alignItems: 'flex-start',
                   paddingLeft: 20, paddingTop: 14, paddingBottom: 14,
                   marginLeft: 10, position: 'relative',
                 }}
               >
-                <div style={{
-                  position: 'absolute', left: -11, top: 16,
-                  width: 20, height: 20, borderRadius: '50%',
-                  background: 'var(--bg)', border: '2px solid var(--accent)',
-                  color: 'var(--accent)', fontSize: 10, fontWeight: 700,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
+                {i < 4 && (
+                  <>
+                    <span aria-hidden="true" style={{ position: 'absolute', left: -2, top: 36, bottom: -26, width: 2, borderRadius: 2, background: 'var(--border-color)' }} />
+                    <motion.span
+                      aria-hidden="true"
+                      initial={{ scaleY: reduce ? 1 : 0 }}
+                      whileInView={{ scaleY: 1 }}
+                      viewport={{ once: true, amount: 0.5, margin: '-15% 0px -15% 0px' }}
+                      transition={{ duration: 0.7, ease: EASE_OUT, delay: 0.25 }}
+                      style={{ position: 'absolute', left: -2, top: 36, bottom: -26, width: 2, borderRadius: 2, background: 'var(--accent)', transformOrigin: 'top' }}
+                    />
+                  </>
+                )}
+                <motion.div
+                  initial={{ scale: reduce ? 1 : 0.3 }}
+                  whileInView={{ scale: 1 }}
+                  viewport={{ once: true, amount: 0.5, margin: '-15% 0px -15% 0px' }}
+                  transition={{ type: 'spring', stiffness: 520, damping: 16, delay: 0.12 }}
+                  style={{
+                    position: 'absolute', left: -11, top: 16,
+                    width: 20, height: 20, borderRadius: '50%',
+                    background: 'var(--bg)', border: '2px solid var(--accent)',
+                    color: 'var(--accent)', fontSize: 10, fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
                   {item.step.replace('0', '')}
-                </div>
+                </motion.div>
                 <div style={{ marginLeft: 14 }}>
                   <div style={{ fontSize: 'calc(var(--font-scale) * 1.25)', fontWeight: 600, marginBottom: 4 }}>{item.title}</div>
                   <div style={{ fontSize: 'calc(var(--font-scale) * 1.33)', color: 'var(--text-dim)', lineHeight: 1.65 }}>{item.desc}</div>
@@ -113,14 +224,30 @@ export default function AboutPage() {
         <motion.div
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, amount: 0.5, margin: '-15% 0px -15% 0px' }}
-          variants={fadeUp}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
+          viewport={{ once: true, amount: 0.02 }}
+          variants={fadeLight}
+          transition={{ ...SOFT }}
           style={{ borderTop: '1px solid var(--accent)', paddingTop: 40, marginBottom: 40 }}
         >
           <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 12, textAlign: 'center' }}>Accuracy disclaimer</h2>
           <p style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.75, color: 'var(--text-dim)' }}>
-            Diverge is powered by AI reasoning from historical knowledge, not a verified academic database. Responses are grounded in real history but should be treated as informed speculation rather than fact. History is contested and complex — the AI acknowledges uncertainty where it exists.
+            Diverge writes alternate history, so there is no answer key. Nobody can check what would really have happened. What I can do is make the AI be honest about what is real and what is a guess, so I built in a bunch of safeguards. Here is what they are, why this is different from just asking Claude, and why it still is not perfect. Tap a heading to open it.
+          </p>
+          <div style={{ marginTop: 28 }}>
+            <Dropdown title="How an answer gets made">
+              <h4 style={{ margin: '4px 0 14px', fontSize: 'calc(var(--font-scale) * 1.2)', fontWeight: 700, color: 'var(--text)' }}>Why this is not just Claude in a browser tab</h4>
+              <PointList items={DIFF} />
+              <p style={{ margin: '18px 0 0', fontSize: 'calc(var(--font-scale) * 1.2)', lineHeight: 1.7, color: 'var(--text-dim)' }}>
+                It is still Claude underneath, so it can be wrong in the same ways. Diverge just adds structure, checks and tools around it. If you only want a quick chat, regular Claude is great.
+              </p>
+              <h4 style={{ margin: '30px 0 14px', fontSize: 'calc(var(--font-scale) * 1.2)', fontWeight: 700, color: 'var(--text)' }}>What happens to your question, step by step</h4>
+              <PointList items={HOW} />
+            </Dropdown>
+            <Dropdown title="The numbers"><PointList items={NUMBERS} /></Dropdown>
+            <Dropdown title="Why it can still be wrong"><PointList items={WHY} /></Dropdown>
+          </div>
+          <p style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.75, color: 'var(--text-dim)', marginTop: 28 }}>
+            So use Diverge to explore and get curious, not as a source for homework or for facts you plan to repeat. If something really matters, check it with a real source.
           </p>
         </motion.div>
 
@@ -129,12 +256,12 @@ export default function AboutPage() {
           whileInView="show"
           viewport={{ once: true, amount: 0.5, margin: '-15% 0px -15% 0px' }}
           variants={fadeUp}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
+          transition={{ ...SOFT }}
           style={{ borderTop: '1px solid var(--accent)', paddingTop: 40 }}
         >
           <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 12, textAlign: 'center' }}>Built by</h2>
           <p style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.75, color: 'var(--text-dim)', marginBottom: 20 }}>
-            Diverge was built by Adi Sharma, a CS student at the University of Delaware. It uses the Claude API by Anthropic for AI responses, Next.js for the frontend, and Supabase for session storage.
+            Diverge was built by Adi Sharma, a CS student at the University of Delaware. It uses the Claude API from Anthropic for the AI answers, Next.js for the front end, and Supabase to store your sessions.
           </p>
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -144,11 +271,6 @@ export default function AboutPage() {
             <a href="https://adii2006675.github.io" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-dim)', fontSize: 14, textDecoration: 'none', transition: 'all 0.2s' }} onMouseEnter={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.color = 'var(--accent)'; el.style.borderColor = 'var(--accent)'; el.style.transform = 'scale(1.06)' }} onMouseLeave={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.color = 'var(--text-dim)'; el.style.borderColor = 'var(--border-color)'; el.style.transform = 'scale(1)' }}>Portfolio</a>
           </div>
 
-          <div style={{ textAlign: 'center', marginTop: 28 }}>
-            <Link href="/credits" style={{ fontSize: 13, color: 'var(--text-dim)', textDecoration: 'underline', textUnderlineOffset: 4 }}>
-              Image credits
-            </Link>
-          </div>
         </motion.div>
       </div>
     </main>

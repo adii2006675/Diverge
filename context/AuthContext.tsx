@@ -129,6 +129,15 @@ function loadGuestSettings(): UserSettings {
   }
 }
 
+// Text colours that stay readable on the accent: the 'no accent' option makes the accent white (dark theme) or near-black (light theme).
+function accentInk(hex: string) {
+  const m = /^#([0-9a-f]{6})$/i.exec(hex.trim())
+  if (!m) return { on: '#fff', onDark: '#1b1305' }
+  const [r, g, b] = [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16) / 255).map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+  return { on: lum > 0.8 ? '#0A0A0A' : '#fff', onDark: lum < 0.08 ? '#fff' : '#1b1305' }
+}
+
 function applyThemeToDOM(theme: string, accentKey: string, fontSize: string) {
   const root = document.documentElement
   const themeVars = THEME_VARS[theme] || THEME_VARS.dark
@@ -140,9 +149,13 @@ function applyThemeToDOM(theme: string, accentKey: string, fontSize: string) {
   root.style.setProperty('--text', themeVars.text)
   root.style.setProperty('--text-dim', themeVars.textDim)
   root.style.setProperty('--nav-bg', themeVars.navBg)
-  root.style.setProperty('--card-bg', themeVars.cardBg)
+  root.style.setProperty('--card-bg', 'color-mix(in srgb, var(--text) 4.5%, var(--bg))')
+  root.style.setProperty('--surface', 'color-mix(in srgb, var(--text) 3%, var(--bg))')
   root.style.setProperty('--border-color', themeVars.borderColor)
   root.style.setProperty('--accent', accent)
+  const ink = accentInk(accentKey === 'none' ? themeVars.text : accent)
+  root.style.setProperty('--on-accent', ink.on)
+  root.style.setProperty('--on-accent-dark', ink.onDark)
   root.style.setProperty('--font-scale', scale)
   root.setAttribute('data-theme', theme)
 }

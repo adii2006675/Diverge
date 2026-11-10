@@ -1,3 +1,5 @@
+import { MORE_EVENTS } from '@/lib/moreEvents'
+
 export type HistoricalEvent = {
   id: string
   year: number
@@ -752,7 +754,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     title: 'Barack Obama Elected President',
     shortDesc: 'Barack Obama becomes the first Black president of the United States, a historic milestone amid a global financial crisis.',
     fullDesc: 'In November 2008, Barack Obama was elected the 44th President of the United States, becoming the first Black president in American history during the depths of the global financial crisis.',
-    era: 'Modern',
+    era: 'Politics',
     image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Obama_portrait_crop.jpg/800px-Obama_portrait_crop.jpg',
     realFacts: [
       'Obama serves two terms from 2009 to 2017',
@@ -800,7 +802,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     title: 'Brexit Referendum',
     shortDesc: 'The United Kingdom votes to leave the European Union, marking a historic shift in European politics and trade.',
     fullDesc: 'In June 2016, the United Kingdom voted in a referendum to leave the European Union, a decision that reshaped British politics, trade relationships, and European unity for years afterward.',
-    era: 'Modern',
+    era: 'Politics',
     image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Flag_of_Europe.svg/800px-Flag_of_Europe.svg.png',
     realFacts: [
       'UK formally leaves the EU in January 2020',
@@ -816,7 +818,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     title: 'Elon Musk Becomes the World\'s First Trillionaire',
     shortDesc: 'SpaceX goes public in a record-breaking IPO, pushing Elon Musk\'s net worth past one trillion dollars for the first time in history.',
     fullDesc: 'On June 12, 2026, SpaceX began trading on the Nasdaq, and the surge in its stock price pushed Elon Musk\'s net worth past one trillion dollars, making him the first person in history to reach trillionaire status.',
-    era: 'Modern',
+    era: 'Business',
     image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Elon_Musk_Royal_Society_%28crop2%29.jpg/800px-Elon_Musk_Royal_Society_%28crop2%29.jpg',
     realFacts: [
       'SpaceX IPO valued the company at nearly $2 trillion on its first trading day',
@@ -1188,10 +1190,23 @@ export const TECH_EVENTS: HistoricalEvent[] = [
   },
 ]
 
-export const ERAS = ['All', 'Ancient', 'Medieval', 'Renaissance', 'Industrial', 'WWI/WWII', 'Cold War', 'Modern', 'Tech']
+export const ERAS = ['All', 'Ancient', 'Medieval', 'Renaissance', 'Industrial', 'WWI/WWII', 'Cold War', 'Modern', 'Tech', 'Politics', 'Business', 'Celebrities', 'Social Media', 'Music', 'Sports']
 
 // Every event the app knows about: the main list plus the ancient and tech events.
-export const ALL_EVENTS: HistoricalEvent[] = [...HISTORICAL_EVENTS, ...ANCIENT_EVENTS, ...TECH_EVENTS]
+// The filter bar on Explore groups the finer categories above so every filter fits on one line.
+export const FILTER_GROUPS: { label: string; eras: string[] }[] = [
+  { label: 'History', eras: ['Ancient', 'Medieval', 'Renaissance', 'Industrial'] },
+  { label: 'War', eras: ['WWI/WWII', 'Cold War'] },
+  { label: 'Modern', eras: ['Modern'] },
+  { label: 'Tech & Business', eras: ['Tech', 'Business'] },
+  { label: 'Politics', eras: ['Politics'] },
+  { label: 'Celebrities', eras: ['Celebrities'] },
+  { label: 'Social Media', eras: ['Social Media'] },
+  { label: 'Music', eras: ['Music'] },
+  { label: 'Sports', eras: ['Sports'] },
+]
+
+export const ALL_EVENTS: HistoricalEvent[] = [...HISTORICAL_EVENTS, ...ANCIENT_EVENTS, ...TECH_EVENTS, ...MORE_EVENTS]
 
 export function formatEventYear(year: number): string {
   return year < 0 ? `${Math.abs(year)} BC` : String(year)

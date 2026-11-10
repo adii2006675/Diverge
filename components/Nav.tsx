@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useState } from 'react'
 import { useT } from '@/lib/useT'
+import { openPalette } from '@/components/CommandPalette'
 
 export default function Nav({ active }: { active?: string }) {
   const router = useRouter()
@@ -89,6 +90,17 @@ export default function Nav({ active }: { active?: string }) {
 
         {/* Right — auth */}
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', minWidth: 100, justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            onClick={openPalette}
+            aria-label={t('Search Diverge…')}
+            title={t('Search Diverge…') + ' (Ctrl/⌘ K)'}
+            style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-dim)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'color .16s, border-color .16s' }}
+            onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.color = 'var(--text)'; el.style.borderColor = 'var(--accent)' }}
+            onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.color = 'var(--text-dim)'; el.style.borderColor = 'var(--border-color)' }}
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
+          </button>
           {!user ? (
             <button
               onClick={() => router.push('/auth')}
@@ -115,7 +127,7 @@ export default function Nav({ active }: { active?: string }) {
                 </button>
 
                 {showUserMenu && (
-                  <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', background: 'var(--nav-bg)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '8px', minWidth: 200, zIndex: 100, animation: 'fadeIn 0.15s ease' }}>
+                  <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', background: 'var(--surface)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '8px', minWidth: 200, zIndex: 100, animation: 'fadeIn 0.15s ease' }}>
                     <div style={{ padding: '8px 12px 12px', borderBottom: '1px solid var(--border-color)', marginBottom: 6 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{profile?.username || t('User')}</div>
                       <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>{user.email}</div>

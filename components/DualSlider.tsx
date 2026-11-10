@@ -1,5 +1,6 @@
 'use client'
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useEffect } from 'react'
+import { motion, useSpring, useTransform, useReducedMotion } from 'motion/react'
 
 interface Props {
   min: number
@@ -17,18 +18,31 @@ interface Props {
   format?: (year: number) => string
 }
 
+// The handles glide to their target with a short spring, so following the pointer, snapping to a tick and letting go of
+// a tick all move smoothly instead of jumping. Values passed to onChange are continuous (not rounded to whole years).
+const HANDLE_SPRING = { stiffness: 620, damping: 42, mass: 0.7 }
+
 export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, onChangeMax, toPct, fromPct, ticks: tickYears, format }: Props) {
   const trackRef = useRef<HTMLDivElement>(null)
   const dragging = useRef<'min' | 'max' | null>(null)
+  const reduce = useReducedMotion()
 
-  const pct = (val: number) => (toPct ? toPct(val) : ((val - min) / (max - min)) * 100)
-  const fmt = (val: number) => (format ? format(val) : String(val))
+  const pct = useCallback((val: number) => (toPct ? toPct(val) : ((val - min) / (max - min)) * 100), [toPct, min, max])
+  const fmt = (val: number) => (format ? format(val) : String(Math.round(val)))
+
+  const minPct = useSpring(pct(valueMin), HANDLE_SPRING)
+  const maxPct = useSpring(pct(valueMax), HANDLE_SPRING)
+  useEffect(() => { if (reduce) minPct.jump(pct(valueMin)); else minPct.set(pct(valueMin)) }, [valueMin, reduce, minPct, pct])
+  useEffect(() => { if (reduce) maxPct.jump(pct(valueMax)); else maxPct.set(pct(valueMax)) }, [valueMax, reduce, maxPct, pct])
+  const minLeft = useTransform(minPct, v => `${v}%`)
+  const maxLeft = useTransform(maxPct, v => `${v}%`)
+  const fillRight = useTransform(maxPct, v => `${100 - v}%`)
 
   const valFromClientX = useCallback((clientX: number) => {
     if (!trackRef.current) return null
     const rect = trackRef.current.getBoundingClientRect()
     const p = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
-    return Math.round(fromPct ? fromPct(p) : min + p * (max - min))
+    return fromPct ? fromPct(p) : min + p * (max - min)
   }, [min, max, fromPct])
 
   function startDrag(e: React.MouseEvent, handle: 'min' | 'max') {
@@ -74,6 +88,17 @@ export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, 
         return t
       })
 
+  const handleStyle = {
+    position: 'absolute' as const,
+    width: 18, height: 18, borderRadius: '50%',
+    background: 'var(--accent)',
+    border: '2px solid var(--bg)',
+    boxShadow: '0 0 10px color-mix(in srgb, var(--accent) 70%, transparent)',
+    cursor: 'grab',
+    zIndex: 3,
+    touchAction: 'none' as const,
+  }
+
   return (
     <div>
       <div style={{ position: 'relative', minHeight: 24, marginBottom: 8 }}>
@@ -88,41 +113,10 @@ export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, 
       >
         <div style={{ position: 'absolute', left: 0, right: 0, height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 99 }} />
 
-        <div style={{
-          position: 'absolute', height: 3, background: 'var(--accent)', borderRadius: 99,
-          left: `${pct(valueMin)}%`,
-          right: `${100 - pct(valueMax)}%`,
-        }} />
+        <motion.div style={{ position: 'absolute', height: 3, background: 'var(--accent)', borderRadius: 99, left: minLeft, right: fillRight }} />
 
-        <div
-          onMouseDown={e => startDrag(e, 'min')}
-          style={{
-            position: 'absolute',
-            left: `${pct(valueMin)}%`,
-            transform: 'translateX(-50%)',
-            width: 18, height: 18, borderRadius: '50%',
-            background: 'var(--accent)',
-            border: '2px solid var(--bg)',
-            boxShadow: '0 0 10px color-mix(in srgb, var(--accent) 70%, transparent)',
-            cursor: 'grab',
-            zIndex: 3,
-          }}
-        />
-
-        <div
-          onMouseDown={e => startDrag(e, 'max')}
-          style={{
-            position: 'absolute',
-            left: `${pct(valueMax)}%`,
-            transform: 'translateX(-50%)',
-            width: 18, height: 18, borderRadius: '50%',
-            background: 'var(--accent)',
-            border: '2px solid var(--bg)',
-            boxShadow: '0 0 10px color-mix(in srgb, var(--accent) 70%, transparent)',
-            cursor: 'grab',
-            zIndex: 3,
-          }}
-        />
+        <motion.div onMouseDown={e => startDrag(e, 'min')} style={{ ...handleStyle, left: minLeft, x: '-50%' }} />
+        <motion.div onMouseDown={e => startDrag(e, 'max')} style={{ ...handleStyle, left: maxLeft, x: '-50%' }} />
       </div>
 
       <div style={{ position: 'relative', minHeight: 32, marginTop: 4 }}>

@@ -3,6 +3,7 @@ import './globals.css'
 import { AuthProvider } from '@/context/AuthContext'
 import StarBackground from '@/components/StarBackground'
 import ViewportScale from '@/components/ViewportScale'
+import CommandPalette from '@/components/CommandPalette'
 
 export const metadata: Metadata = {
   title: 'Diverge',
@@ -27,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </div>
         <div className="app-shell" style={{ position: 'relative', zIndex: 1 }}>
           <ViewportScale />
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>{children}<CommandPalette /></AuthProvider>
         </div>
         <div className="desktop-notice" role="status">
           <div className="desktop-notice-wordmark">DIVERGE</div>
