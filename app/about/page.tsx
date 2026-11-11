@@ -9,24 +9,15 @@ const SOFT = { type: 'spring', stiffness: 130, damping: 22, mass: 0.9 } as const
 
 type Point = { lead: string; text: string }
 
-const DIFF: Point[] = [
-  { lead: "It starts from real history.", text: "You pick a real event, and the real facts and Wikipedia text for it are already attached to your question. In regular Claude you would have to know all that and paste it in yourself." },
-  { lead: "Every answer has the same structure.", text: "You always get the year, a divergence score, the world mood, a confidence level and a list of key facts, so answers are easy to compare. A normal chat just gives you a wall of text." },
-  { lead: "Facts are labeled and checked.", text: "Each fact is marked as documented, inference or speculation, and a second AI flags the ones it can't confirm. A normal chat won't show you which parts are guesses unless you ask." },
-  { lead: "Your timeline stays consistent.", text: "Earlier answers are locked in and the year only moves forward, so your alternate world holds together. In a long normal chat, the AI can forget things or contradict itself." },
-  { lead: "You can see it, not just read it.", text: "There is a view next to real history, a timeline graphic and a summary that compares the two worlds. You can also rewind, branch, save, listen to and share your timelines." },
-  { lead: "It is built for this one job.", text: "Settings let you pick the length, depth, tone and how bold the guesses are, and there is a library of real events to start from so you are never staring at a blank box." },
-]
-
 const HOW: Point[] = [
   { lead: "Strict rules first.", text: "Every question starts with a long set of instructions, about 1,000 words. They tell the AI to act like a historian, stick to history, never invent numbers, dates or quotes, and say when it is guessing." },
   { lead: "Real facts go in with your question.", text: "Each event comes with real facts that I wrote in ahead of time. The AI also gets the opening part of the topic's Wikipedia article, up to 3,200 characters, so it starts from real history and not just memory." },
   { lead: "A set way of thinking.", text: "The rules make it work in steps: what changes right away (0 to 2 years), the ripple effects (2 to 10 years), the long term (10 to 50 years), what would have happened anyway, and where it is unsure." },
-  { lead: "Every fact gets a label.", text: "Each key fact is marked as documented, inference or speculation, so you can tell a real record from a reasonable guess. Every answer also shows a confidence level." },
+  { lead: "Every answer has the same structure.", text: "You always get the year, a divergence score, the world mood, a confidence level and a list of key facts, so answers are easy to compare. A normal chat just gives you a wall of text." },
   { lead: "A second AI checks the first one.", text: "After an answer shows up, a smaller AI looks over the facts labeled documented and flags the ones it can't confirm as unconfirmed." },
   { lead: "Your timeline stays consistent.", text: "Your earlier questions are locked in so a new answer can't contradict them, and the year can only move forward." },
   { lead: "It stays on topic and on guard.", text: "Questions that aren't about history get refused. Your question is treated as a question and not as orders, which blocks most tricks. There is also a test script with 17 checks for facts, refusals, tricks and false premises." },
-  { lead: "You can tune it.", text: "Settings let you pick how long the answer is, how simple or detailed, the tone, and whether the guesses are realistic or bolder." },
+  { lead: "You can tune it.", text: "Settings let you pick how long the answer is, how simple or detailed, the tone, and whether the guesses are realistic or bolder. There is also a library of real events to start from, so you are never staring at a blank box." },
 ]
 
 const NUMBERS: Point[] = [
@@ -231,16 +222,10 @@ export default function AboutPage() {
         >
           <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 12, textAlign: 'center' }}>Accuracy disclaimer</h2>
           <p style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.75, color: 'var(--text-dim)' }}>
-            Diverge writes alternate history, so there is no answer key. Nobody can check what would really have happened. What I can do is make the AI be honest about what is real and what is a guess, so I built in a bunch of safeguards. Here is what they are, why this is different from just asking Claude, and why it still is not perfect. Tap a heading to open it.
+            Diverge writes alternate history, so there is no answer key. Nobody can check what would really have happened. What I can do is make the AI be honest about what is real and what is a guess, so I built in a bunch of safeguards. Here is what they are and why it still is not perfect. Tap a heading to open it.
           </p>
           <div style={{ marginTop: 28 }}>
             <Dropdown title="How an answer gets made">
-              <h4 style={{ margin: '4px 0 14px', fontSize: 'calc(var(--font-scale) * 1.2)', fontWeight: 700, color: 'var(--text)' }}>Why this is not just Claude in a browser tab</h4>
-              <PointList items={DIFF} />
-              <p style={{ margin: '18px 0 0', fontSize: 'calc(var(--font-scale) * 1.2)', lineHeight: 1.7, color: 'var(--text-dim)' }}>
-                It is still Claude underneath, so it can be wrong in the same ways. Diverge just adds structure, checks and tools around it. If you only want a quick chat, regular Claude is great.
-              </p>
-              <h4 style={{ margin: '30px 0 14px', fontSize: 'calc(var(--font-scale) * 1.2)', fontWeight: 700, color: 'var(--text)' }}>What happens to your question, step by step</h4>
               <PointList items={HOW} />
             </Dropdown>
             <Dropdown title="The numbers"><PointList items={NUMBERS} /></Dropdown>

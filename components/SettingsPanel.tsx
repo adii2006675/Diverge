@@ -129,8 +129,8 @@ export default function SettingsPanel() {
         <Section title="Display Options">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <Toggle
-              label={t('Show confidence level')}
-              desc={t('Display LOW / MEDIUM / HIGH confidence badge on AI responses')}
+              label={t('Show answer tags')}
+              desc={t('Show the year, world mood, confidence level and how much each answer changed (+10%) around your answers')}
               value={settings?.show_confidence_level ?? true}
               onChange={() => handleToggle('show_confidence_level')}
             />

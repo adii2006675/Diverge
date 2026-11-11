@@ -44,7 +44,7 @@ export default function StarBackground() {
       life: number; maxLife: number
     }
 
-    let stars: Star[] = []
+    const stars: Star[] = []
     let shootingStars: ShootingStar[] = []
     const SHOT_INTERVAL_MS = 5000
     let lastShotSlot = Math.floor(Date.now() / SHOT_INTERVAL_MS)
@@ -54,21 +54,40 @@ export default function StarBackground() {
       return { width: window.innerWidth, height: window.innerHeight }
     }
 
-    function resize() {
-      const { width, height } = getSize()
-      canvas.width = width
-      canvas.height = height
-      const density = (width * height) / (1920 * 1080)
-      const starCount = Math.max(40, Math.round(260 * density))
-      stars = Array.from({ length: starCount }, () => ({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
+    // The stars live in a field as big as the largest window seen so far (uW x uH), and the canvas is just a window onto its
+    // top-left corner. Making the window smaller crops stars out of view, making it bigger reveals them again, and stars are
+    // only ever created for space that has never been on screen before, so resizing never reshuffles the ones you can see.
+    let uW = 0
+    let uH = 0
+    function makeStar(x: number, y: number): Star {
+      return {
+        x, y,
         r: Math.random() * 1.6 + 0.6,
         vx: (Math.random() - 0.5) * 0.15,
         vy: (Math.random() - 0.5) * 0.15,
         alpha: Math.random() * 0.6 + 0.2,
         pulse: Math.random() * Math.PI * 2,
-      }))
+      }
+    }
+
+    function resize() {
+      const { width, height } = getSize()
+      canvas.width = width
+      canvas.height = height
+      const newW = Math.max(uW, width)
+      const newH = Math.max(uH, height)
+      if (newW > uW || newH > uH) {
+        const target = Math.max(40, Math.round(260 * (newW * newH) / (1920 * 1080)))
+        let guard = 0
+        while (stars.length < target && guard++ < target * 40) {
+          const x = Math.random() * newW
+          const y = Math.random() * newH
+          if (x < uW && y < uH) continue // that part of the field already has its stars
+          stars.push(makeStar(x, y))
+        }
+        uW = newW
+        uH = newH
+      }
     }
 
     function spawnShootingStar() {
@@ -108,10 +127,10 @@ export default function StarBackground() {
       stars.forEach(s => {
         s.pulse += 0.008
         s.x += s.vx; s.y += s.vy
-        if (s.x < -10) s.x = canvas.width + 10
-        if (s.x > canvas.width + 10) s.x = -10
-        if (s.y < -10) s.y = canvas.height + 10
-        if (s.y > canvas.height + 10) s.y = -10
+        if (s.x < -10) s.x = uW + 10
+        if (s.x > uW + 10) s.x = -10
+        if (s.y < -10) s.y = uH + 10
+        if (s.y > uH + 10) s.y = -10
         const a = s.alpha * (0.65 + 0.35 * Math.sin(s.pulse))
         const grd = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 4)
         grd.addColorStop(0, `rgba(${cr},${cg},${cb},${a * 0.4})`)

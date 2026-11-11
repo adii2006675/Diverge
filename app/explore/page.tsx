@@ -22,10 +22,10 @@ const START_YEAR = 1800
 const SCALE_BREAKS: [number, number][] = [[START_YEAR, 0], [YEAR_MAX, 100]]
 const SNAP_POINTS = [START_YEAR, 1850, 1900, 1950, 2000, YEAR_MAX]
 const SLIDER_TICKS = SNAP_POINTS
-// Magnetic stops: a handle dragged close to one of the tick years locks onto it, and has to be pulled a little further
-// away to come unlocked again.
-const SNAP_IN = 7
-const SNAP_OUT = 12
+// Magnetic stops: a handle within 5 years of a tick year locks onto it, and comes unlocked as soon as it is more than
+// 5 years away on either side.
+const SNAP_IN = 5
+const SNAP_OUT = 5
 function magnet(value: number, current: number): number {
   if (SNAP_POINTS.includes(current) && Math.abs(value - current) <= SNAP_OUT) return current
   const near = SNAP_POINTS.find(p => Math.abs(value - p) <= SNAP_IN)
@@ -60,23 +60,42 @@ function pctToYear(p: number): number {
   return YEAR_MAX
 }
 
+// Where the pop-up has to be to sit exactly on a card. The whole app sits inside a wrapper with CSS zoom (it scales up on big
+// screens), and a transform or height set on the pop-up is in that zoomed unit while getBoundingClientRect is in screen
+// pixels, so every length from the screen is divided by the zoom (z). The pop-up is centred in a fixed, full-screen box, so
+// that box's centre is where the pop-up rests.
+function zoomTarget(el: HTMLElement, target: DOMRect) {
+  const holder = el.parentElement as HTMLElement
+  const box = holder.getBoundingClientRect()
+  const z = box.width / (holder.offsetWidth || 1)
+  const scale = Math.min(1, target.width / (el.offsetWidth * z))
+  return {
+    x: (target.left + target.width / 2 - (box.left + box.width / 2)) / z,
+    y: (target.top + target.height / 2 - (box.top + box.height / 2)) / z,
+    scale,
+    height: Math.min(el.offsetHeight, target.height / (scale * z)),
+    radius: 16 / scale,
+  }
+}
+
 type CardProps = {
   event: HistoricalEvent
   idx: number
   entered: boolean
   language: string
   saved: boolean
+  lifted: boolean
   onOpen: (id: string, el: HTMLElement) => void
   onToggle: (id: string) => void
 }
 
-const EventCardItem = memo(function EventCardItem({ event, idx, entered, language, saved, onOpen, onToggle }: CardProps) {
+const EventCardItem = memo(function EventCardItem({ event, idx, entered, language, saved, lifted, onOpen, onToggle }: CardProps) {
   const tr = (text: string) => translate(language, text)
   const year = event.year < 0 ? `${Math.abs(event.year)} ${tr('BC')}` : String(event.year)
   const text = eventText(language, event)
   return (
     <motion.div
-      className="event-card"
+      className={`event-card${lifted ? ' is-lifted' : ''}`}
       // The first load fades up in a stagger; after that, cards that appear because of a filter just fade in quickly.
       initial={entered ? { opacity: 0 } : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
@@ -124,15 +143,30 @@ export default function ExplorePage() {
   // made cards fly around whenever the list changed, so the zoom is done by hand.)
   const modalRef = useRef<HTMLDivElement>(null)
   const fromRect = useRef<DOMRect | null>(null)
-  const zoomBack = useRef<{ x: number; y: number; scale: number } | null>(null)
+  const fromEl = useRef<HTMLElement | null>(null)
+  const zoomBack = useRef<{ x: number; y: number; scale: number; height: number; radius: number } | null>(null)
   const [closing, setClosing] = useState(false)
-  const openCard = useCallback((id: string, el: HTMLElement) => { fromRect.current = el.getBoundingClientRect(); setClosing(false); setExpandedId(id) }, [])
+  // Near the end of closing the real card fades back in underneath the pop-up as it fades out.
+  const [revealing, setRevealing] = useState(false)
+  // Escape closes the pop-up with no animation (keyboard actions never animate); clicking Back or the backdrop zooms it home.
+  const [kbClose, setKbClose] = useState(false)
+  const openCard = useCallback((id: string, el: HTMLElement) => { fromEl.current = el; fromRect.current = el.getBoundingClientRect(); setClosing(false); setRevealing(false); setKbClose(false); setExpandedId(id) }, [])
   function closeCard() {
     const el = modalRef.current
-    const back = zoomBack.current
-    if (!el || !back || reduce || closing) { setExpandedId(null); return }
+    const stored = zoomBack.current
+    if (!el || !stored || reduce || closing) { setExpandedId(null); return }
     setClosing(true)
-    animate(el, { x: back.x, y: back.y, scale: back.scale, opacity: 0 }, { duration: 0.26, ease: EASE_OUT }).then(() => { setExpandedId(null); setClosing(false) })
+    // Measure the card where it is right now, not where it was when the pop-up opened.
+    const cardNow = fromEl.current && fromEl.current.isConnected ? fromEl.current.getBoundingClientRect() : null
+    const back = cardNow ? zoomTarget(el, cardNow) : stored
+    // The pop-up is taller than the card (full description and buttons), so as it travels home it also gets shorter: the
+    // bottom half is clipped away until it is exactly the card's shape. The real card fades in underneath near the end.
+    el.style.overflowY = 'hidden'
+    window.setTimeout(() => setRevealing(true), 170)
+    const to = { duration: 0.3, ease: EASE_OUT }
+    animate(el, { opacity: [1, 1, 0] }, { duration: 0.3, times: [0, 0.7, 1], ease: 'linear' })
+    animate(el, { height: [el.offsetHeight, back.height], borderRadius: [20, back.radius] }, to)
+    animate(el, { x: back.x, y: back.y, scale: back.scale }, to).then(() => { setExpandedId(null); setClosing(false) })
   }
   const [query, setQuery] = useState('')
   const [savedOnly, setSavedOnly] = useState(false)
@@ -170,12 +204,12 @@ export default function ExplorePage() {
     const from = fromRect.current
     if (!expandedId || !el) return
     if (!from || reduce) { zoomBack.current = null; animate(el, { opacity: [0, 1] }, { duration: 0.2 }); return }
-    const to = el.getBoundingClientRect()
-    const x = from.left + from.width / 2 - (to.left + to.width / 2)
-    const y = from.top + from.height / 2 - (to.top + to.height / 2)
-    const scale = Math.min(1, from.width / to.width)
-    zoomBack.current = { x, y, scale }
-    animate(el, { x: [x, 0], y: [y, 0], scale: [scale, 1], opacity: [0.2, 1] }, SPRING)
+    const g = zoomTarget(el, from)
+    const natural = el.offsetHeight
+    zoomBack.current = g
+    el.style.overflowY = 'hidden'
+    animate(el, { x: [g.x, 0], y: [g.y, 0], scale: [g.scale, 1], opacity: [0.2, 1] }, SPRING)
+    animate(el, { height: [g.height, natural], borderRadius: [g.radius, 20] }, SPRING).then(() => { el.style.height = ''; el.style.overflowY = 'auto' })
   }, [expandedId, reduce])
 
   // "/" opens the search bar. Keyboard action, so nothing animates.
@@ -186,6 +220,19 @@ export default function ExplorePage() {
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
       e.preventDefault()
       openSearch(true)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [expandedId])
+
+  useEffect(() => {
+    if (!expandedId) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return
+      e.preventDefault()
+      setKbClose(true)
+      setClosing(false)
+      setExpandedId(null)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -326,8 +373,9 @@ export default function ExplorePage() {
             format={y => fmtYear(Math.round(y))}
             valueMin={yearMin}
             valueMax={yearMax}
-            onChangeMin={v => setYearMin(Math.max(magnet(v, yearMin), START_YEAR))}
-            onChangeMax={v => setYearMax(Math.max(magnet(v, yearMax), START_YEAR))}
+            snap={magnet}
+            onChangeMin={v => setYearMin(Math.max(v, START_YEAR))}
+            onChangeMax={v => setYearMax(Math.max(v, START_YEAR))}
           />
         </motion.div>
         </div>
@@ -364,6 +412,7 @@ export default function ExplorePage() {
                 entered={entered}
                 language={language}
                 saved={bookmarkSet.has(event.id)}
+                lifted={expandedId === event.id && !revealing}
                 onOpen={openCard}
                 onToggle={bookmarks.toggle}
               />
@@ -373,14 +422,16 @@ export default function ExplorePage() {
       </div>
 
       {/* Expanded modal */}
-      <AnimatePresence>
+      <AnimatePresence custom={kbClose}>
         {expandedEvent && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: closing ? 0 : 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: closing ? 0.26 : 0.25 }}
+              variants={{ hide: (instant: boolean) => ({ opacity: 0, transition: { duration: instant ? 0 : 0.25 } }) }}
+              custom={kbClose}
+              exit="hide"
+              transition={{ duration: closing ? 0.3 : 0.25 }}
               onClick={closeCard}
               style={{
                 position: 'fixed', inset: 0, zIndex: 100,
@@ -391,7 +442,9 @@ export default function ExplorePage() {
               <motion.div
                 ref={modalRef}
                 className="event-card always-trace"
-                exit={{ opacity: 0, transition: { duration: 0.12 } }}
+                variants={{ hide: (instant: boolean) => ({ opacity: 0, transition: { duration: instant ? 0 : 0.12 } }) }}
+                custom={kbClose}
+                exit="hide"
                 style={{
                   borderRadius: 20,
                   background: 'var(--bg)', overflow: 'hidden',

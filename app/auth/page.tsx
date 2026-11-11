@@ -312,13 +312,6 @@ export default function AuthPage() {
               {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
             </button>
     
-            <button
-              onClick={() => router.push('/')}
-              style={{ width: '100%', marginTop: 10, padding: '13px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: 'rgba(255,255,255,0.5)', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}
-            >
-              Continue without account
-            </button>
-    
             <div style={{ marginTop: 16, textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
               {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
               <span

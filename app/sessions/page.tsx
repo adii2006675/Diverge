@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
@@ -9,6 +9,8 @@ import EventImage from '@/components/EventImage'
 import { ALL_EVENTS } from '@/lib/events'
 import { motion, AnimatePresence } from 'motion/react'
 import { useToast } from '@/components/useToast'
+import { createShare, revokeShare, shareUrl } from '@/lib/share'
+import type { WhatIfEntry } from '@/types'
 
 type Session = {
   id: string
@@ -42,6 +44,11 @@ function whatIfText(w: unknown): string {
   return 'Untitled question'
 }
 
+// Saved titles for the built-in events end with the year ("Kendrick Lamar vs. Drake — 2024"). Show just the title.
+function cleanTitle(title: string) {
+  return (title || '').replace(/\s+[—–-]\s+\d{1,4}(\s*BC)?(?=\s*(\(copy\))?\s*$)/i, '').trim()
+}
+
 export default function SessionsPage() {
   const router = useRouter()
   const { user, loading } = useAuth()
@@ -55,6 +62,8 @@ export default function SessionsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('newest')
   const { toast, showToast } = useToast()
+  // One link per session until its answers change, so tapping Share twice does not make two links.
+  const shared = useRef<Record<string, { signature: string; id: string }>>({})
 
   useEffect(() => {
     if (user) loadSessions()
@@ -97,6 +106,44 @@ export default function SessionsPage() {
     if (data) { setSessions(prev => [data, ...prev]); showToast('Session duplicated.') }
     else { if (error) console.error(error); showToast('Could not duplicate this session.') }
     setOpenMenuId(null)
+  }
+
+  async function handleShare(session: Session) {
+    setOpenMenuId(null)
+    if (!user) return
+    // Rows can hold older or odd shapes, so only share entries that are complete answers.
+    const entries = session.what_ifs.filter((w): w is WhatIfEntry => {
+      const o = w as { question?: unknown; response?: { paragraph?: unknown } } | null
+      return !!o && typeof o.question === 'string' && !!o.response && typeof o.response.paragraph === 'string'
+    })
+    if (entries.length === 0) { showToast('There is nothing to share in this session yet.'); return }
+    const signature = `${entries.length}:${session.divergence_score}`
+    try {
+      let id = shared.current[session.id]?.signature === signature ? shared.current[session.id].id : null
+      const isNew = !id
+      if (!id) {
+        id = await createShare({ userId: user.id, eventId: session.event_id, title: cleanTitle(session.event_title) || 'Alternate timeline', whatIfs: entries, divergence: session.divergence_score })
+        shared.current[session.id] = { signature, id }
+      }
+      const link = shareUrl(id)
+      let copied = true
+      try { await navigator.clipboard.writeText(link) } catch { copied = false }
+      const shareId = id
+      showToast(
+        copied ? 'Link copied. Anyone with it can read this timeline.' : `Share link: ${link}`,
+        isNew ? {
+          label: 'Stop sharing',
+          run: async () => {
+            try { await revokeShare(shareId); delete shared.current[session.id]; showToast('Link removed. It no longer works.') }
+            catch (err) { console.error(err); showToast('Could not stop sharing. Try again.') }
+          },
+        } : undefined,
+      )
+    } catch (err) {
+      console.error(err)
+      const code = (err as { code?: string } | null)?.code
+      showToast(code === 'PGRST205' || code === '42P01' ? 'Sharing is not switched on for this site yet.' : 'Could not create a share link. Please try again.')
+    }
   }
 
   async function handleDelete(id: string) {
@@ -232,7 +279,7 @@ export default function SessionsPage() {
                       <EventImage
                         key={session.event_id}
                         id={session.event_id}
-                        title={session.event_title || ''}
+                        title={cleanTitle(session.event_title)}
                         year={ALL_EVENTS.find(e => e.id === session.event_id)?.year}
                         compact
                         loading="lazy"
@@ -250,7 +297,7 @@ export default function SessionsPage() {
                       />
                     ) : (
                       <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {session.event_title || 'Untitled Session'}
+                        {cleanTitle(session.event_title) || 'Untitled Session'}
                       </div>
                     )}
                     <div style={{ fontSize: 12, color: 'var(--text-dim)', whiteSpace: 'nowrap' }}>
@@ -279,12 +326,20 @@ export default function SessionsPage() {
                           style={{ position: 'absolute', left: '100%', marginLeft: 25, top: -16, background: 'var(--surface)', border: '1px solid var(--border-color)', borderRadius: 10, padding: 6, minWidth: 140, zIndex: 50 }}
                         >
                           <button
-                            onClick={() => { setRenamingId(session.id); setRenameValue(session.event_title || ''); setOpenMenuId(null) }}
+                            onClick={() => { setRenamingId(session.id); setRenameValue(cleanTitle(session.event_title)); setOpenMenuId(null) }}
                             style={{ display: 'block', width: '100%', padding: '8px 10px', borderRadius: 7, border: 'none', background: 'transparent', color: 'var(--text-dim)', fontSize: 13, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                             onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'var(--card-bg)'}
                             onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
                           >
                             Rename
+                          </button>
+                          <button
+                            onClick={() => handleShare(session)}
+                            style={{ display: 'block', width: '100%', padding: '8px 10px', borderRadius: 7, border: 'none', background: 'transparent', color: 'var(--text-dim)', fontSize: 13, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'var(--card-bg)'}
+                            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
+                          >
+                            Share
                           </button>
                           <button
                             onClick={() => handleDuplicate(session)}
@@ -356,7 +411,7 @@ export default function SessionsPage() {
             >
               <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)', marginBottom: 10 }}>Delete this session?</div>
               <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.6, marginBottom: 24 }}>
-                Are you sure you want to delete <span style={{ fontWeight: 700, color: 'var(--text)' }}>{deleteTarget?.event_title || 'Untitled Session'}</span>. This action cannot be undone.
+                Are you sure you want to delete <span style={{ fontWeight: 700, color: 'var(--text)' }}>{cleanTitle(deleteTarget?.event_title || '') || 'Untitled Session'}</span>. This action cannot be undone.
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button

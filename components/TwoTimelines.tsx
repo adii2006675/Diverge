@@ -29,6 +29,17 @@ export default function TwoTimelines({
   const hovered = hover !== null ? nodes[hover] : null
   const hoveredPt = hover !== null ? geo.pts[hover] : null
 
+  // Print a year under a node only when the timeline has moved at least 5 years past the last year shown, so a run of
+  // answers in the same year doesn't repeat it. Nodes whose year can't be read as a number show when the text differs.
+  const showYear: boolean[] = []
+  let lastNum: number | null = startYear
+  let lastText = formatEventYear(startYear)
+  nodes.forEach(n => {
+    const show = n.yearNum !== null && lastNum !== null ? Math.abs(n.yearNum - lastNum) >= 5 : n.year !== lastText
+    showYear.push(show)
+    if (show) { lastNum = n.yearNum; lastText = n.year }
+  })
+
   return (
     <div className="dv-card dv-tt">
       <div className="dv-tt-head">
@@ -94,7 +105,7 @@ export default function TwoTimelines({
                 {on && <circle className="dv-tt-pulse" cx={p.x} cy={p.y} r="19" fill="none" stroke="var(--acc)" strokeOpacity=".45" strokeWidth="2" />}
                 <circle cx={p.x} cy={p.y} r={on ? 13 : 11} fill={on ? 'var(--acc)' : 'color-mix(in srgb, var(--acc) 18%, #0b0b17)'} stroke="var(--acc)" strokeWidth="2.5" />
                 <text x={p.x} y={p.y + 4} textAnchor="middle" fontSize="12.5" fontWeight="800" fill={on ? 'var(--on-accent-dark, #1b1305)' : 'var(--acc)'}>{i + 1}</text>
-                <text x={p.x} y={BASE - 25} textAnchor="middle" fontSize="12.5" fill="var(--dim)" className="dv-tt-year">{nodes[i].year}</text>
+                {showYear[i] && <text x={p.x} y={BASE - 25} textAnchor="middle" fontSize="12.5" fill="var(--dim)" className="dv-tt-year">{nodes[i].year}</text>}
               </g>
             )
           })}

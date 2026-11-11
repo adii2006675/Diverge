@@ -119,6 +119,10 @@ body {
 .event-card {
   position: relative;
 }
+/* The card whose pop-up is out leaves its slot empty; it fades back in as the pop-up returns. */
+.event-card > * { transition: opacity 0.14s ease; }
+.event-card.is-lifted { pointer-events: none; }
+.event-card.is-lifted > * { opacity: 0; transition: none; }
 .event-card .card-trace-right,
 .event-card .card-trace-left {
   opacity: 0;
@@ -290,6 +294,7 @@ html.dv-thinking .dv-logo:not(:hover) .dv-run { opacity: 0; animation: none; }
 
 /* Shared toast and loading skeleton */
 .app-toast-wrap { position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%); z-index: 300; pointer-events: none; }
+.app-toast button { margin-left: 16px; background: none; border: 0; padding: 0; color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; pointer-events: auto; }
 .app-toast { padding: 11px 22px; border-radius: 999px; background: var(--surface, #0d0d16); color: var(--text); font-size: 14px; font-weight: 600; white-space: nowrap; box-shadow: 0 18px 44px rgba(0,0,0,.4), inset 0 0 0 1px var(--border-color); }
 .skel-row { height: 72px; border-radius: 14px; border: 1px solid var(--border-color); background: linear-gradient(90deg, var(--card-bg), color-mix(in srgb, var(--text) 8%, var(--card-bg)), var(--card-bg)); background-size: 200% 100%; animation: skelShimmer 1.6s linear infinite; }
 @keyframes skelShimmer { to { background-position: -200% 0; } }

@@ -61,12 +61,23 @@ type Refusal = { message: string; question: string }
 type Gate = { code: string; message: string; question: string }
 type Toast = { id: number; message: string; undo?: () => void; actionLabel?: string }
 
+// Stage 0: nothing written yet (looking up the record). 1: the paragraph is streaming. 2: key facts and explanations. 3: score, mood, year.
 const WAIT_STAGES = ['Reading the historical record', 'Tracing the causes', 'Weighing the ripple effects', 'Writing your answer']
 // Measured typical times for each length setting.
 const WAIT_USUAL: Record<'short' | 'medium' | 'long', string> = { short: '10–15', medium: '15–30', long: '30–60' }
 
 const CUSTOM_START_COPY =
   'This is a custom starting point, so there is no recorded timeline to compare against. Diverge will anchor its answer in documented history for this topic.'
+
+type CustomInfo = { title: string; extract: string; image: string | null; url: string }
+
+// Up to about 420 characters of a summary, ended on a full sentence.
+function trimSummary(text: string, max = 420) {
+  if (text.length <= max) return text
+  const cut = text.slice(0, max)
+  const end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? '))
+  return end > 120 ? cut.slice(0, end + 1) : cut.replace(/\s+\S*$/, '') + '…'
+}
 
 export default function DivergePage() {
   const params = useParams()
@@ -133,6 +144,46 @@ export default function DivergePage() {
     setToast(null)
   }
 
+
+  // A custom starting point has no entry in the event list, so once the first answer names the Wikipedia article it is
+  // grounded in, the "Real timeline" card is filled from that article's public summary.
+  const customSource = !event ? whatIfs.find(w => w.response.sources && w.response.sources.length > 0)?.response.sources?.[0] : undefined
+  const [customInfo, setCustomInfo] = useState<CustomInfo | null>(null)
+  const customSourceUrl = customSource?.url
+  const customSourceTitle = customSource?.title
+  useEffect(() => {
+    if (!customSourceUrl || !customSourceTitle) return
+    let live = true
+    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(customSourceTitle.replace(/ /g, '_'))}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        if (!live || !d || typeof d.extract !== 'string' || !d.extract) return
+        setCustomInfo({ title: d.title || customSourceTitle, extract: d.extract, image: d.thumbnail?.source || d.originalimage?.source || null, url: customSourceUrl })
+      })
+      .catch(() => {})
+    return () => { live = false }
+  }, [customSourceUrl, customSourceTitle])
+  const customCardTitle = customInfo?.title || customQ || resumedTitle || 'Custom starting point'
+  // One setting (Settings page, Display Options) shows or hides all four tags: year, world mood, confidence and the +N% change.
+  const showTags = settings?.show_confidence_level !== false
+  // How much this answer moved the divergence compared with the one before it.
+  const deltaAt = (i: number) => whatIfs[i].response.divergenceScore - (i > 0 ? whatIfs[i - 1].response.divergenceScore : 0)
+  const fmtDelta = (d: number) => `${d >= 0 ? '+' : '−'}${Math.abs(d)}%`
+  // Clicking anywhere on an answer opens or closes it, except on the key facts, links and buttons. The hidden button
+  // at the top of each answer keeps this working from the keyboard and for screen readers.
+  function toggleAnswer(e: React.MouseEvent, i: number, open: boolean) {
+    const hit = (e.target as HTMLElement).closest('.dv-chip, a, button')
+    if (hit && !hit.classList.contains('dv-ans-head')) return
+    if (window.getSelection()?.toString()) return
+    setOpenAnswers(m => ({ ...m, [i]: !open }))
+    setActiveTimelineIdx(i)
+  }
+  // The waiting card follows what the model is actually writing. The answer streams as JSON in a fixed order:
+  // paragraph, then key facts and their explanations, then mood, score, year and confidence, then suggestions.
+  const waitStage = !streamText ? 0
+    : /"(worldMood|impact|year|uncertaintyLevel|suggestions)"\s*:/.test(streamText) ? 3
+    : /"(keyFacts|factTypes|factExplanations)"\s*:/.test(streamText) ? 2
+    : 1
   const latest = whatIfs.length > 0 ? whatIfs[whatIfs.length - 1] : null
   const currentEntry = whatIfs[activeTimelineIdx] || null
   const currentResponse = currentEntry?.response || null
@@ -144,12 +195,6 @@ export default function DivergePage() {
 
   // Real events around and after the timeline's current year, from the static event list.
   const yearNow = currentResponse ? parseYear(currentResponse.year) : (event?.year ?? null)
-  const meanwhile = (() => {
-    if (yearNow === null) return { near: true, list: [] as typeof ALL_EVENTS }
-    const byDistance = [...ALL_EVENTS].filter(e => e.id !== event?.id).sort((a, b) => Math.abs(a.year - yearNow) - Math.abs(b.year - yearNow))
-    const near = byDistance.filter(e => Math.abs(e.year - yearNow) <= 25).slice(0, 3)
-    return near.length > 0 ? { near: true, list: near } : { near: false, list: byDistance.slice(0, 2) }
-  })()
   const unanswered = yearNow === null ? [] : ALL_EVENTS
     .filter(e => e.year > yearNow && e.id !== event?.id && !askedEvents.includes(e.id))
     .sort((a, b) => a.year - b.year)
@@ -219,6 +264,7 @@ export default function DivergePage() {
         language: settings?.language || 'English',
         // The timeline can only move forward: the next answer's year must not be earlier than this.
         previousYear: latest ? parseYear(latest.response.year) : (event?.year ?? null),
+        previousScore: latest ? latest.response.divergenceScore : 0,
       }, ev => {
         if (ev.t === 'delta') setStreamText(t => t + ev.text)
         else if (ev.t === 'done') data = { ...ev.data }
@@ -468,7 +514,8 @@ export default function DivergePage() {
       )
     } catch (err) {
       console.error(err)
-      showToast('Could not create a share link. Please try again.')
+      const code = (err as { code?: string } | null)?.code
+      showToast(code === 'PGRST205' || code === '42P01' ? 'Sharing is not switched on for this site yet.' : 'Could not create a share link. Please try again.')
     }
     setSharing(false)
   }
@@ -620,33 +667,19 @@ export default function DivergePage() {
               {whatIfs.map((w, i) => {
                 const r = w.response
                 const open = isAnswerOpen(i)
-                const prevScore = i > 0 ? whatIfs[i - 1].response.divergenceScore : 0
-                const delta = r.divergenceScore - prevScore
-                const c = confidenceInfo(r.uncertaintyLevel)
                 return (
                   <div className={`dv-ex${activeTimelineIdx === i ? ' active' : ''}`} id={`ans-${i}`} key={i}>
                     <div className="dv-q">{w.question}</div>
-                    <div className="dv-ans">
+                    <div className="dv-ans" onClick={e => toggleAnswer(e, i, open)}>
                       <button
                         type="button"
-                        className="dv-ans-head"
+                        className="dv-ans-head dv-sr"
                         aria-expanded={open}
                         aria-controls={`ans-body-${i}`}
-                        onClick={() => { setOpenAnswers(m => ({ ...m, [i]: !open })); setActiveTimelineIdx(i) }}
-                      >
-                        <span className="dv-tags">
-                          <span className="dv-tag">{r.year}</span>
-                          <span className="dv-tag up">{delta >= 0 ? '+' : '−'}{Math.abs(delta)}% to {r.divergenceScore}% diverged</span>
-                          <span className="dv-tag" style={{ ['--c' as string]: MOOD_COLORS[r.worldMood] || '#fff' }}><i />{moodLabel(r.worldMood)}</span>
-                          {settings?.show_confidence_level !== false && (
-                            <span className="dv-tag" style={{ ['--c' as string]: c.color }}><i />{c.label}</span>
-                          )}
-                        </span>
-                        <span className={`dv-chev${open ? ' open' : ''}`} aria-hidden="true">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
-                        </span>
-                      </button>
+                        aria-label={open ? 'Collapse this answer' : 'Expand this answer'}
+                      />
                       {!open && <p className="dv-head">{firstSentence(r.paragraph)}</p>}
+                      {!open && <span className="dv-hint" aria-hidden="true">Show more <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg></span>}
                       <div className={`dv-collapse${open ? ' open' : ''}`} id={`ans-body-${i}`}>
                         <div>
                           <div className={`dv-reveal${freshIdx === i ? ' go' : ''}`}><p className="dv-prose dv-para">{r.paragraph}</p></div>
@@ -682,6 +715,7 @@ export default function DivergePage() {
                               )
                             })}
                           </div>
+                          <div className="dv-foot-row">
                           {r.sources && r.sources.length > 0 && (
                             <p className="dv-sources">Grounded in: {r.sources.map((src, n) => (
                               <span key={src.url}>{n > 0 && ', '}<a href={src.url} target="_blank" rel="noreferrer">{src.title} (Wikipedia)</a></span>
@@ -727,6 +761,8 @@ export default function DivergePage() {
                               </button>
                             </>)}
                           </div>
+                          </div>
+                          <span className="dv-hint up" aria-hidden="true">Show less <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg></span>
                         </div>
                       </div>
                     </div>
@@ -744,14 +780,13 @@ export default function DivergePage() {
                         <path className="b" pathLength={100} d="M4 17 H18 Q25 17 29 24 Q33 31 41 31 H60" />
                       </svg>
                       <div>
-                        <b>{WAIT_STAGES[Math.min(WAIT_STAGES.length - 1, Math.floor(elapsed / 7))]}…</b>
+                        <b>{WAIT_STAGES[waitStage]}…</b>
                         <span className="dv-wait-sub">{elapsed}s · usually {WAIT_USUAL[normalizeLength(settings?.ai_response_style)]} seconds</span>
                       </div>
                     </div>
                     <div className="dv-steps" aria-hidden="true">
                       {WAIT_STAGES.map((label, i) => {
-                        const stage = Math.min(WAIT_STAGES.length - 1, Math.floor(elapsed / 7))
-                        return <span key={label} className={i < stage ? 'done' : i === stage ? 'now' : ''}><i />{label}</span>
+                        return <span key={label} className={i < waitStage ? 'done' : i === waitStage ? 'now' : ''}><i />{label}</span>
                       })}
                     </div>
                     <span className="dv-bar-wait" aria-hidden="true" />
@@ -854,13 +889,14 @@ export default function DivergePage() {
                           {i + 1}
                           <span className="dv-hc" role="tooltip">
                             <span className="dv-hq">{w.question}</span>
-                            <span className="dv-hs">
-                              <span className="dv-tag">{r.year}</span>
-                              <span className="dv-tag">{r.divergenceScore}% diverged</span>
-                              <span className="dv-tag" style={{ ['--c' as string]: MOOD_COLORS[r.worldMood] || '#fff' }}><i />{moodLabel(r.worldMood)}</span>
-                              <span className="dv-tag" style={{ ['--c' as string]: c.color }}><i />{c.label}</span>
-                            </span>
-                            <span className="dv-hl">{firstSentence(r.paragraph, 170)}</span>
+                            {showTags && (
+                              <span className="dv-hs">
+                                <span className="dv-tag">{r.year}</span>
+                                <span className="dv-tag">{fmtDelta(deltaAt(i))}</span>
+                                <span className="dv-tag" style={{ ['--c' as string]: MOOD_COLORS[r.worldMood] || '#fff' }}><i />{moodLabel(r.worldMood)}</span>
+                                <span className="dv-tag" style={{ ['--c' as string]: c.color }}><i />{c.label}</span>
+                              </span>
+                            )}
                           </span>
                         </button>
                       </span>
@@ -898,19 +934,18 @@ export default function DivergePage() {
             <div className="dv-gauge" style={{ ['--p' as string]: divergence }} role="img" aria-label={`${divergence}% diverged from real history`}>
               <div><b><CountUp value={divergence} />%</b><small>diverged</small></div>
             </div>
-            <div className="dv-tags center">
-              {currentYear !== '?' && <span className="dv-tag">{currentYear}</span>}
-              {currentResponse ? (
-                <>
-                  <span className="dv-tag" style={{ ['--c' as string]: MOOD_COLORS[mood] || '#fff' }}><i />{moodLabel(mood)}</span>
-                  {settings?.show_confidence_level !== false && (
+            {showTags && <div className="dv-tags center">
+                {currentYear !== '?' && <span className="dv-tag">{currentYear}</span>}
+                {currentResponse ? (
+                  <>
+                    <span className="dv-tag" style={{ ['--c' as string]: MOOD_COLORS[mood] || '#fff' }}><i />{moodLabel(mood)}</span>
                     <span className="dv-tag" style={{ ['--c' as string]: confidenceInfo(currentResponse.uncertaintyLevel).color }}><i />{confidenceInfo(currentResponse.uncertaintyLevel).label}</span>
-                  )}
-                </>
-              ) : (
-                <span className="dv-tag">Real history</span>
-              )}
-            </div>
+                  </>
+                ) : (
+                  <span className="dv-tag">Real history</span>
+                )}
+              {currentResponse && activeTimelineIdx >= 0 && <span className="dv-tag">{fmtDelta(deltaAt(activeTimelineIdx))}</span>}
+            </div>}
           </div>
 
           {event && whatIfs.length > 0 && (
@@ -937,18 +972,6 @@ export default function DivergePage() {
             </div>
           )}
 
-          {meanwhile.list.length > 0 && (
-            <div className="dv-card">
-              <h3>Meanwhile in real history</h3>
-              <p className="dv-sub">{meanwhile.near ? `Around ${currentYear}` : `Nothing recorded near ${currentYear}. The closest events:`}</p>
-              <ul className="dv-list">
-                {meanwhile.list.map(e => (
-                  <li key={e.id}><b>{formatEventYear(e.year)}</b><span><i>{e.title}</i>{e.shortDesc}</span></li>
-                ))}
-              </ul>
-            </div>
-          )}
-
           {unanswered.length > 0 && (
             <div className="dv-card">
               <h3>Unanswered history</h3>
@@ -964,11 +987,21 @@ export default function DivergePage() {
           )}
 
           <div className="dv-card">
-            <h3>Real timeline{event ? ` · ${formatEventYear(event.year)}` : ''}</h3>
+            <h3>{event ? `Real timeline · ${formatEventYear(event.year)}` : customInfo ? `Real history · ${customInfo.title}` : 'Real history'}</h3>
             <div className="dv-ph">
-              <EventImage key={event?.id || 'custom'} id={event?.id} title={event?.title || 'Custom starting point'} year={event?.year} imgStyle={{ filter: 'brightness(0.75) saturate(0.8)' }} />
+              {!event && customInfo?.image ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={customInfo.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.75) saturate(0.8)' }} />
+              ) : (
+                <EventImage key={event?.id || 'custom'} id={event?.id} title={event?.title || customCardTitle} year={event?.year} imgStyle={{ filter: 'brightness(0.75) saturate(0.8)' }} />
+              )}
             </div>
-            <p className="dv-prose soft">{event?.fullDesc || CUSTOM_START_COPY}</p>
+            <p className="dv-prose soft">
+              {event?.fullDesc || (customInfo ? trimSummary(customInfo.extract) : whatIfs.length === 0 ? 'Ask a what-if and the real history behind it will show up here.' : CUSTOM_START_COPY)}
+            </p>
+            {!event && customInfo && (
+              <p className="dv-sources" style={{ marginTop: '.6em' }}><a href={customInfo.url} target="_blank" rel="noreferrer">Read more on Wikipedia</a></p>
+            )}
             <ul className="dv-facts">
               {realFacts.map(f => <li key={f}>{f}</li>)}
             </ul>
@@ -1087,14 +1120,13 @@ export default function DivergePage() {
                 <AIResponseSettings showDescriptions />
               </div>
 
-              {/* Toggles */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <AIToggle
-                  label="Show confidence level"
-                  value={settings?.show_confidence_level ?? true}
-                  onChange={() => updateSettings({ show_confidence_level: !(settings?.show_confidence_level ?? true) })}
-                />
-              </div>
+              {/* The same setting as Settings, Display Options */}
+              <AIToggle
+                label="Show answer tags (year, mood, confidence, change)"
+                value={showTags}
+                onChange={() => updateSettings({ show_confidence_level: !showTags })}
+              />
+
             </motion.div>
           </motion.div>
         )}
@@ -1141,8 +1173,12 @@ const btnStyle: React.CSSProperties = {
 function AIToggle({ label, value, onChange }: { label: string; value: boolean; onChange: () => void }) {
   return (
     <div
+      role="switch"
+      aria-checked={value}
+      tabIndex={0}
       onClick={onChange}
-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', cursor: 'pointer' }}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onChange() } }}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', cursor: 'pointer' }}
     >
       <span style={{ fontSize: 13, color: 'var(--text)' }}>{label}</span>
       <div style={{

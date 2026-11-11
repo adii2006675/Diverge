@@ -1,6 +1,6 @@
 'use client'
 import { useRef, useCallback, useEffect } from 'react'
-import { motion, useSpring, useTransform, useReducedMotion } from 'motion/react'
+import { motion, animate, useMotionValue, useSpring, useTransform, useReducedMotion } from 'motion/react'
 
 interface Props {
   min: number
@@ -16,13 +16,18 @@ interface Props {
   ticks?: number[]
   /** How to print a year, for example "500 BC". */
   format?: (year: number) => string
+  /** Magnetic stops: given the value under the pointer and the handle's current value, returns the value to use. */
+  snap?: (value: number, current: number) => number
 }
 
-// The handles glide to their target with a short spring, so following the pointer, snapping to a tick and letting go of
-// a tick all move smoothly instead of jumping. Values passed to onChange are continuous (not rounded to whole years).
-const HANDLE_SPRING = { stiffness: 620, damping: 42, mass: 0.7 }
+// While dragging, a handle sits exactly under the pointer (no spring, so it can never trail behind a fast drag). The only
+// thing that is smoothed is the pull toward a snap point: the page snaps the value, and the gap between the pointer and the
+// snapped position is eased out with this spring, so locking onto 1900 and letting go of it both glide instead of popping.
+const SNAP_SPRING = { stiffness: 620, damping: 42, mass: 0.7 }
+// A change that does not come from dragging (clicking the track, resetting filters) glides to its new place.
+const MOVE_SPRING = { type: 'spring' as const, stiffness: 380, damping: 34, mass: 0.9 }
 
-export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, onChangeMax, toPct, fromPct, ticks: tickYears, format }: Props) {
+export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, onChangeMax, toPct, fromPct, ticks: tickYears, format, snap }: Props) {
   const trackRef = useRef<HTMLDivElement>(null)
   const dragging = useRef<'min' | 'max' | null>(null)
   const reduce = useReducedMotion()
@@ -30,13 +35,42 @@ export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, 
   const pct = useCallback((val: number) => (toPct ? toPct(val) : ((val - min) / (max - min)) * 100), [toPct, min, max])
   const fmt = (val: number) => (format ? format(val) : String(Math.round(val)))
 
-  const minPct = useSpring(pct(valueMin), HANDLE_SPRING)
-  const maxPct = useSpring(pct(valueMax), HANDLE_SPRING)
-  useEffect(() => { if (reduce) minPct.jump(pct(valueMin)); else minPct.set(pct(valueMin)) }, [valueMin, reduce, minPct, pct])
-  useEffect(() => { if (reduce) maxPct.jump(pct(valueMax)); else maxPct.set(pct(valueMax)) }, [valueMax, reduce, maxPct, pct])
-  const minLeft = useTransform(minPct, v => `${v}%`)
-  const maxLeft = useTransform(maxPct, v => `${v}%`)
-  const fillRight = useTransform(maxPct, v => `${100 - v}%`)
+  // Shown position (in %) of each handle = where the pointer is (raw) + the eased snap offset.
+  const minRaw = useMotionValue(pct(valueMin))
+  const maxRaw = useMotionValue(pct(valueMax))
+  const minOff = useSpring(0, SNAP_SPRING)
+  const maxOff = useSpring(0, SNAP_SPRING)
+
+  const cur = useRef({ min: valueMin, max: valueMax })
+  useEffect(() => { cur.current = { min: valueMin, max: valueMax } })
+
+  const rawOf = (which: 'min' | 'max') => (which === 'min' ? minRaw : maxRaw)
+  const offOf = (which: 'min' | 'max') => (which === 'min' ? minOff : maxOff)
+
+  // The value changed. While dragging, that is the snap: ease the gap between pointer and snapped position. Otherwise the
+  // change came from somewhere else, so glide the handle there (or jump with reduced motion).
+  function follow(which: 'min' | 'max', value: number) {
+    const raw = rawOf(which)
+    const off = offOf(which)
+    const target = pct(value)
+    if (dragging.current === which) {
+      const gap = target - raw.get()
+      if (reduce) off.jump(gap); else off.set(gap)
+      return
+    }
+    const shown = raw.get() + off.get()
+    off.jump(0)
+    raw.set(shown)
+    if (reduce) raw.set(target); else animate(raw, target, MOVE_SPRING)
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { follow('min', valueMin) }, [valueMin])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { follow('max', valueMax) }, [valueMax])
+
+  const minLeft = useTransform([minRaw, minOff], ([r, o]: number[]) => `${r + o}%`)
+  const maxLeft = useTransform([maxRaw, maxOff], ([r, o]: number[]) => `${r + o}%`)
+  const fillRight = useTransform([maxRaw, maxOff], ([r, o]: number[]) => `${100 - (r + o)}%`)
 
   const valFromClientX = useCallback((clientX: number) => {
     if (!trackRef.current) return null
@@ -48,12 +82,30 @@ export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, 
   function startDrag(e: React.MouseEvent, handle: 'min' | 'max') {
     e.preventDefault()
     dragging.current = handle
+    // Stop any glide in progress and start from where the handle is drawn right now.
+    const raw = rawOf(handle)
+    const off = offOf(handle)
+    const shown = raw.get() + off.get()
+    raw.stop()
+    raw.set(shown)
+    off.jump(0)
 
     function onMove(e: MouseEvent) {
       const val = valFromClientX(e.clientX)
       if (val === null) return
-      if (dragging.current === 'min' && val < valueMax - 5) onChangeMin(val)
-      if (dragging.current === 'max' && val > valueMin + 5) onChangeMax(val)
+      const which = dragging.current
+      if (which === 'min' && val < cur.current.max - 5) {
+        // The snap is decided here, at the same moment as the pointer moves, so the handle's offset from the pointer is
+        // always the exact distance to the stop it is locked on (it stays centred on the tick while the pointer wanders).
+        const s = snap ? snap(val, cur.current.min) : val
+        minRaw.set(pct(val)); const gap = pct(s) - pct(val); if (reduce) minOff.jump(gap); else minOff.set(gap)
+        onChangeMin(s)
+      }
+      if (which === 'max' && val > cur.current.min + 5) {
+        const s = snap ? snap(val, cur.current.max) : val
+        maxRaw.set(pct(val)); const gap = pct(s) - pct(val); if (reduce) maxOff.jump(gap); else maxOff.set(gap)
+        onChangeMax(s)
+      }
     }
 
     function onUp() {
@@ -71,8 +123,8 @@ export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, 
     if (val === null) return
     const distMin = Math.abs(val - valueMin)
     const distMax = Math.abs(val - valueMax)
-    if (distMin <= distMax && val < valueMax - 5) onChangeMin(val)
-    else if (val > valueMin + 5) onChangeMax(val)
+    if (distMin <= distMax && val < valueMax - 5) onChangeMin(snap ? snap(val, valueMin) : val)
+    else if (val > valueMin + 5) onChangeMax(snap ? snap(val, valueMax) : val)
   }
 
   const numTicks = 6

@@ -1,5 +1,6 @@
 'use client'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
+import { getPointer } from '@/lib/pointerTrack'
 
 type Props = {
   children: React.ReactNode
@@ -54,7 +55,8 @@ export default function TiltCard({ children, radius = 16, maxTilt = 9 }: Props) 
     return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   }
 
-  function aim(e: React.PointerEvent) {
+  type Pt = { clientX: number; clientY: number }
+  function aim(e: Pt) {
     const box = outer.current?.getBoundingClientRect()
     if (!box || box.width === 0) return
     const px = Math.min(1, Math.max(0, (e.clientX - box.left) / box.width))
@@ -70,8 +72,7 @@ export default function TiltCard({ children, radius = 16, maxTilt = 9 }: Props) 
     kick()
   }
 
-  function onEnter(e: React.PointerEvent) {
-    if (e.pointerType !== 'mouse') return
+  function enter(e: Pt) {
     outer.current?.classList.add('is-hover')
     const c = cur.current
     // Start the outline glow where the pointer entered instead of sweeping in from the middle.
@@ -84,8 +85,15 @@ export default function TiltCard({ children, radius = 16, maxTilt = 9 }: Props) 
     tgt.current.lift = reduced() ? 0 : 1
     aim(e)
   }
+  function onEnter(e: React.PointerEvent) {
+    if (e.pointerType !== 'mouse') return
+    enter(e)
+  }
   function onMove(e: React.PointerEvent) {
     if (e.pointerType !== 'mouse') return
+    // A card that appears under a cursor that is already resting there (for example after clicking "Show more events")
+    // gets a move event but never an enter event, so the first move counts as the enter.
+    if (tgt.current.glow === 0) { enter(e); return }
     aim(e)
   }
   function onLeave(e: React.PointerEvent) {
@@ -96,6 +104,21 @@ export default function TiltCard({ children, radius = 16, maxTilt = 9 }: Props) 
     // Keep it above its neighbours until it has settled back.
     window.setTimeout(() => { if (tgt.current.glow === 0) outer.current?.classList.remove('is-hover') }, 260)
   }
+
+  // A card that appears under a cursor that is not moving gets no pointer events at all, so look at where the cursor last
+  // was once the card has settled (the cards fade in over about half a second) and light it up if the cursor is on it.
+  useEffect(() => {
+    function check() {
+      const p = getPointer()
+      const el = outer.current
+      if (!p || !el || tgt.current.glow !== 0) return
+      const hit = document.elementFromPoint(p.x, p.y)
+      if (hit && el.contains(hit)) enter({ clientX: p.x, clientY: p.y })
+    }
+    const ids = [60, 350, 900].map(ms => window.setTimeout(check, ms))
+    return () => ids.forEach(id => window.clearTimeout(id))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div ref={outer} className="tilt-outer" onPointerEnter={onEnter} onPointerMove={onMove} onPointerLeave={onLeave} style={{ borderRadius: radius }}>

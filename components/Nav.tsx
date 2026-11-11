@@ -1,7 +1,8 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { trackPointer } from '@/lib/pointerTrack'
 import { useT } from '@/lib/useT'
 import { openPalette } from '@/components/CommandPalette'
 
@@ -10,6 +11,7 @@ export default function Nav({ active }: { active?: string }) {
   const { user, profile, signOut } = useAuth()
   const { t } = useT()
   const [showUserMenu, setShowUserMenu] = useState(false)
+  useEffect(() => { trackPointer() }, [])
 
   async function handleSignOut() {
     await signOut()

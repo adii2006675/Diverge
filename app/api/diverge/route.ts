@@ -144,12 +144,17 @@ function outputSchema() {
       factTypes: { type: 'array', items: { type: 'string', enum: ['documented', 'inference', 'speculation'] } },
       factExplanations: strs,
       worldMood: { type: 'string', enum: ['STABLE', 'TENSE', 'CRITICAL', 'AT WAR', 'CATASTROPHIC', 'REBUILDING', 'FLOURISHING'] },
-      divergenceScore: { type: 'integer' },
+      impact: {
+        type: 'object',
+        properties: { scale: { type: 'integer' }, people: { type: 'integer' }, lasting: { type: 'integer' }, breadth: { type: 'integer' } },
+        required: ['scale', 'people', 'lasting', 'breadth'],
+        additionalProperties: false,
+      },
       year: str,
       uncertaintyLevel: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] },
       suggestions: strs,
     },
-    required: ['paragraph', 'keyFacts', 'factTypes', 'factExplanations', 'worldMood', 'divergenceScore', 'year', 'uncertaintyLevel', 'suggestions'],
+    required: ['paragraph', 'keyFacts', 'factTypes', 'factExplanations', 'worldMood', 'impact', 'year', 'uncertaintyLevel', 'suggestions'],
     additionalProperties: false,
   }
 }
@@ -194,7 +199,7 @@ ${prior}
 
 <user_question>${i.question}</user_question>
 
-TASK: If the question is not a history or alternate-history question, refuse (paragraph explains why, divergenceScore 0, keyFacts has one item, other lists matching). Otherwise reason about direct effects (first 1-2 years), near-term ripples, medium-term divergence, what would have happened anyway, and where you are unsure, then fill the JSON.
+TASK: If the question is not a history or alternate-history question, refuse (paragraph explains why, all four impact ratings 0, keyFacts has one item, other lists matching). Otherwise reason about direct effects (first 1-2 years), near-term ripples, medium-term divergence, what would have happened anyway, and where you are unsure, then fill the JSON.
 For very large what-ifs (Industrial Revolution, fall of Rome), reframe as a specific modelable version and be honest about limits.
 
 FIELD RULES:
@@ -203,14 +208,27 @@ FIELD RULES:
 - factTypes: exactly ${spec.facts} items, one per fact. "documented" = a real-history claim backed by the facts or excerpt above or by firmly established record; "inference" = a reasoned consequence of the change; "speculation" = a bolder possibility. Never label an invented number or date as documented.
 - factExplanations: exactly ${spec.facts} items, each ${spec.explanation}, citing real mechanisms or precedents.
 - worldMood, uncertaintyLevel: pick the best fit. uncertaintyLevel is how confident you are (HIGH = very confident).
-- divergenceScore: integer 1-100. Small decision about 15-25, WW2 never happening 70+, no Industrial Revolution 95+. Compound upward with each added what-if.
+- impact: four whole numbers from 0 to 10 rating how big THIS one change is on its own (not a running total; the app turns your ratings into the divergence score and adds them to the earlier answers). scale = how large a change to the course of events (2 a local incident, 5 a national turning point, 8 a world-changing shift, 10 a civilization-level break). people = how many lives it touches (1 hundreds, 3 hundreds of thousands, 5 tens of millions, 8 hundreds of millions, 10 billions). lasting = how long the effects last (1 months, 3 a few years, 5 a generation, 8 centuries, 10 permanent). breadth = how many areas of life change (1 a single area such as sports, 3 two or three, 6 most of politics, economy and culture, 9 nearly everything). Judge each one separately and use the whole range, so the four numbers are usually different. If you refuse the question, all four are 0.
 - ${yearRule}
 - suggestions: exactly ${spec.suggestions} short "What if..." follow-ups about THIS alternate timeline, each under 20 words and not a restatement of the question.`
 }
 
+// ---- divergence score
+// The model rates the size of THIS change on four scales. The app combines them and adds the result onto the running score, so
+// the number is worked out the same way every time instead of being one guess that tends to land on the same few values.
+function scoreFrom(impact: any, previousScore: number): number {
+  const rate = (k: string) => Math.max(0, Math.min(10, Number(impact?.[k]) || 0))
+  const weighted = rate('scale') * 0.35 + rate('people') * 0.25 + rate('lasting') * 0.25 + rate('breadth') * 0.15 // 0 to 10
+  if (weighted === 0) return 0 // a refused question
+  // Share of the distance that is still left to 100 that this change covers. Small changes cover little, huge ones most of it.
+  const share = 0.85 * Math.pow(weighted / 10, 1.1)
+  const next = Math.round(previousScore + (100 - previousScore) * share)
+  return Math.min(99, Math.max(previousScore + 1, next)) // the score only goes up as you keep changing things
+}
+
 // ---- post-processing shared by every path
 type Answer = Record<string, any>
-function finish(data: Answer, depth: AIDepth, spec: { facts: number; suggestions: number }, previousYear: number | null): Answer {
+function finish(data: Answer, depth: AIDepth, spec: { facts: number; suggestions: number }, previousYear: number | null, previousScore: number): Answer {
   const plain = (t: unknown) => (typeof t === 'string' && depth === 'simple' ? t.replace(/\s*[—–]\s*/g, ', ') : t)
   data.paragraph = plain(String(data.paragraph ?? ''))
   const n = Math.min(Array.isArray(data.keyFacts) ? data.keyFacts.length : 0, spec.facts)
@@ -228,7 +246,7 @@ function finish(data: Answer, depth: AIDepth, spec: { facts: number; suggestions
     const y = parseYear(data.year)
     if (y !== null) data.year = formatYear(y)
   }
-  data.divergenceScore = Math.max(0, Math.min(100, Math.round(Number(data.divergenceScore) || 0)))
+  data.divergenceScore = scoreFrom(data.impact, previousScore)
   return data
 }
 
@@ -255,6 +273,7 @@ export async function POST(req: NextRequest) {
   const LANGS = ['English', 'Spanish', 'French', 'German', 'Japanese', 'Portuguese', 'Hindi', 'Chinese']
   const language = LANGS.includes(body.language) ? (body.language as string) : 'English'
   const spec = LENGTH_SPEC[length]
+  const previousScore = Math.max(0, Math.min(99, Math.round(Number(body.previousScore) || 0)))
   const previousYear = typeof body.previousYear === 'number' && Number.isFinite(body.previousYear) ? Math.round(body.previousYear) : parseYear(body.previousYear)
 
   // Who pays? A user's own key, or one of their free questions.
@@ -292,7 +311,7 @@ export async function POST(req: NextRequest) {
           data = JSON.parse(m[0])
         }
         if (final.stop_reason === 'max_tokens') console.warn('diverge: hit max_tokens')
-        data = finish(data, depth, spec, previousYear)
+        data = finish(data, depth, spec, previousYear, previousScore)
         const sources = ref ? [{ title: ref.title, url: ref.url }] : []
         send({ t: 'done', data: { ...data, sources }, meta: { model: MODEL, usage: final.usage } })
         charged = false
