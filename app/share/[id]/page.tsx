@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { hostOf } from '@/lib/sourceHost'
 import Nav from '@/components/Nav'
 import EventImage from '@/components/EventImage'
 import { ALL_EVENTS, formatEventYear } from '@/lib/events'
@@ -118,7 +119,7 @@ export default function SharedTimelinePage() {
                       </ol>
                       {r.sources && r.sources.length > 0 && (
                         <p className="dv-sources">Grounded in: {r.sources.map((src, n) => (
-                          <span key={src.url}>{n > 0 && ', '}<a href={src.url} target="_blank" rel="noreferrer">{src.title} (Wikipedia)</a></span>
+                          <span key={src.url}>{n > 0 && ', '}<a href={src.url} target="_blank" rel="noreferrer">{src.title} ({hostOf(src.url) || 'source'})</a></span>
                         ))}</p>
                       )}
                     </div>

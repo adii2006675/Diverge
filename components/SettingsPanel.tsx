@@ -24,11 +24,6 @@ export default function SettingsPanel() {
   const { settings, updateSettings } = useAuth()
   const { t } = useT()
 
-  async function handleToggle(key: 'show_confidence_level') {
-    if (!settings) return
-    await updateSettings({ [key]: !settings[key] })
-  }
-
   return (
     <>
         <Section title="Theme">
@@ -127,18 +122,25 @@ export default function SettingsPanel() {
             ))}
           </div>
         </Section>
-
-        <Section title="Display Options">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <Toggle
-              label={t('Show answer tags')}
-              desc={t('Show the year, world mood, confidence level and how much each answer changed (+10%) around your answers')}
-              value={settings?.show_confidence_level ?? true}
-              onChange={() => handleToggle('show_confidence_level')}
-            />
-          </div>
-        </Section>
     </>
+  )
+}
+
+/** The "Show answer tags" switch. It lives on the Settings page (not the Profile page). */
+export function DisplayOptions() {
+  const { settings, updateSettings } = useAuth()
+  const { t } = useT()
+  return (
+    <Section title="Display Options">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <Toggle
+          label={t('Show answer tags')}
+          desc={t('The year, world mood, confidence level of the AI, and the % increase or decrease from the last chat')}
+          value={settings?.show_confidence_level ?? true}
+          onChange={() => updateSettings({ show_confidence_level: !(settings?.show_confidence_level ?? true) })}
+        />
+      </div>
+    </Section>
   )
 }
 

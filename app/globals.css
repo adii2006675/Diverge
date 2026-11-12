@@ -392,6 +392,9 @@ html.dv-thinking .dv-logo:not(:hover) .dv-run { opacity: 0; animation: none; }
   .cr-table td:nth-child(n+2) { grid-column: 2; }
   .cr-table td:nth-child(2) { font-size: 13.5px !important; }
 
+  /* Change email / change password pages sit under the fixed top bar */
+  .acct-main { padding: calc(84px + env(safe-area-inset-top)) 16px 32px !important; align-items: flex-start !important; }
+
   /* Sign in: a card with breathing room, and the 6-digit reset code boxes keep their big digits */
   .auth-main { padding: 16px !important; }
   .auth-card { padding: 24px 20px !important; }

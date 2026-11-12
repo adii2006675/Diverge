@@ -11,7 +11,7 @@ type Point = { lead: string; text: string }
 
 const HOW: Point[] = [
   { lead: "Strict rules first.", text: "Every question starts with a long set of instructions, about 1,000 words. They tell the AI to act like a historian, stick to history, never invent numbers, dates or quotes, and say when it is guessing." },
-  { lead: "Real facts go in with your question.", text: "Each event comes with real facts that I wrote in ahead of time. The AI also gets the opening part of the topic's Wikipedia article, up to 3,200 characters, so it starts from real history and not just memory." },
+  { lead: "Real facts go in with your question.", text: "Each event comes with real facts that I wrote in ahead of time. Then a quick research step searches the web for credible sources, like government sites, universities, museums and established news outlets, and the AI gets those notes along with a Wikipedia excerpt. Blogs, forums and content farms are filtered out, and the sources it used are listed under each answer." },
   { lead: "A set way of thinking.", text: "The rules make it work in steps: what changes right away (0 to 2 years), the ripple effects (2 to 10 years), the long term (10 to 50 years), what would have happened anyway, and where it is unsure." },
   { lead: "Every answer has the same structure.", text: "You always get the year, a divergence score, the world mood, a confidence level and a list of key facts, so answers are easy to compare. A normal chat just gives you a wall of text." },
   { lead: "A second AI checks the first one.", text: "After an answer shows up, a smaller AI looks over the facts labeled documented and flags the ones it can't confirm as unconfirmed." },
@@ -21,9 +21,9 @@ const HOW: Point[] = [
 ]
 
 const NUMBERS: Point[] = [
-  { lead: "Model:", text: "Claude Sonnet 4.6, made by Anthropic, writes the answers and the final summary. Claude Haiku 4.5 does the fact check." },
+  { lead: "Model:", text: "Claude Sonnet 4.6, made by Anthropic, writes the answers and the final summary. Claude Haiku 4.5 does the web research (up to 3 searches per question) and the fact check." },
   { lead: "Randomness:", text: "The temperature is set to 0.2, so answers stay steady instead of wild." },
-  { lead: "Tokens in:", text: "Roughly 3,500 to 4,500 tokens go in with every question. That covers the rules (about 1,750), the instructions for your settings (about 800), the event facts and Wikipedia text (about 900) and your earlier questions." },
+  { lead: "Tokens in:", text: "Roughly 4,500 to 5,500 tokens go in with every question. That covers the rules (about 1,750), the instructions for your settings (about 800), the event facts, web research notes and Wikipedia text (about 1,800) and your earlier questions. The research step has its own usage on top of that." },
   { lead: "Tokens out:", text: "Up to 2,000 for Short answers, 3,500 for Medium and 7,000 for Long. The fact check uses at most 600." },
   { lead: "Speed and cost:", text: "The long rules are set up to be cached, so follow-up questions can reuse them. These counts are estimates based on the size of my prompts." },
 ]
@@ -31,7 +31,8 @@ const NUMBERS: Point[] = [
 const WHY: Point[] = [
   { lead: "It predicts, it doesn't know.", text: "The AI writes the words that seem most likely to come next. It can sound completely sure and still be wrong, and it can mix up names, dates and numbers." },
   { lead: "There is no answer key.", text: "Nobody knows what would really have happened, and even expert historians would disagree about these what ifs." },
-  { lead: "The checker has blind spots too.", text: "The second AI is smaller, only looks at facts labeled documented, and works from a short Wikipedia excerpt that does not always match your question. It can miss mistakes, and the first AI can label a guess as a fact." },
+  { lead: "The checker has blind spots too.", text: "The second AI is smaller, only looks at facts labeled documented, and works from the research notes and a short Wikipedia excerpt that do not always match your question. It can miss mistakes, and the first AI can label a guess as a fact." },
+  { lead: "The web is not all trustworthy.", text: "I filter out sites that look unreliable, but a search can still pick up a page that is out of date or wrong, and even a respected outlet makes mistakes. Check the sources listed under an answer before you rely on it." },
   { lead: "Mistakes pile up.", text: "Every answer builds on the last one, so a small error early on can grow the longer you keep going." },
   { lead: "Its knowledge has limits.", text: "It may not know about very recent events, and what it learned from the internet can be biased or incomplete." },
 ]

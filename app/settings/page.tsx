@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext'
 import Nav from '@/components/Nav'
 import AIResponseSettings from '@/components/AIResponseSettings'
 import ApiKeyField from '@/components/ApiKeyField'
-import { Section } from '@/components/SettingsPanel'
+import { Section, DisplayOptions } from '@/components/SettingsPanel'
 import { useT } from '@/lib/useT'
 
 export default function SettingsPage() {
@@ -34,6 +34,8 @@ export default function SettingsPage() {
         <Section title="AI Responses">
           <AIResponseSettings showDescriptions />
         </Section>
+
+        <DisplayOptions />
 
         <Section title="Your API key">
           <ApiKeyField />

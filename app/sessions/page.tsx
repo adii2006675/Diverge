@@ -69,6 +69,18 @@ export default function SessionsPage() {
     if (user) loadSessions()
   }, [user])
 
+  // The three-dots menu closes on a tap anywhere outside it, or Escape.
+  useEffect(() => {
+    if (!openMenuId) return
+    function onDown(e: PointerEvent) {
+      if (!(e.target as HTMLElement).closest('.ses-menu-wrap')) setOpenMenuId(null)
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpenMenuId(null) }
+    document.addEventListener('pointerdown', onDown)
+    window.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('pointerdown', onDown); window.removeEventListener('keydown', onKey) }
+  }, [openMenuId])
+
   async function loadSessions() {
     if (!user) return
     setLoadingSessions(true)

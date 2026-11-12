@@ -14,7 +14,7 @@ const sections: { title: string; body: string[] }[] = [
   {
     title: 'Questions and answers',
     body: [
-      'Each what-if you ask is sent to Anthropic, which writes the answer. The server also looks up the event on Wikipedia to ground the answer, using the event name or your question as the search text.',
+      'Each what-if you ask is sent to Anthropic, which writes the answer. Before that, the server runs a short web search through Anthropic and looks up the event on Wikipedia to ground the answer. The event name and your question are used as the search text, and the sources it used are shown under the answer.',
       'Questions you ask are only stored if you are signed in and the timeline is saved to your account.',
     ],
   },
@@ -33,7 +33,7 @@ const sections: { title: string; body: string[] }[] = [
   {
     title: 'Services we rely on',
     body: [
-      'Supabase stores accounts and saved data and sends sign-in emails. Anthropic generates answers. Vercel hosts the site. Wikipedia supplies reference text.',
+      'Supabase stores accounts and saved data and sends sign-in emails. Anthropic generates answers and runs the web searches. Vercel hosts the site. Wikipedia and other public web pages supply reference text.',
     ],
   },
   {

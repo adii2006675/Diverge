@@ -13,6 +13,7 @@ import Nav from '@/components/Nav'
 import AIResponseSettings from '@/components/AIResponseSettings'
 import { streamAnswer, aiHeaders, AiError, setUserApiKey } from '@/lib/aiClient'
 import { createShare, revokeShare, shareUrl } from '@/lib/share'
+import { hostOf, isWikipedia } from '@/lib/sourceHost'
 import { renderTimelineImage, downloadBlob } from '@/lib/exportImage'
 import { normalizeLength, normalizeDepth, normalizeTone, normalizePlausibility } from '@/lib/aiSettings'
 import { LOCALES, normalizeLanguage } from '@/lib/i18n'
@@ -64,7 +65,7 @@ type Toast = { id: number; message: string; undo?: () => void; actionLabel?: str
 // Stage 0: nothing written yet (looking up the record). 1: the paragraph is streaming. 2: key facts and explanations. 3: score, mood, year.
 const WAIT_STAGES = ['Reading the historical record', 'Tracing the causes', 'Weighing the ripple effects', 'Writing your answer']
 // Measured typical times for each length setting.
-const WAIT_USUAL: Record<'short' | 'medium' | 'long', string> = { short: '10–15', medium: '15–30', long: '30–60' }
+const WAIT_USUAL: Record<'short' | 'medium' | 'long', string> = { short: '20–25', medium: '25–40', long: '40–70' }
 
 const CUSTOM_START_COPY =
   'This is a custom starting point, so there is no recorded timeline to compare against. Diverge will anchor its answer in documented history for this topic.'
@@ -147,7 +148,7 @@ export default function DivergePage() {
 
   // A custom starting point has no entry in the event list, so once the first answer names the Wikipedia article it is
   // grounded in, the "Real timeline" card is filled from that article's public summary.
-  const customSource = !event ? whatIfs.find(w => w.response.sources && w.response.sources.length > 0)?.response.sources?.[0] : undefined
+  const customSource = !event ? whatIfs.flatMap(w => w.response.sources || []).find(src => isWikipedia(src.url)) : undefined
   const [customInfo, setCustomInfo] = useState<CustomInfo | null>(null)
   const customSourceUrl = customSource?.url
   const customSourceTitle = customSource?.title
@@ -640,7 +641,10 @@ export default function DivergePage() {
           <div className="dv-ev-th"><EventImage id={event?.id} title={event?.title || 'Custom'} year={event?.year} compact /></div>
           <div>
             <b title={startingEvent}>{event?.title || 'Custom starting point'}</b>
-            <span>{event ? formatEventYear(event.year) : 'Your own question'}{whatIfs.length > 0 ? ` · ${activeTimelineIdx >= 0 ? `Question ${activeTimelineIdx + 1} of ${whatIfs.length}` : 'Start'}` : ''}</span>
+            <span>
+              {event ? formatEventYear(event.year) : <i className={whatIfs.length > 0 ? 'dv-ev-lead' : undefined} style={{ fontStyle: 'normal' }}>Your own question</i>}
+              {whatIfs.length > 0 && <>{event ? ' · ' : <i className="dv-ev-lead" style={{ fontStyle: 'normal' }}> · </i>}{activeTimelineIdx >= 0 ? `Question ${activeTimelineIdx + 1} of ${whatIfs.length}` : 'Start'}</>}
+            </span>
           </div>
         </div>
         <div className="dv-sp" />
@@ -757,7 +761,7 @@ export default function DivergePage() {
                           <div className="dv-foot-row">
                           {r.sources && r.sources.length > 0 && (
                             <p className="dv-sources">Grounded in: {r.sources.map((src, n) => (
-                              <span key={src.url}>{n > 0 && ', '}<a href={src.url} target="_blank" rel="noreferrer">{src.title} (Wikipedia)</a></span>
+                              <span key={src.url}>{n > 0 && ', '}<a href={src.url} target="_blank" rel="noreferrer">{src.title} ({hostOf(src.url) || 'source'})</a></span>
                             ))}</p>
                           )}
                           <div className="dv-ans-foot">
@@ -911,13 +915,6 @@ export default function DivergePage() {
 
           <div className="dv-dockwrap">
             <div className="dv-dock">
-              {suggestions.length > 0 && (
-                <div className="dv-chiprow">
-                  {suggestions.map(sg => (
-                    <button key={sg} type="button" disabled={loading} onClick={() => handleAsk(sg)}>{sg}</button>
-                  ))}
-                </div>
-              )}
               <div className="dv-trackrow">
                 <button className="dv-circ" type="button" aria-label="Previous answer" disabled={whatIfs.length === 0 || activeTimelineIdx <= 0} onClick={() => selectAnswer(activeTimelineIdx - 1)}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>

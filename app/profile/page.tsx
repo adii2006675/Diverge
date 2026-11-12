@@ -1,5 +1,4 @@
 'use client'
-import PasswordInput from '@/components/PasswordInput'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
@@ -16,14 +15,8 @@ export default function ProfilePage() {
   const [username, setUsername] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [passwordError, setPasswordError] = useState('')
-  const [passwordSaved, setPasswordSaved] = useState(false)
-  const [savingPassword, setSavingPassword] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [avatarHover, setAvatarHover] = useState(false)
-  const [showPasswordInfo, setShowPasswordInfo] = useState(false)
   const [editingName, setEditingName] = useState(false)
   const [nameError, setNameError] = useState('')
 
@@ -98,34 +91,6 @@ export default function ProfilePage() {
       console.error('Avatar reset failed:', err)
     }
     setUploadingAvatar(false)
-  }
-
-  async function handleChangePassword() {
-    setPasswordError('')
-    const meetsLength = newPassword.length >= 8 && newPassword.length <= 16
-    const hasUpper = /[A-Z]/.test(newPassword)
-    const hasLower = /[a-z]/.test(newPassword)
-    const hasNumber = /[0-9]/.test(newPassword)
-    const hasSpecial = /[^A-Za-z0-9]/.test(newPassword)
-    if (!meetsLength || !hasUpper || !hasLower || !hasNumber || !hasSpecial) {
-      setPasswordError(t('Password must be 8-16 characters with 1 uppercase, 1 lowercase, 1 number, and 1 special character'))
-      return
-    }
-    if (newPassword !== confirmPassword) {
-      setPasswordError(t('Passwords do not match'))
-      return
-    }
-    setSavingPassword(true)
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
-    setSavingPassword(false)
-    if (error) {
-      setPasswordError(error.message)
-    } else {
-      setPasswordSaved(true)
-      setNewPassword('')
-      setConfirmPassword('')
-      setTimeout(() => setPasswordSaved(false), 2500)
-    }
   }
 
   const initials = profile?.username?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?'
@@ -221,96 +186,33 @@ export default function ProfilePage() {
 
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-dim)', margin: '8px 0 14px' }}>{t('Account')}</div>
 
-        {/* Email — read only */}
-        <div style={{ marginBottom: 32 }}>
+        {/* Email and password: each change has its own page */}
+        <div style={{ marginBottom: 40 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 12 }}>
             {t('Email')}
           </div>
           <input
             value={user.email || ''}
             disabled
-            style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-dim)', fontSize: 'var(--font-scale)', outline: 'none', fontFamily: 'inherit', cursor: 'not-allowed' }}
+            aria-label={t('Your email')}
+            style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'color-mix(in srgb, var(--text) 5%, transparent)', color: 'var(--text-dim)', WebkitTextFillColor: 'var(--text-dim)', opacity: 0.6, fontSize: 'var(--font-scale)', outline: 'none', fontFamily: 'inherit', cursor: 'not-allowed' }}
           />
-          <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', marginTop: 6, opacity: 0.7 }}>{t('Email cannot be changed.')} {t('Member since')} {new Date(user.created_at).toLocaleDateString(locale, { month: 'long', year: 'numeric' })}</div>
-        </div>
-
-        {/* Change password */}
-        <div style={{ marginBottom: 40 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>
-              {t('Change Password')}
-            </div>
-            <div
-              style={{ position: 'relative', display: 'flex' }}
-              onMouseEnter={() => setShowPasswordInfo(true)}
-              onMouseLeave={() => setShowPasswordInfo(false)}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" strokeWidth="2" style={{ width: 14, height: 14, cursor: 'help' }}>
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="17" x2="12" y2="11"></line>
-                <circle cx="12" cy="8" r="0.5" fill="var(--text-dim)"></circle>
-              </svg>
-              {showPasswordInfo && (
-                <div style={{
-                  position: 'absolute', left: 0, top: 'calc(100% + 8px)', zIndex: 10,
-                  background: 'var(--surface)', border: '1px solid var(--border-color)', borderRadius: 8,
-                  padding: '10px 12px', width: 220, fontSize: 11, fontWeight: 400, textTransform: 'none',
-                  letterSpacing: 'normal', color: 'var(--text-dim)', lineHeight: 1.6,
-                }}>
-                  <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{t('Minimum requirements')}</div>
-                  <ul style={{ margin: 0, paddingLeft: 16 }}>
-                    <li>{t('8-16 characters')}</li>
-                    <li>{t('1 uppercase')}</li>
-                    <li>{t('1 lowercase')}</li>
-                    <li>{t('1 number')}</li>
-                    <li>{t('1 special character')}</li>
-                  </ul>
-                </div>
-              )}
-            </div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
+            {[{ label: 'Change email', href: '/profile/email' }, { label: 'Change password', href: '/profile/password' }].map(b => (
+              <button
+                key={b.href}
+                type="button"
+                onClick={() => router.push(b.href)}
+                style={{ flex: '1 1 150px', padding: '12px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text)', fontSize: 'var(--font-scale)', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'border-color 0.18s' }}
+                onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)'}
+                onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)'}
+              >
+                {t(b.label)}
+              </button>
+            ))}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <PasswordInput
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
-              autoComplete="new-password"
-              showLabel={t('Show password')}
-              hideLabel={t('Hide password')}
-              placeholder={t('New password')}
-              style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text)', fontSize: 'var(--font-scale)', outline: 'none', fontFamily: 'inherit' }}
-            />
-            <PasswordInput
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              autoComplete="new-password"
-              showLabel={t('Show password')}
-              hideLabel={t('Hide password')}
-              placeholder={t('Confirm new password')}
-              onKeyDown={e => e.key === 'Enter' && handleChangePassword()}
-              style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: `1px solid ${passwordError ? 'rgba(239,68,68,0.5)' : 'var(--border-color)'}`, background: 'var(--card-bg)', color: 'var(--text)', fontSize: 'var(--font-scale)', outline: 'none', fontFamily: 'inherit' }}
-            />
-            {passwordError && (
-              <div style={{ fontSize: 'var(--font-scale)', color: '#EF4444' }}>{passwordError}</div>
-            )}
-            <button
-              onClick={handleChangePassword}
-              disabled={savingPassword || !newPassword || !confirmPassword}
-              style={{ padding: '12px', borderRadius: 10, border: 'none', background: passwordSaved ? '#10B981' : 'var(--card-bg)', color: passwordSaved ? '#fff' : 'var(--text-dim)', fontSize: 'var(--font-scale)', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              {savingPassword ? t('Updating...') : passwordSaved ? t('Password Updated ✓') : t('Update Password')}
-            </button>
-          </div>
+          <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', marginTop: 10, opacity: 0.7 }}>{t('Member since')} {new Date(user.created_at).toLocaleDateString(locale, { month: 'long', year: 'numeric' })}</div>
         </div>
-
-        {/* Back */}
-        <button
-          onClick={() => router.push('/')}
-          style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-dim)', fontSize: 'var(--font-scale)', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)'}
-          onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)'}
-        >
-          {t('Home')}
-        </button>
       </div>
     </main>
   )

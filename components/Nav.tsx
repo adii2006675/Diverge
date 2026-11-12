@@ -1,7 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { trackPointer } from '@/lib/pointerTrack'
 import { useT } from '@/lib/useT'
 import { openPalette } from '@/components/CommandPalette'
@@ -12,6 +12,18 @@ export default function Nav({ active }: { active?: string }) {
   const { t } = useT()
   const [showUserMenu, setShowUserMenu] = useState(false)
   useEffect(() => { trackPointer() }, [])
+  // The profile menu closes when you tap anywhere outside it, or press Escape.
+  const userMenuRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!showUserMenu) return
+    function onDown(e: PointerEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setShowUserMenu(false)
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setShowUserMenu(false) }
+    document.addEventListener('pointerdown', onDown)
+    window.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('pointerdown', onDown); window.removeEventListener('keydown', onKey) }
+  }, [showUserMenu])
 
   async function handleSignOut() {
     await signOut()
@@ -114,7 +126,7 @@ export default function Nav({ active }: { active?: string }) {
           ) : (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {/* Profile icon */}
-              <div style={{ position: 'relative' }}>
+              <div ref={userMenuRef} style={{ position: 'relative' }}>
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   style={{
