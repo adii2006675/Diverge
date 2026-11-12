@@ -27,7 +27,7 @@ export default function SettingsPage() {
   return (
     <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
       <Nav active="settings" />
-      <div style={{ position: 'relative', zIndex: 1, maxWidth: 640, margin: '0 auto', padding: '140px 24px 60px' }}>
+      <div className="page-wrap" style={{ position: 'relative', zIndex: 1, maxWidth: 640, margin: '0 auto', padding: '140px 24px 60px' }}>
         <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 8, letterSpacing: '-0.02em' }}>{t('Settings')}</h1>
         <p style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 40 }}>{t('Changes save automatically to your account.')}</p>
 

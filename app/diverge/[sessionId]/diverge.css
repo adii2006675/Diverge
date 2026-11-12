@@ -32,13 +32,16 @@
 .dv-ans{position:relative;cursor:pointer}
 .dv-ans:has(.dv-ans-head:focus-visible){outline:2px solid var(--acc);outline-offset:3px}
 .dv-ans.dv-wait{cursor:default}
-.dv-hint{display:flex;align-items:center;justify-content:center;gap:.3em;margin-top:.8em;font-size:.78em;font-weight:700;letter-spacing:.02em;color:var(--dim);transition:color .16s}
-.dv-hint svg{width:1.1em;height:1.1em;transition:transform .2s cubic-bezier(.23,1,.32,1)}
-.dv-hint.up svg{transform:rotate(180deg)}
-.dv-ans:hover .dv-hint{color:var(--acc)}
-.dv-ans:hover .dv-hint:not(.up) svg{transform:translateY(2px)}
-.dv-ans:hover .dv-hint.up svg{transform:rotate(180deg) translateY(2px)}
-@media (prefers-reduced-motion:reduce){.dv-hint svg{transition:none}.dv-ans:hover .dv-hint:not(.up) svg{transform:none}.dv-ans:hover .dv-hint.up svg{transform:rotate(180deg)}}
+/* An answer opens and closes when you click anywhere on it. With a mouse, hovering shows it: the card lights up and a small chevron
+   appears at the bottom (pointing down to open, up to close). On a phone there is no hover; you just tap. */
+.dv-ans:not(.dv-wait){transition:box-shadow .2s,background .2s}
+.dv-ans:not(.dv-wait)::after{content:"";position:absolute;left:50%;bottom:.45em;width:.5em;height:.5em;margin-left:-.25em;border-right:2px solid var(--acc);border-bottom:2px solid var(--acc);transform:rotate(45deg) translate(-2px,-2px);opacity:0;pointer-events:none;transition:opacity .18s,transform .22s cubic-bezier(.23,1,.32,1)}
+@media (hover:hover){
+  .dv-ans:not(.dv-wait):hover{background:color-mix(in srgb,var(--ink) 5%,var(--glass));box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--acc) 45%,transparent),0 14px 36px rgba(0,0,0,.2)}
+  .dv-ans:not(.dv-wait):hover::after{opacity:.9;transform:rotate(45deg)}
+  .dv-ans:not(.dv-wait):has(.dv-collapse.open):hover::after{transform:rotate(225deg)}
+}
+@media (prefers-reduced-motion:reduce){.dv-ans:not(.dv-wait)::after{transition:opacity .01ms}}
 .dv-foot-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6em 1em;margin-top:1em}
 .dv-foot-row .dv-sources{margin:0;flex:1 1 14em}
 .dv-foot-row .dv-ans-foot{margin:0 0 0 auto}
@@ -245,3 +248,77 @@
 .dv-wave i:nth-child(2){animation-delay:.18s}
 .dv-wave i:nth-child(3){animation-delay:.36s}
 @keyframes dvWave{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1.8)}}
+
+/* ---- Phone layout: one column, a world strip, a bottom dock, and the World panel as a sheet that slides up ---- */
+.dv-strip,.dv-sheet-head,.dv-chiprow,.dv-scrim,.dv-phone-only,.dv-mob{display:none}
+
+@media (max-width: 820px){
+  .dv{padding-top:calc(62px + env(safe-area-inset-top));font-size:13px}
+  .dv .dv-bar{padding:.55em 12px .35em;gap:.5em}
+  .dv-sp{display:none}
+  .dv-desk{display:none}
+  .dv-mob{display:inline}
+  .dv-ev{flex:1;min-width:0;padding:.25em .9em .25em .25em;gap:.6em}
+  .dv-ev>div:last-child{min-width:0}
+  .dv-ev b{max-width:100%;font-size:.95em}
+  .dv-ev-th{width:2.3em;height:2.3em}
+  .dv .dv-bar .dv-btn:not(.pri){width:2.8em;height:2.8em;padding:0;justify-content:center;flex:none}
+  .dv .dv-bar .dv-btn:not(.pri) svg{width:1.3em;height:1.3em}
+  .dv .dv-bar .dv-lbl{display:none}
+  .dv .dv-bar .dv-btn.pri{padding:.7em 1.1em;flex:none}
+
+  .dv-strip{display:flex;align-items:center;gap:.7em;flex:none;margin:.15em 12px .4em;width:calc(100% - 24px);padding:.45em .8em;border:0;border-radius:1.4em;background:var(--glass);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);color:var(--ink);cursor:pointer;text-align:left;font-family:inherit}
+  .dv-strip:active{transform:scale(.99)}
+  .dv-strip .dv-ring{flex:none;width:3.4em;height:3.4em}
+  .dv-strip .dv-tags{flex:1;min-width:0;gap:.3em}
+  .dv-strip .dv-tag{font-size:.74em;padding:.25em .65em}
+  .dv-strip .dv-strip-label{flex:1;font-weight:700}
+  .dv-strip .chev{flex:none;color:var(--dim)}
+
+  .dv-body{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:0;padding:0}
+  .dv-thread{max-width:none;padding:.4em 12px .8em}
+  .dv-thread-in{gap:1.1em}
+  .dv-q{max-width:90%;padding:.7em 1em;font-size:.95em}
+  .dv-ans{width:100%;padding:.85em 1em .95em;border-radius:1.3em 1.3em 1.3em .35em}
+  .dv-chip-head{padding:.6em .8em}
+  .dv-chip-x{padding:.1em 1em .9em 3em}
+  .dv-foot-row .dv-ans-foot{margin:0}
+
+  .dv-dockwrap{padding:0;max-width:none}
+  .dv-dock{border-radius:1.6em 1.6em 0 0;padding:.6em .7em calc(.7em + env(safe-area-inset-bottom));box-shadow:0 -10px 30px rgba(0,0,0,.35),inset 0 0 0 1px rgba(255,255,255,.08)}
+  .dv-chiprow{display:flex;gap:.5em;overflow-x:auto;padding:.1em .1em .7em;scrollbar-width:none}
+  .dv-chiprow::-webkit-scrollbar{display:none}
+  .dv-chiprow button{all:unset;box-sizing:border-box;flex:none;cursor:pointer;max-width:78vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:.6em .95em;border-radius:999px;background:color-mix(in srgb,var(--acc) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 32%,transparent);font-size:.86em;font-weight:600}
+  .dv-chiprow button:disabled{opacity:.5}
+  .dv-trackrow{padding:.1em .1em .65em;gap:.5em}
+  .dv-trackrow>.dv-btn{display:none}
+  .dv-track{justify-content:flex-start;overflow-x:auto;scrollbar-width:none}
+  .dv-track::-webkit-scrollbar{display:none}
+  .dv-seg{flex:none;width:1.6em;min-width:1.6em}
+  .dv-dot{flex:none;min-width:2.6em;height:2.6em}
+  .dv-circ{width:2.6em;height:2.6em}
+  .dv-hc{display:none}
+  .dv-cnt{display:none}
+  .dv-ask{padding:.3em .3em .3em 1.2em}
+  .dv-send{width:2.9em;height:2.9em}
+  .dv-toast-wrap{bottom:11em;max-width:calc(100vw - 24px)}
+  .dv-toast{white-space:normal}
+
+  .dv-scrim{display:block;position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.55);animation:dvFade .2s ease both}
+  @keyframes dvFade{from{opacity:0}to{opacity:1}}
+  .dv .dv-world{position:fixed;left:0;right:0;bottom:0;top:calc(12vh + env(safe-area-inset-top));z-index:90;margin:0;gap:.9em;padding:0 14px calc(1.2em + env(safe-area-inset-bottom));border-radius:1.6em 1.6em 0 0;
+    background:var(--surface,#0d0d16);box-shadow:0 -20px 60px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.1);
+    transform:translateY(105%);visibility:hidden;transition:transform .3s cubic-bezier(.32,.72,0,1),visibility 0s .3s}
+  .dv .dv-world.open{transform:none;visibility:visible;transition:transform .3s cubic-bezier(.32,.72,0,1)}
+  .dv-sheet-head{display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;flex:none;padding:1.1em 0 .6em;background:var(--surface,#0d0d16)}
+  .dv-sheet-head::before{content:"";position:absolute;top:.4em;left:50%;width:2.8em;height:4px;margin-left:-1.4em;border-radius:2px;background:rgba(255,255,255,.24)}
+  .dv-sheet-head b{font-size:1.2em;font-weight:800}
+  .dv .dv-phone-only{display:inline-flex;justify-content:center;width:100%;flex:none}
+  .dv-card{padding:1em 1.1em;border-radius:1.5em}
+  .gauge-card .dv-gauge{width:min(52%,10em)}
+  .dv-ph{height:110px}
+}
+@media (max-width: 820px) and (prefers-reduced-motion: reduce){
+  .dv .dv-world,.dv .dv-world.open{transition:none}
+  .dv-scrim{animation:none}
+}

@@ -105,18 +105,18 @@ const EventCardItem = memo(function EventCardItem({ event, idx, entered, languag
     >
       <TiltCard radius={16}>
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ height: 130, overflow: 'hidden', position: 'relative', background: 'var(--bg)' }}>
+          <div className="ev-img" style={{ height: 130, overflow: 'hidden', position: 'relative', background: 'var(--bg)' }}>
             <EventImage key={event.id} id={event.id} title={event.title} year={event.year} loading="lazy" />
             <HeartButton saved={saved} onToggle={() => onToggle(event.id)} labelOn={tr('Remove from favorites')} labelOff={tr('Add to favorites')} />
-            <div style={{ position: 'absolute', top: 10, left: 12 }}>
+            <div className="ev-badge" style={{ position: 'absolute', top: 10, left: 12 }}>
               <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', background: 'var(--bg)', padding: '2px 7px', borderRadius: 4 }}>
                 {tr(event.era).toUpperCase()} · {year}
               </span>
             </div>
           </div>
-          <div style={{ padding: '12px 14px 14px' }}>
-            <div style={{ fontSize: 'var(--font-scale)', fontWeight: 700, marginBottom: 5, color: 'var(--text)' }}>{text.title}</div>
-            <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', lineHeight: 1.6, marginBottom: 0 }}>{text.shortDesc}</div>
+          <div className="ev-body" style={{ padding: '12px 14px 14px' }}>
+            <div className="ev-title" style={{ fontSize: 'var(--font-scale)', fontWeight: 700, marginBottom: 5, color: 'var(--text)' }}>{text.title}</div>
+            <div className="ev-desc" style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', lineHeight: 1.6, marginBottom: 0 }}>{text.shortDesc}</div>
           </div>
         </div>
       </TiltCard>
@@ -252,7 +252,7 @@ export default function ExplorePage() {
       <Nav active="explore" />
 
       {/* Hero */}
-      <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '120px 40px 48px' }}>
+      <div className="ex-hero" style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '120px 40px 48px' }}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -267,7 +267,7 @@ export default function ExplorePage() {
         </motion.div>
 
         {/* The filters and the year slider share one width, so 1800 sits under the first filter and 2026 under the last. */}
-        <div style={{ width: 'fit-content', maxWidth: '100%', margin: '0 auto' }}>
+        <div className="ex-bar" style={{ width: 'fit-content', maxWidth: '100%', margin: '0 auto' }}>
         {/* Filters. The search icon opens a search bar that fills this whole bar. */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -277,6 +277,7 @@ export default function ExplorePage() {
         >
           <div
             inert={searchOpen}
+            className="ex-filters"
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap', minHeight: 44,
               opacity: searchOpen ? 0 : 1,
@@ -382,7 +383,7 @@ export default function ExplorePage() {
       </div>
 
       {/* Cards grid */}
-      <div style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto', padding: '0 40px 80px' }}>
+      <div className="ex-wrap" style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto', padding: '0 40px 80px' }}>
         {filtered.length > 0 && (
           <div role="status" aria-live="polite" style={{ textAlign: 'center', margin: '-8px 0 14px', color: 'var(--text-dim)', fontSize: 'calc(var(--font-scale) * 0.9)' }}>
             {filtered.length} {t(filtered.length === 1 ? 'event' : 'events')}
@@ -403,7 +404,7 @@ export default function ExplorePage() {
             )}
           </motion.div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+          <div className="ex-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
             {filtered.map((event, idx) => (
               <EventCardItem
                 key={event.id}

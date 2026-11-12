@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { AuthProvider } from '@/context/AuthContext'
 import StarBackground from '@/components/StarBackground'
@@ -12,6 +12,9 @@ export const metadata: Metadata = {
     icon: '/icon.svg',
   },
 }
+
+// viewportFit "cover" lets fixed bars use the phone's safe-area insets (notch, home indicator).
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: '#080810' }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -29,11 +32,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="app-shell" style={{ position: 'relative', zIndex: 1 }}>
           <ViewportScale />
           <AuthProvider>{children}<CommandPalette /></AuthProvider>
-        </div>
-        <div className="desktop-notice" role="status">
-          <div className="desktop-notice-wordmark">DIVERGE</div>
-          <h1>Diverge is built for desktop</h1>
-          <p>Open it on a laptop or desktop computer with a browser window at least 1024px wide.</p>
         </div>
       </body>
     </html>

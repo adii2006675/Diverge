@@ -132,9 +132,9 @@ export default function AuthPage() {
   }
 
   return (
-    <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: '#080810', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
+    <main className="auth-main" style={{ minHeight: 'var(--vh-fit, 100vh)', background: '#080810', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
       <StarBackground />
-      <div style={{ width: '100%', maxWidth: 420, padding: 32, borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)', background: '#0d0d16', position: 'relative', zIndex: 1 }}>
+      <div className="auth-card" style={{ width: '100%', maxWidth: 420, padding: 32, borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)', background: '#0d0d16', position: 'relative', zIndex: 1 }}>
 
         <div
           onClick={() => router.push('/')}

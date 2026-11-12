@@ -27,56 +27,20 @@ body {
   --vh-fit: calc(100vh / var(--ui-scale, 1));
 }
 
+@supports (height: 100svh) {
+  :root { --vh-fit: calc(100svh / var(--ui-scale, 1)); }
+}
+
 @supports (zoom: 1.2) {
   .app-shell {
     zoom: var(--ui-scale, 1);
   }
 }
 
-/* Diverge is desktop-only: below 1024px show a notice instead of the app. */
-.desktop-notice {
-  display: none;
-}
-
-@media (max-width: 1023.98px) {
-  .app-shell {
-    display: none;
-  }
-  .desktop-notice {
-    position: relative;
-    z-index: 1;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    padding: 32px 24px;
-    text-align: center;
-  }
-  .desktop-notice-wordmark {
-    font-size: 14px;
-    font-weight: 900;
-    letter-spacing: 0.3em;
-    color: var(--text);
-  }
-  .desktop-notice h1 {
-    margin: 0;
-    font-size: 28px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    color: var(--text);
-    text-wrap: balance;
-  }
-  .desktop-notice p {
-    margin: 0;
-    max-width: 30em;
-    font-size: 16px;
-    line-height: 1.6;
-    color: var(--text-dim, rgba(255, 255, 255, 0.6));
-    text-wrap: pretty;
-  }
-}
+/* Diverge works on phones and desktops. Phone rules sit in one block at the end of this file (max-width: 820px). */
+html { -webkit-text-size-adjust: 100%; }
+body { overflow-x: clip; }
+button, a, [role='button'], [role='switch'] { touch-action: manipulation; }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
@@ -129,8 +93,10 @@ body {
   stroke-dasharray: 0 1;
   transition: opacity 0.15s ease, stroke-dasharray 0.5s ease-out;
 }
-.event-card:hover .card-trace-right,
-.event-card:hover .card-trace-left,
+@media (hover: hover) {
+  .event-card:hover .card-trace-right,
+  .event-card:hover .card-trace-left { opacity: 1; stroke-dasharray: 0.6 0.35; }
+}
 .event-card.always-trace .card-trace-right,
 .event-card.always-trace .card-trace-left {
   opacity: 1;
@@ -379,3 +345,91 @@ html.dv-thinking .dv-logo:not(:hover) .dv-run { opacity: 0; animation: none; }
 .explore-searchbar button:hover { background: color-mix(in srgb, var(--text) 18%, transparent); color: var(--text); }
 .explore-searchbar button:active { transform: scale(.92); }
 @media (prefers-reduced-motion: reduce) { .explore-searchbar button { transition: none; } }
+
+/* ---- Phones and small tablets ---- */
+@media (max-width: 820px) {
+  /* The three tabs stay in the top bar on phones, just smaller. */
+  /* Three equal-weight columns: the logo on the left, the right-hand buttons on the right, and the three tabs exactly in the
+     middle of the screen (the two sides can be different widths, so margin:auto would push the tabs off-centre). */
+  .app-nav { display: grid !important; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 10px 12px !important; padding-top: calc(10px + env(safe-area-inset-top)) !important; gap: 4px; }
+  .app-nav > .dv-logo { justify-self: start; }
+  .app-nav-links { position: static !important; left: auto !important; transform: none !important; margin: 0; justify-self: center; gap: 0 !important; min-width: 0; }
+  .app-nav-right { justify-self: end; }
+  .app-nav-links button { padding: 7px 7px !important; font-size: clamp(11.5px, 3.3vw, 13px) !important; white-space: nowrap; }
+  .app-nav-right { min-width: 0 !important; gap: 6px !important; }
+  .app-nav-right > button:not(.app-nav-signin) { width: 32px !important; height: 32px !important; }
+  .app-nav-right > div > div > button { width: 32px !important; height: 32px !important; }
+  .app-nav-signin { padding: 6px 10px !important; font-size: 12px !important; white-space: nowrap; }
+  .dv-logo { width: 40px !important; min-width: 40px !important; }
+
+  /* Fields at 16px or more so iPhones don't zoom the page when one is focused. */
+  input, textarea, select { font-size: 16px !important; }
+
+  .app-toast-wrap { bottom: calc(24px + env(safe-area-inset-bottom)); max-width: calc(100vw - 32px); }
+  .app-toast { white-space: normal; text-align: center; border-radius: 18px; }
+  .cp-backdrop { padding-top: calc(8vh + env(safe-area-inset-top)); }
+
+  /* Sessions: title on top, date and score under it, the menu opens below the button inside the screen */
+  .ses-row { grid-template-columns: 44px minmax(0, 1fr) auto !important; gap: 3px 12px !important; padding: 12px 14px !important; }
+  .ses-thumb { grid-row: 1 / span 2; }
+  .ses-title { grid-column: 2; min-width: 0; }
+  .ses-meta { display: flex !important; grid-column: 2; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
+  .ses-menu-wrap { grid-column: 3; grid-row: 1 / span 2; }
+  .ses-menu { left: auto !important; right: 0 !important; margin-left: 0 !important; top: calc(100% + 6px) !important; }
+
+  /* Pages under the fixed top bar: the bar is short on a phone, so the empty space above the content is too */
+  .page-wrap { padding-top: calc(84px + env(safe-area-inset-top)) !important; }
+  /* The About title is sized so the whole line fits (it is 8.2 times its font size wide) */
+  .about-title { font-size: calc((100vw - 48px) / 8.5) !important; margin-bottom: 18px !important; }
+
+  /* Image credits: each table row becomes a small card (picture on the left, details stacked on the right) */
+  .cr-table, .cr-table tbody, .cr-table tr, .cr-table td { display: block; }
+  .cr-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .cr-table tr { display: grid !important; grid-template-columns: 64px minmax(0, 1fr); gap: 2px 12px; padding: 12px 14px; border-top: 1px solid var(--border-color); }
+  .cr-table tbody tr:first-child { border-top: 0; }
+  .cr-table td { padding: 0 !important; border: 0 !important; white-space: normal !important; font-size: 12.5px !important; min-width: 0; }
+  .cr-table td:nth-child(1) { grid-row: 1 / span 4; }
+  .cr-table td:nth-child(n+2) { grid-column: 2; }
+  .cr-table td:nth-child(2) { font-size: 13.5px !important; }
+
+  /* Sign in: a card with breathing room, and the 6-digit reset code boxes keep their big digits */
+  .auth-main { padding: 16px !important; }
+  .auth-card { padding: 24px 20px !important; }
+  input[inputmode="numeric"] { font-size: 22px !important; }
+
+  /* About: the four link buttons share one row */
+  .about-links { flex-wrap: nowrap !important; gap: 6px !important; }
+  .about-links a { flex: 1 1 0; min-width: 0; justify-content: center; padding: 10px 4px !important; font-size: 12px !important; white-space: nowrap; }
+
+  /* Home */
+  .home-hero { padding-left: 20px !important; padding-right: 20px !important; }
+  .home-hero h1 { font-size: calc((100vw - 40px) / 13.05) !important; white-space: normal; }
+  .home-sub { white-space: normal !important; font-size: calc((100vw - 40px) / 30) !important; margin-bottom: 30px !important; }
+  .home-search { flex-direction: column; }
+  .home-search button { width: 100%; padding: 14px !important; }
+
+  /* Explore */
+  .ex-hero { padding: calc(84px + env(safe-area-inset-top)) 16px 20px !important; }
+  .ex-hero h1 { font-size: clamp(32px, 9.5vw, 44px) !important; }
+  .ex-hero p { margin-bottom: 24px !important; }
+  .ex-bar { width: 100% !important; }
+  .ex-filters { flex-wrap: wrap !important; justify-content: center !important; gap: 5px !important; min-height: 0 !important; }
+  .ex-filters button { white-space: nowrap; min-height: 32px; padding: 4px 10px !important; font-size: 11.5px !important; }
+  .ex-filters .fav-chip { padding: 4px 10px !important; }
+  .ex-filters .fav-chip svg { width: 14px; height: 14px; }
+  .ex-wrap { padding: 0 16px 56px !important; }
+  .ex-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+  .ev-img { height: 92px !important; }
+  .ev-badge { top: 7px !important; left: 7px !important; }
+  .ev-badge span { font-size: 8.5px !important; padding: 2px 5px !important; letter-spacing: 0.06em !important; }
+  .ev-body { padding: 9px 10px 11px !important; }
+  .ev-title { font-size: 12.5px !important; margin-bottom: 4px !important; line-height: 1.3; }
+  .ev-desc { font-size: 11px !important; line-height: 1.45 !important; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .heart-btn { width: 34px; height: 34px; top: 5px; right: 6px; }
+  .heart-btn svg { width: 16px; height: 16px; }
+}
+
+/* On a narrow phone there is not room for both the search icon and Sign In beside centred tabs; keep Sign In. */
+@media (max-width: 430px) {
+  .app-nav-right:has(.app-nav-signin) > button:not(.app-nav-signin) { display: none !important; }
+}

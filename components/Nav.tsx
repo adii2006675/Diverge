@@ -26,7 +26,7 @@ export default function Nav({ active }: { active?: string }) {
 
   return (
     <>
-      <nav style={{
+      <nav className="app-nav" style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '18px 40px',
         background: 'var(--nav-bg)',
@@ -56,7 +56,7 @@ export default function Nav({ active }: { active?: string }) {
         </button>
 
         {/* Center — nav links */}
-        <div style={{ display: 'flex', gap: 4, alignItems: 'center', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+        <div className="app-nav-links" style={{ display: 'flex', gap: 4, alignItems: 'center', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
           {navLinks.map(({ label, href }) => (
             <button
               key={label}
@@ -91,7 +91,7 @@ export default function Nav({ active }: { active?: string }) {
         </div>
 
         {/* Right — auth */}
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', minWidth: 100, justifyContent: 'flex-end' }}>
+        <div className="app-nav-right" style={{ display: 'flex', gap: 10, alignItems: 'center', minWidth: 100, justifyContent: 'flex-end' }}>
           <button
             type="button"
             onClick={openPalette}
@@ -106,6 +106,7 @@ export default function Nav({ active }: { active?: string }) {
           {!user ? (
             <button
               onClick={() => router.push('/auth')}
+              className="app-nav-signin"
               style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
             >
               {t('Sign In')}

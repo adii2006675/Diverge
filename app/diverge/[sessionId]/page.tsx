@@ -184,6 +184,21 @@ export default function DivergePage() {
     : /"(worldMood|impact|year|uncertaintyLevel|suggestions)"\s*:/.test(streamText) ? 3
     : /"(keyFacts|factTypes|factExplanations)"\s*:/.test(streamText) ? 2
     : 1
+  // Phone layout: the World panel (ring, timelines, suggestions, real history) is a sheet that slides up from the bottom.
+  const [worldOpen, setWorldOpen] = useState(false)
+  const sheetY = useRef<number | null>(null)
+  useEffect(() => {
+    if (!worldOpen) return
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setWorldOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [worldOpen])
+  // Keep the current answer's dot in view when the dots row scrolls sideways (many answers on a narrow screen).
+  useEffect(() => {
+    const track = document.querySelector<HTMLElement>('.dv-track')
+    const dot = track?.querySelector<HTMLElement>('.dv-dot.now')
+    if (track && dot) track.scrollTo({ left: dot.offsetLeft - track.clientWidth / 2 + dot.clientWidth / 2, behavior: 'smooth' })
+  }, [activeTimelineIdx, whatIfs.length])
   const latest = whatIfs.length > 0 ? whatIfs[whatIfs.length - 1] : null
   const currentEntry = whatIfs[activeTimelineIdx] || null
   const currentResponse = currentEntry?.response || null
@@ -631,12 +646,12 @@ export default function DivergePage() {
         <div className="dv-sp" />
         <button className="dv-btn" type="button" onClick={() => setShowAISettings(true)}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
-          AI settings
+          <span className="dv-lbl">AI settings</span>
         </button>
         {whatIfs.length > 0 && (
           <button className="dv-btn" type="button" onClick={handleShare} disabled={sharing} title="Copy a public link to this timeline">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
-            {sharing ? 'Sharing…' : 'Share'}
+            <span className="dv-lbl">{sharing ? 'Sharing…' : 'Share'}</span>
           </button>
         )}
         {whatIfs.length > 0 && (
@@ -652,6 +667,31 @@ export default function DivergePage() {
         )}
       </div>
 
+      <button type="button" className="dv-strip" onClick={() => setWorldOpen(true)} aria-label="Open the world panel: divergence, timelines and history">
+        <svg className="dv-ring" viewBox="0 0 46 46" aria-hidden="true">
+          <circle cx="23" cy="23" r="18" fill="none" stroke="rgba(255,255,255,.12)" strokeWidth="5" />
+          <circle cx="23" cy="23" r="18" fill="none" stroke="var(--acc)" strokeWidth="5" strokeLinecap="round" strokeDasharray={`${(Math.min(100, divergence) / 100) * 113.1} 113.1`} transform="rotate(-90 23 23)" />
+          <text x="23" y="27" textAnchor="middle" fill="currentColor" fontSize="11" fontWeight="800">{divergence}%</text>
+        </svg>
+        {showTags ? (
+          <span className="dv-tags">
+            {currentYear !== '?' && <span className="dv-tag">{currentYear}</span>}
+            {currentResponse ? (
+              <>
+                <span className="dv-tag" style={{ ['--c' as string]: MOOD_COLORS[mood] || '#fff' }}><i />{moodLabel(mood)}</span>
+                <span className="dv-tag" style={{ ['--c' as string]: confidenceInfo(currentResponse.uncertaintyLevel).color }}><i />{confidenceInfo(currentResponse.uncertaintyLevel).label}</span>
+              </>
+            ) : (
+              <span className="dv-tag">Real history</span>
+            )}
+            {currentResponse && activeTimelineIdx >= 0 && <span className="dv-tag">{fmtDelta(deltaAt(activeTimelineIdx))}</span>}
+          </span>
+        ) : (
+          <span className="dv-strip-label">World</span>
+        )}
+        <svg className="chev" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
+      </button>
+
       <div className="dv-body">
         <div className="dv-left">
           <div className="dv-thread" ref={threadRef} role="log" aria-label="Your questions and answers">
@@ -660,7 +700,7 @@ export default function DivergePage() {
                 <div className="dv-empty">
                   <div className="dv-empty-orb" aria-hidden="true">?</div>
                   <h2>What would have changed?</h2>
-                  <p>Ask a &ldquo;what if&rdquo; about {event ? event.title : 'this moment in history'} below, or tap a suggestion in the panel on the right.</p>
+                  <p>Ask a &ldquo;what if&rdquo; about {event ? event.title : 'this moment in history'} below, or tap a suggestion in <span className="dv-desk">the panel on the right</span><span className="dv-mob">the world panel (tap the strip above)</span>.</p>
                 </div>
               )}
 
@@ -679,7 +719,6 @@ export default function DivergePage() {
                         aria-label={open ? 'Collapse this answer' : 'Expand this answer'}
                       />
                       {!open && <p className="dv-head">{firstSentence(r.paragraph)}</p>}
-                      {!open && <span className="dv-hint" aria-hidden="true">Show more <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg></span>}
                       <div className={`dv-collapse${open ? ' open' : ''}`} id={`ans-body-${i}`}>
                         <div>
                           <div className={`dv-reveal${freshIdx === i ? ' go' : ''}`}><p className="dv-prose dv-para">{r.paragraph}</p></div>
@@ -762,7 +801,6 @@ export default function DivergePage() {
                             </>)}
                           </div>
                           </div>
-                          <span className="dv-hint up" aria-hidden="true">Show less <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg></span>
                         </div>
                       </div>
                     </div>
@@ -873,6 +911,13 @@ export default function DivergePage() {
 
           <div className="dv-dockwrap">
             <div className="dv-dock">
+              {suggestions.length > 0 && (
+                <div className="dv-chiprow">
+                  {suggestions.map(sg => (
+                    <button key={sg} type="button" disabled={loading} onClick={() => handleAsk(sg)}>{sg}</button>
+                  ))}
+                </div>
+              )}
               <div className="dv-trackrow">
                 <button className="dv-circ" type="button" aria-label="Previous answer" disabled={whatIfs.length === 0 || activeTimelineIdx <= 0} onClick={() => selectAnswer(activeTimelineIdx - 1)}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
@@ -929,7 +974,19 @@ export default function DivergePage() {
           </div>
         </div>
 
-        <aside className="dv-world" aria-label="World state">
+        {worldOpen && <div className="dv-scrim" onClick={() => setWorldOpen(false)} />}
+        <aside className={`dv-world${worldOpen ? ' open' : ''}`} aria-label="World state">
+          <div
+            className="dv-sheet-head"
+            onTouchStart={e => { sheetY.current = e.touches[0].clientY }}
+            onTouchEnd={e => { if (sheetY.current !== null && e.changedTouches[0].clientY - sheetY.current > 60) setWorldOpen(false); sheetY.current = null }}
+          >
+            <b>World</b>
+            <button type="button" className="dv-circ" aria-label="Close the world panel" onClick={() => setWorldOpen(false)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+            </button>
+          </div>
+          <button type="button" className="dv-btn dv-phone-only" onClick={() => { setWorldOpen(false); handleSummary() }} disabled={whatIfs.length === 0}>View summary</button>
           <div className="dv-card gauge-card" style={{ ['--mood' as string]: MOOD_COLORS[mood] || '#F59E0B' }}>
             <div className="dv-gauge" style={{ ['--p' as string]: divergence }} role="img" aria-label={`${divergence}% diverged from real history`}>
               <div><b><CountUp value={divergence} />%</b><small>diverged</small></div>
@@ -956,8 +1013,8 @@ export default function DivergePage() {
               exporting={exporting}
               nodes={whatIfs.map(w => ({ question: w.question, year: w.response.year, score: w.response.divergenceScore, yearNum: parseYear(w.response.year) }))}
               activeIdx={activeTimelineIdx}
-              onSelect={i => selectAnswer(i)}
-              onSelectStart={() => { setActiveTimelineIdx(-1); threadRef.current?.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }) }}
+              onSelect={i => { setWorldOpen(false); selectAnswer(i) }}
+              onSelectStart={() => { setWorldOpen(false); setActiveTimelineIdx(-1); threadRef.current?.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }) }}
             />
           )}
 
@@ -966,7 +1023,7 @@ export default function DivergePage() {
               <h3>Ask next</h3>
               <div className="dv-sug">
                 {suggestions.map(s => (
-                  <button key={s} type="button" className="dv-sug-b" disabled={loading} onClick={() => handleAsk(s)}>{s}</button>
+                  <button key={s} type="button" className="dv-sug-b" disabled={loading} onClick={() => { setWorldOpen(false); handleAsk(s) }}>{s}</button>
                 ))}
               </div>
             </div>
@@ -978,7 +1035,7 @@ export default function DivergePage() {
               <p className="dv-sub">Real events after {currentYear} that this timeline hasn’t touched. Tap one to ask about it.</p>
               <div className="dv-un">
                 {unanswered.map(e => (
-                  <button key={e.id} type="button" className="dv-un-b" disabled={loading} onClick={() => askAboutEvent(e)}>
+                  <button key={e.id} type="button" className="dv-un-b" disabled={loading} onClick={() => { setWorldOpen(false); askAboutEvent(e) }}>
                     <b>{formatEventYear(e.year)}</b>{e.title}
                   </button>
                 ))}

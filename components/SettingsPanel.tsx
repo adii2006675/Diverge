@@ -56,23 +56,25 @@ export default function SettingsPanel() {
         </Section>
 
         <Section title="Accent Color">
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {/* A grid keeps every row on the same columns, so the dots line up down each column. */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
             {ACCENT_COLORS.map(c => (
               <button
                 key={c.value}
                 onClick={() => updateSettings({ accent_color: c.value })}
                 style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  flex: '1 1 140px', minWidth: 140,
-                  padding: '8px 16px', borderRadius: 999, cursor: 'pointer', fontFamily: 'inherit',
+                  // Dot first, label after it, both from the left edge, so the dots line up in each column.
+                  display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 12, textAlign: 'left',
+                  minWidth: 0,
+                  padding: '9px 18px', borderRadius: 999, cursor: 'pointer', fontFamily: 'inherit',
                   border: `1px solid ${settings?.accent_color === c.value ? c.hex : 'var(--border-color)'}`,
-                  background: settings?.accent_color === c.value ? `${c.hex}26` : 'transparent',
+                  background: settings?.accent_color === c.value ? `color-mix(in srgb, ${c.hex} 15%, transparent)` : 'transparent',
                   color: settings?.accent_color === c.value ? c.hex : 'var(--text-dim)',
                   fontSize: 'var(--font-scale)', fontWeight: settings?.accent_color === c.value ? 600 : 400,
                   transition: 'all 0.18s',
                 }}
               >
-                <span style={{ width: 12, height: 12, borderRadius: '50%', background: c.hex, flexShrink: 0 }} />
+                <span aria-hidden="true" style={{ width: 14, height: 14, borderRadius: '50%', background: c.hex, flexShrink: 0, boxShadow: 'inset 0 0 0 1px rgba(128,128,128,0.35)' }} />
                 {t(c.label)}
               </button>
             ))}

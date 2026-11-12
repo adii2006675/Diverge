@@ -79,7 +79,7 @@ export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, 
     return fromPct ? fromPct(p) : min + p * (max - min)
   }, [min, max, fromPct])
 
-  function startDrag(e: React.MouseEvent, handle: 'min' | 'max') {
+  function startDrag(e: React.PointerEvent, handle: 'min' | 'max') {
     e.preventDefault()
     dragging.current = handle
     // Stop any glide in progress and start from where the handle is drawn right now.
@@ -90,7 +90,7 @@ export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, 
     raw.set(shown)
     off.jump(0)
 
-    function onMove(e: MouseEvent) {
+    function onMove(e: PointerEvent) {
       const val = valFromClientX(e.clientX)
       if (val === null) return
       const which = dragging.current
@@ -110,12 +110,14 @@ export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, 
 
     function onUp() {
       dragging.current = null
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
     }
 
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
   }
 
   function handleTrackClick(e: React.MouseEvent) {
@@ -167,8 +169,8 @@ export default function DualSlider({ min, max, valueMin, valueMax, onChangeMin, 
 
         <motion.div style={{ position: 'absolute', height: 3, background: 'var(--accent)', borderRadius: 99, left: minLeft, right: fillRight }} />
 
-        <motion.div onMouseDown={e => startDrag(e, 'min')} style={{ ...handleStyle, left: minLeft, x: '-50%' }} />
-        <motion.div onMouseDown={e => startDrag(e, 'max')} style={{ ...handleStyle, left: maxLeft, x: '-50%' }} />
+        <motion.div onPointerDown={e => startDrag(e, 'min')} style={{ ...handleStyle, left: minLeft, x: '-50%' }}><span aria-hidden="true" style={{ position: 'absolute', inset: -12 }} /></motion.div>
+        <motion.div onPointerDown={e => startDrag(e, 'max')} style={{ ...handleStyle, left: maxLeft, x: '-50%' }}><span aria-hidden="true" style={{ position: 'absolute', inset: -12 }} /></motion.div>
       </div>
 
       <div style={{ position: 'relative', minHeight: 32, marginTop: 4 }}>

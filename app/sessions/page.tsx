@@ -204,7 +204,7 @@ export default function SessionsPage() {
     return (
       <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
         <Nav active="sessions" />
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto', padding: '140px 24px 60px' }}>
+        <div className="page-wrap" style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto', padding: '140px 24px 60px' }}>
           <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 8, letterSpacing: '-0.02em' }}>Sessions</h1>
           <p style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 24 }}>Sign in to access your saved history.</p>
           <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
@@ -224,7 +224,7 @@ export default function SessionsPage() {
     <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
       <Nav active="sessions" />
 
-      <div style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto', padding: '140px 24px 60px' }}>
+      <div className="page-wrap" style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto', padding: '140px 24px 60px' }}>
         <h1 style={{ fontSize: 'calc(var(--font-scale) * 2.67)', fontWeight: 900, marginBottom: 8, letterSpacing: '-0.02em' }}>Sessions</h1>
         <p style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', marginBottom: 24 }}>Your saved alternate timelines.</p>
 
@@ -267,15 +267,15 @@ export default function SessionsPage() {
                   transition={{ duration: 0.15, ease: 'easeOut' }}
                   onClick={() => !isRenaming && setExpandedSession(isExpanded ? null : session.id)}
                   style={{
-                    borderRadius: 14, cursor: 'pointer', position: 'relative', isolation: 'isolate',
+                    borderRadius: 14, cursor: 'pointer', position: 'relative', isolation: 'isolate', zIndex: openMenuId === session.id ? 20 : undefined,
                     border: `1px solid ${isExpanded ? 'color-mix(in srgb, var(--accent) 35%, var(--card-bg))' : 'var(--border-color)'}`,
                     background: isExpanded ? 'color-mix(in srgb, var(--accent) 6%, var(--card-bg))' : 'var(--card-bg)',
                     overflow: 'visible',
                   }}
                 >
                   <CardBorderTrace radius={14} />
-                  <div style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: '44px 1fr auto auto auto', gap: 14, alignItems: 'center', padding: '14px 18px' }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 10, overflow: 'hidden', position: 'relative', background: 'color-mix(in srgb, var(--accent) 8%, var(--card-bg))' }}>
+                  <div className="ses-row" style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: '44px 1fr auto auto auto', gap: 14, alignItems: 'center', padding: '14px 18px' }}>
+                    <div className="ses-thumb" style={{ width: 44, height: 44, borderRadius: 10, overflow: 'hidden', position: 'relative', background: 'color-mix(in srgb, var(--accent) 8%, var(--card-bg))' }}>
                       <EventImage
                         key={session.event_id}
                         id={session.event_id}
@@ -287,6 +287,7 @@ export default function SessionsPage() {
                     </div>
                     {isRenaming ? (
                       <input
+                        className="ses-title"
                         autoFocus
                         value={renameValue}
                         onChange={e => setRenameValue(e.target.value)}
@@ -296,10 +297,11 @@ export default function SessionsPage() {
                         style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', background: 'transparent', border: '1px solid var(--accent)', borderRadius: 6, padding: '4px 8px', outline: 'none', fontFamily: 'inherit', width: '100%' }}
                       />
                     ) : (
-                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div className="ses-title" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {cleanTitle(session.event_title) || 'Untitled Session'}
                       </div>
                     )}
+                    <div className="ses-meta" style={{ display: 'contents' }}>
                     <div style={{ fontSize: 12, color: 'var(--text-dim)', whiteSpace: 'nowrap' }}>
                       {formatDate(session.created_at)}
                     </div>
@@ -311,7 +313,8 @@ export default function SessionsPage() {
                     }}>
                       {session.divergence_score}% diverged
                     </div>
-                    <div style={{ position: 'relative' }}>
+                    </div>
+                    <div className="ses-menu-wrap" style={{ position: 'relative' }}>
                       <button
                         onClick={e => { e.stopPropagation(); setOpenMenuId(openMenuId === session.id ? null : session.id) }}
                         style={{ width: 28, height: 28, borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--text-dim)', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -322,6 +325,7 @@ export default function SessionsPage() {
                       </button>
                       {openMenuId === session.id && (
                         <div
+                          className="ses-menu"
                           onClick={e => e.stopPropagation()}
                           style={{ position: 'absolute', left: '100%', marginLeft: 25, top: -16, background: 'var(--surface)', border: '1px solid var(--border-color)', borderRadius: 10, padding: 6, minWidth: 140, zIndex: 50 }}
                         >

@@ -31,7 +31,7 @@ export default function LandingPage() {
       <Nav active="home" />
 
       {/* Hero */}
-      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 'var(--vh-fit, 100vh)', textAlign: 'center', padding: '0 24px', paddingTop: 80 }}>
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 'var(--vh-fit, 100vh)', textAlign: 'center', padding: '0 24px', paddingTop: 80 }} className="home-hero">
 
         {user && profile?.username && (
           <motion.p
@@ -52,6 +52,7 @@ export default function LandingPage() {
 
         <motion.p
           {...rise(1.05)}
+          className="home-sub"
           style={{ fontSize: 19, color: 'var(--text-dim)', marginBottom: 52, lineHeight: 1.6, whiteSpace: 'nowrap' }}
         >
           {t('Pick any event in time. Ask to see a change. Watch it Diverge.')}
@@ -59,6 +60,7 @@ export default function LandingPage() {
 
         <motion.div
           {...rise(1.2)}
+          className="home-search"
           style={{ display: 'flex', gap: 10, width: '100%', maxWidth: 680, marginBottom: 18 }}
         >
           <input

@@ -36,14 +36,14 @@ export default function CreditsPage() {
   return (
     <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text, #fff)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
       <Nav />
-      <div style={{ position: 'relative', zIndex: 1, width: 'min(92vw, 1200px)', margin: '0 auto', padding: '120px 0 80px' }}>
+      <div className="page-wrap" style={{ position: 'relative', zIndex: 1, width: 'min(92vw, 1200px)', margin: '0 auto', padding: '120px 0 80px' }}>
         <h1 style={{ fontSize: 40, fontWeight: 900, letterSpacing: '-0.02em', marginBottom: 12 }}>Image credits</h1>
         {notes.map(n => (
           <p key={n} style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--text-dim, rgba(255,255,255,0.55))', maxWidth: '75ch', marginBottom: 8 }}>{n}</p>
         ))}
 
         <div style={{ marginTop: 28, borderRadius: 14, border: '1px solid var(--border-color, rgba(255,255,255,0.1))', background: 'var(--card-bg, rgba(255,255,255,0.03))', overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table className="cr-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
                 <th style={{ ...th, width: 84 }}><span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Image</span></th>
