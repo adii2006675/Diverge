@@ -1,5 +1,7 @@
 'use client'
 import { useAskNext, useFeature } from '@/lib/askNext'
+import { useT } from '@/lib/useT'
+import { useAutoT } from '@/lib/autoTranslate'
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { ALL_EVENTS, formatEventYear } from '@/lib/events'
@@ -113,6 +115,9 @@ export default function DivergePage() {
   const [saved, setSaved] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const { settings, user, updateSettings, loading: authLoading } = useAuth()
+  const { t } = useT()
+  const { at } = useAutoT()
+  const tm = (k: string, n: string | number, m: string | number = '') => t(k).replace('{n}', String(n)).replace('{m}', String(m))
   const hasAutoSubmitted = useRef(false)
   const hasResumed = useRef(false)
   const [resumedTitle, setResumedTitle] = useState<string | null>(null)
@@ -352,7 +357,7 @@ export default function DivergePage() {
         return
       }
       setAskError({
-        message: err instanceof Error && err.message ? err.message : 'Something went wrong while generating the answer.',
+        message: err instanceof Error && err.message ? err.message : t('Something went wrong while generating the answer.'),
         question,
       })
       setCurrentInput(question)
@@ -371,13 +376,13 @@ export default function DivergePage() {
       await downloadChatPdf({
         title: cleanSessionTitle(startingEvent),
         realTitle: event?.title || customInfo?.title || customCardTitle,
-        realSummary: event?.fullDesc || (customInfo ? trimSummary(customInfo.extract, 900) : ''),
-        realFacts,
+        realSummary: event ? at(event.fullDesc) : (customInfo ? at(trimSummary(customInfo.extract, 900)) : ''),
+        realFacts: realFacts.map(f => at(f)),
         whatIfs,
       })
     } catch (err) {
       console.error(err)
-      showToast('Could not make the PDF. Please try again.')
+      showToast(t('Could not make the PDF. Please try again.'))
     } finally {
       setDownloading(false)
     }
@@ -501,19 +506,19 @@ export default function DivergePage() {
     const before = whatIfs
     const kept = before.slice(0, i + 1)
     truncateLocal(kept, i)
-    showToast(`Rewound to question ${i + 1}. ${before.length - 1 - i} removed.`, async () => {
+    showToast(tm('Rewound to question {n}. {m} removed.', i + 1, before.length - 1 - i), async () => {
       setWhatIfs(before)
       setActiveTimelineIdx(i)
       dismissToast()
-      if (!(await persistTimeline(before))) showToast('Restored here, but the saved copy could not be updated.')
+      if (!(await persistTimeline(before))) showToast(t('Restored here, but the saved copy could not be updated.'))
     })
-    if (!(await persistTimeline(kept))) showToast('Rewound here, but the saved copy could not be updated.')
+    if (!(await persistTimeline(kept))) showToast(t('Rewound here, but the saved copy could not be updated.'))
   }
 
   // Copies the timeline up to answer i into a new saved session and carries on there. The original stays in Sessions.
   async function branchFrom(i: number) {
     if (loading || branching || i < 0 || i >= whatIfs.length - 1) return
-    if (!user) { showToast('Sign in to branch a timeline.'); return }
+    if (!user) { showToast(t('Sign in to branch a timeline.')); return }
     const kept = whatIfs.slice(0, i + 1)
     setBranching(true)
     const { data, error } = await supabase.from('sessions').insert({
@@ -525,17 +530,17 @@ export default function DivergePage() {
       updated_at: new Date().toISOString(),
     }).select('id').single()
     setBranching(false)
-    if (error || !data) { console.error(error); showToast('Could not branch this timeline. Try again.'); return }
+    if (error || !data) { console.error(error); showToast(t('Could not branch this timeline. Try again.')); return }
     truncateLocal(kept, i)
     setCurrentSessionId(data.id)
     window.history.replaceState(null, '', `?session=${data.id}`)
-    showToast(`Branched from question ${i + 1}. The original is still in Sessions.`)
+    showToast(tm('Branched from question {n}. The original is still in Sessions.', i + 1))
   }
 
   // Publishes a frozen copy of the timeline and copies its link. The same unchanged timeline reuses its link.
   async function handleShare() {
     if (whatIfs.length === 0 || sharing) return
-    if (!user) { showToast('Sign in to share this timeline.'); return }
+    if (!user) { showToast(t('Sign in to share this timeline.')); return }
     const last = whatIfs[whatIfs.length - 1]
     const signature = `${whatIfs.length}:${last.timestamp}`
     setSharing(true)
@@ -551,18 +556,18 @@ export default function DivergePage() {
       try { await navigator.clipboard.writeText(link) } catch { copied = false }
       const shareId = id
       showToast(
-        copied ? 'Link copied. Anyone with it can read this timeline.' : `Share link: ${link}`,
+        copied ? t('Link copied. Anyone with it can read this timeline.') : `${t('Share link:')} ${link}`,
         isNew ? async () => {
           dismissToast()
-          try { await revokeShare(shareId); if (lastShare.current?.id === shareId) lastShare.current = null; showToast('Sharing stopped. The link no longer works.') }
-          catch (err) { console.error(err); showToast('Could not stop sharing. Try again.') }
+          try { await revokeShare(shareId); if (lastShare.current?.id === shareId) lastShare.current = null; showToast(t('Sharing stopped. The link no longer works.')) }
+          catch (err) { console.error(err); showToast(t('Could not stop sharing. Try again.')) }
         } : undefined,
-        'Stop sharing',
+        t('Stop sharing'),
       )
     } catch (err) {
       console.error(err)
       const code = (err as { code?: string } | null)?.code
-      showToast(code === 'PGRST205' || code === '42P01' ? 'Sharing is not switched on for this site yet.' : 'Could not create a share link. Please try again.')
+      showToast(code === 'PGRST205' || code === '42P01' ? t('Sharing is not switched on for this site yet.') : t('Could not create a share link. Please try again.'))
     }
     setSharing(false)
   }
@@ -610,10 +615,10 @@ export default function DivergePage() {
         nodes: whatIfs.map(w => ({ question: w.question, year: w.response.year, score: w.response.divergenceScore, yearNum: parseYear(w.response.year) })),
       })
       downloadBlob(blob, `diverge-${event.id}.png`)
-      showToast('Image saved to your downloads.')
+      showToast(t('Image saved to your downloads.'))
     } catch (err) {
       console.error(err)
-      showToast('Could not create the image.')
+      showToast(t('Could not create the image.'))
     }
     setExporting(false)
   }
@@ -678,22 +683,22 @@ export default function DivergePage() {
             )}
           </div>
           <div>
-            <b title={startingEvent}>{event?.title || 'Custom starting point'}</b>
+            <b title={startingEvent}>{event ? at(event.title) : t('Custom starting point')}</b>
             <span>
-              {event ? formatEventYear(event.year) : <i className={whatIfs.length > 0 ? 'dv-ev-lead' : undefined} style={{ fontStyle: 'normal' }}>Your own question</i>}
-              {whatIfs.length > 0 && <>{event ? ' · ' : <i className="dv-ev-lead" style={{ fontStyle: 'normal' }}> · </i>}{activeTimelineIdx >= 0 ? `Question ${activeTimelineIdx + 1} of ${whatIfs.length}` : 'Start'}</>}
+              {event ? formatEventYear(event.year) : <i className={whatIfs.length > 0 ? 'dv-ev-lead' : undefined} style={{ fontStyle: 'normal' }}>{t('Your own question')}</i>}
+              {whatIfs.length > 0 && <>{event ? ' · ' : <i className="dv-ev-lead" style={{ fontStyle: 'normal' }}> · </i>}{activeTimelineIdx >= 0 ? tm('Question {n} of {m}', activeTimelineIdx + 1, whatIfs.length) : t('Start')}</>}
             </span>
           </div>
         </div>
         <div className="dv-sp" />
         <button className="dv-btn" type="button" onClick={() => setShowAISettings(true)}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
-          <span className="dv-lbl">AI settings</span>
+          <span className="dv-lbl">{t('AI settings')}</span>
         </button>
         {whatIfs.length > 0 && (
-          <button className="dv-btn" type="button" onClick={handleShare} disabled={sharing} title="Copy a public link to this timeline">
+          <button className="dv-btn" type="button" onClick={handleShare} disabled={sharing} title={t('Copy a public link to this timeline')}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
-            <span className="dv-lbl">{sharing ? 'Sharing…' : 'Share'}</span>
+            <span className="dv-lbl">{sharing ? t('Sharing…') : t('Share')}</span>
           </button>
         )}
         {whatIfs.length > 0 && (
@@ -702,15 +707,15 @@ export default function DivergePage() {
             type="button"
             onClick={handleDownloadPdf}
             disabled={downloading}
-            aria-label="Download this timeline as a PDF"
-            title="Download as PDF"
+            aria-label={t('Download this timeline as a PDF')}
+            title={t('Download as PDF')}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11" /><path d="M7 11l5 5 5-5" /><path d="M5 20h14" /></svg>
           </button>
         )}
       </div>
 
-      <button type="button" className="dv-strip" onClick={() => setWorldOpen(true)} aria-label="Open the world panel: divergence, timelines and history">
+      <button type="button" className="dv-strip" onClick={() => setWorldOpen(true)} aria-label={t('Open the world panel: divergence, timelines and history')}>
         <svg className="dv-ring" viewBox="0 0 46 46" aria-hidden="true">
           <circle cx="23" cy="23" r="18" fill="none" stroke="rgba(255,255,255,.12)" strokeWidth="5" />
           <circle cx="23" cy="23" r="18" fill="none" stroke="var(--acc)" strokeWidth="5" strokeLinecap="round" strokeDasharray={`${(Math.min(100, divergence) / 100) * 113.1} 113.1`} transform="rotate(-90 23 23)" />
@@ -721,29 +726,29 @@ export default function DivergePage() {
             {currentYear !== '?' && <span className="dv-tag">{currentYear}</span>}
             {currentResponse ? (
               <>
-                <span className="dv-tag" style={{ ['--c' as string]: MOOD_COLORS[mood] || '#fff' }}><i />{moodLabel(mood)}</span>
-                <span className="dv-tag" style={{ ['--c' as string]: confidenceInfo(currentResponse.uncertaintyLevel).color }}><i />{confidenceInfo(currentResponse.uncertaintyLevel).label}</span>
+                <span className="dv-tag" style={{ ['--c' as string]: MOOD_COLORS[mood] || '#fff' }}><i />{t(moodLabel(mood))}</span>
+                <span className="dv-tag" style={{ ['--c' as string]: confidenceInfo(currentResponse.uncertaintyLevel).color }}><i />{t(confidenceInfo(currentResponse.uncertaintyLevel).label)}</span>
               </>
             ) : (
-              <span className="dv-tag">Real history</span>
+              <span className="dv-tag">{t('Real history')}</span>
             )}
             {currentResponse && activeTimelineIdx >= 0 && <span className="dv-tag">{fmtDelta(deltaAt(activeTimelineIdx))}</span>}
           </span>
         ) : (
-          <span className="dv-strip-label">World</span>
+          <span className="dv-strip-label">{t('World')}</span>
         )}
         <svg className="chev" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
       </button>
 
       <div className="dv-body">
         <div className="dv-left">
-          <div className="dv-thread" ref={threadRef} role="log" aria-label="Your questions and answers">
+          <div className="dv-thread" ref={threadRef} role="log" aria-label={t('Your questions and answers')}>
             <div className="dv-thread-in">
               {whatIfs.length === 0 && !loading && (
                 <div className="dv-empty">
                   <div className="dv-empty-orb" aria-hidden="true">?</div>
-                  <h2>What would have changed?</h2>
-                  <p>Ask a &ldquo;what if&rdquo; about {event ? event.title : 'this moment in history'} below, or tap a suggestion in <span className="dv-desk">the panel on the right</span><span className="dv-mob">the world panel (tap the strip above)</span>.</p>
+                  <h2>{t('What would have changed?')}</h2>
+                  <p><span className="dv-desk">{t('Ask a “what if” about {name} below, or tap a suggestion in the panel on the right.').replace('{name}', event ? at(event.title) : t('this moment in history'))}</span><span className="dv-mob">{t('Ask a “what if” about {name} below, or tap a suggestion in the world panel (tap the strip above).').replace('{name}', event ? at(event.title) : t('this moment in history'))}</span></p>
                 </div>
               )}
 
@@ -759,7 +764,7 @@ export default function DivergePage() {
                         className="dv-ans-head dv-sr"
                         aria-expanded={open}
                         aria-controls={`ans-body-${i}`}
-                        aria-label={open ? 'Collapse this answer' : 'Expand this answer'}
+                        aria-label={open ? t('Collapse this answer') : t('Expand this answer')}
                       />
                       {!open && <p className="dv-head">{firstSentence(r.paragraph)}</p>}
                       <div className={`dv-collapse${open ? ' open' : ''}`} id={`ans-body-${i}`}>
@@ -782,10 +787,10 @@ export default function DivergePage() {
                                     <span className="dv-chip-n">{k + 1}</span>
                                     <span className="dv-chip-t">{f}</span>
                                     {r.factTypes?.[k] && r.factTypes[k] !== 'documented' && (
-                                      <span className="dv-chip-kind" title={r.factTypes[k] === 'inference' ? 'A reasoned consequence of the change, not a recorded fact' : 'A bolder possibility, not a prediction'}>{r.factTypes[k]}</span>
+                                      <span className="dv-chip-kind" title={r.factTypes[k] === 'inference' ? t('A reasoned consequence of the change, not a recorded fact') : t('A bolder possibility, not a prediction')}>{t(r.factTypes[k].charAt(0).toUpperCase() + r.factTypes[k].slice(1))}</span>
                                     )}
                                     {r.factTypes?.[k] === 'documented' && r.unverified?.includes(k) && (
-                                      <span className="dv-chip-kind warn" title="A second check could not confirm this against the reference">unconfirmed</span>
+                                      <span className="dv-chip-kind warn" title={t('A second check could not confirm this against the reference')}>{t('unconfirmed')}</span>
                                     )}
                                   </button>
                                   {expl && (
@@ -799,8 +804,8 @@ export default function DivergePage() {
                           </div>
                           <div className="dv-foot-row">
                           {r.sources && r.sources.length > 0 && (
-                            <p className="dv-sources">Sources: {r.sources.map((src, n) => (
-                              <span key={src.url}>{n > 0 && ', '}<a href={src.url} target="_blank" rel="noreferrer">{src.title} ({hostOf(src.url) || 'source'})</a></span>
+                            <p className="dv-sources">{t('Sources:')} {r.sources.map((src, n) => (
+                              <span key={src.url}>{n > 0 && ', '}<a href={src.url} target="_blank" rel="noreferrer">{src.title} ({hostOf(src.url) || t('source')})</a></span>
                             ))}</p>
                           )}
                           <div className="dv-ans-foot">
@@ -810,14 +815,14 @@ export default function DivergePage() {
                                 className="dv-btn ghost sm"
                                 aria-pressed={speakingIdx === i}
                                 onClick={() => toggleSpeak(i)}
-                                title={speakingIdx === i ? 'Stop reading' : 'Read this answer aloud'}
+                                title={speakingIdx === i ? t('Stop reading') : t('Read this answer aloud')}
                               >
                                 {speakingIdx === i ? (
                                   <span className="dv-wave" aria-hidden="true"><i /><i /><i /></span>
                                 ) : (
                                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4V5z" /><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" /></svg>
                                 )}
-                                {speakingIdx === i ? 'Stop' : 'Listen'}
+                                {speakingIdx === i ? t('Stop') : t('Listen')}
                               </button>
                             )}
                             {i < whatIfs.length - 1 && (<>
@@ -826,20 +831,20 @@ export default function DivergePage() {
                                 className="dv-btn ghost sm"
                                 disabled={loading || branching}
                                 onClick={() => branchFrom(i)}
-                                title="Start a new saved timeline from this answer and keep the original"
+                                title={t('Start a new saved timeline from this answer and keep the original')}
                               >
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="6" cy="5" r="2.2" /><circle cx="6" cy="19" r="2.2" /><circle cx="18" cy="9" r="2.2" /><path d="M6 7.2v9.6M18 11.2c0 4-6 3-12 6" /></svg>
-                                {branching ? 'Branching…' : 'Branch from here'}
+                                {branching ? t('Branching…') : t('Branch from here')}
                               </button>
                               <button
                                 type="button"
                                 className="dv-btn ghost sm"
                                 disabled={loading}
                                 onClick={() => rewindTo(i)}
-                                title="Remove the answers after this one and continue from here"
+                                title={t('Remove the answers after this one and continue from here')}
                               >
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></svg>
-                                Rewind to here
+                                {t('Rewind to here')}
                               </button>
                             </>)}
                           </div>
@@ -861,13 +866,13 @@ export default function DivergePage() {
                         <path className="b" pathLength={100} d="M4 17 H18 Q25 17 29 24 Q33 31 41 31 H60" />
                       </svg>
                       <div>
-                        <b>{WAIT_STAGES[waitStage]}…</b>
-                        <span className="dv-wait-sub">{elapsed}s · usually {WAIT_USUAL[normalizeLength(settings?.ai_response_style)]} seconds</span>
+                        <b>{t(WAIT_STAGES[waitStage])}…</b>
+                        <span className="dv-wait-sub">{tm('{n}s · usually {m} seconds', elapsed, WAIT_USUAL[normalizeLength(settings?.ai_response_style)])}</span>
                       </div>
                     </div>
                     <div className="dv-steps" aria-hidden="true">
                       {WAIT_STAGES.map((label, i) => {
-                        return <span key={label} className={i < waitStage ? 'done' : i === waitStage ? 'now' : ''}><i />{label}</span>
+                        return <span key={label} className={i < waitStage ? 'done' : i === waitStage ? 'now' : ''}><i />{t(label)}</span>
                       })}
                     </div>
                     <span className="dv-bar-wait" aria-hidden="true" />
@@ -886,8 +891,8 @@ export default function DivergePage() {
 
               {resumeNote && !loading && whatIfs.length === 0 && (
                 <div className="dv-note" role="status">
-                  <b>Welcome back</b>
-                  <p>This session was saved before answers were kept, so only your questions survived. Tap a question to ask it again and rebuild the timeline.</p>
+                  <b>{t('Welcome back')}</b>
+                  <p>{t('This session was saved before answers were kept, so only your questions survived. Tap a question to ask it again and rebuild the timeline.')}</p>
                   <div className="dv-note-actions" style={{ flexWrap: 'wrap' }}>
                     {resumeNote.questions.map(q => (
                       <button key={q} className="dv-btn" type="button" onClick={() => { setResumeNote(null); handleAsk(q) }}>{q.length > 70 ? q.slice(0, 69) + '…' : q}</button>
@@ -898,18 +903,18 @@ export default function DivergePage() {
 
               {askError && !loading && (
                 <div className="dv-note err" role="alert">
-                  <b>Couldn’t get an answer</b>
-                  <p>{askError.message} Your question is back in the box below.</p>
+                  <b>{t('Couldn’t get an answer')}</b>
+                  <p>{t(askError.message)} {t('Your question is back in the box below.')}</p>
                   <div className="dv-note-actions">
-                    <button className="dv-btn" type="button" onClick={() => handleAsk(askError.question)}>Try again</button>
-                    <button className="dv-btn ghost" type="button" onClick={() => setAskError(null)}>Dismiss</button>
+                    <button className="dv-btn" type="button" onClick={() => handleAsk(askError.question)}>{t('Try again')}</button>
+                    <button className="dv-btn ghost" type="button" onClick={() => setAskError(null)}>{t('Dismiss')}</button>
                   </div>
                 </div>
               )}
               {gate && !loading && (
                 <div className="dv-note" role="alert">
-                  <b>{gate.code === 'free_limit_reached' ? 'You’ve used your 2 free questions' : gate.code === 'sign_in_required' ? 'Sign in to ask' : gate.code === 'invalid_api_key' ? 'That API key didn’t work' : 'Free questions unavailable'}</b>
-                  <p>{gate.message}</p>
+                  <b>{gate.code === 'free_limit_reached' ? t('You’ve used your 2 free questions') : gate.code === 'sign_in_required' ? t('Sign in to ask') : gate.code === 'invalid_api_key' ? t('That API key didn’t work') : t('Free questions unavailable')}</b>
+                  <p>{t(gate.message)}</p>
                   <form
                     className="dv-note-actions"
                     style={{ flexWrap: 'wrap' }}
@@ -929,23 +934,23 @@ export default function DivergePage() {
                       spellCheck={false}
                       value={keyDraft}
                       onChange={e => setKeyDraft(e.target.value)}
-                      placeholder="sk-ant-… your Anthropic API key"
-                      aria-label="Your Anthropic API key"
+                      placeholder={t('sk-ant-… your Anthropic API key')}
+                      aria-label={t('Your Anthropic API key')}
                       style={{ flex: '1 1 240px', minWidth: 0, padding: '9px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontSize: 13 }}
                     />
-                    <button className="dv-btn" type="submit" disabled={!keyDraft.trim()}>Use my key</button>
-                    {!user && <button className="dv-btn ghost" type="button" onClick={() => router.push('/auth')}>Sign in</button>}
-                    <button className="dv-btn ghost" type="button" disabled title="Payments are coming soon">Pay (coming soon)</button>
+                    <button className="dv-btn" type="submit" disabled={!keyDraft.trim()}>{t('Use my key')}</button>
+                    {!user && <button className="dv-btn ghost" type="button" onClick={() => router.push('/auth')}>{t('Sign in')}</button>}
+                    <button className="dv-btn ghost" type="button" disabled title={t('Payments are coming soon')}>{t('Pay (coming soon)')}</button>
                   </form>
-                  <p style={{ fontSize: 12, opacity: 0.7, marginTop: 8 }}>Your key stays in this browser and is sent only with your own requests. It is never saved on the server.</p>
+                  <p style={{ fontSize: 12, opacity: 0.7, marginTop: 8 }}>{t('Your key stays in this browser and is sent only with your own requests. It is never saved on the server.')}</p>
                 </div>
               )}
               {refusal && !loading && (
                 <div className="dv-note" role="status">
-                  <b>That one isn’t a historical what-if</b>
-                  <p>{refusal.message} Edit your question below and ask again.</p>
+                  <b>{t('That one isn’t a historical what-if')}</b>
+                  <p>{refusal.message} {t('Edit your question below and ask again.')}</p>
                   <div className="dv-note-actions">
-                    <button className="dv-btn ghost" type="button" onClick={() => setRefusal(null)}>Dismiss</button>
+                    <button className="dv-btn ghost" type="button" onClick={() => setRefusal(null)}>{t('Dismiss')}</button>
                   </div>
                 </div>
               )}
@@ -962,18 +967,18 @@ export default function DivergePage() {
                 </div>
               )}
               <div className="dv-trackrow">
-                <button className="dv-circ" type="button" aria-label="Previous answer" disabled={whatIfs.length === 0 || activeTimelineIdx <= 0} onClick={() => selectAnswer(activeTimelineIdx - 1)}>
+                <button className="dv-circ" type="button" aria-label={t('Previous answer')} disabled={whatIfs.length === 0 || activeTimelineIdx <= 0} onClick={() => selectAnswer(activeTimelineIdx - 1)}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
                 </button>
                 <div className="dv-track">
-                  <button className={`dv-dot start${activeTimelineIdx === -1 ? ' now' : ''}`} type="button" aria-label="Back to the start" onClick={() => { setActiveTimelineIdx(-1); threadRef.current?.scrollTo({ top: 0, behavior: 'smooth' }) }}>Start</button>
+                  <button className={`dv-dot start${activeTimelineIdx === -1 ? ' now' : ''}`} type="button" aria-label={t('Back to the start')} onClick={() => { setActiveTimelineIdx(-1); threadRef.current?.scrollTo({ top: 0, behavior: 'smooth' }) }}>{t('Start')}</button>
                   {whatIfs.map((w, i) => {
                     const r = w.response
                     const c = confidenceInfo(r.uncertaintyLevel)
                     return (
                       <span key={i} style={{ display: 'contents' }}>
                         <span className={`dv-seg${i <= activeTimelineIdx ? ' on' : ''}`} />
-                        <button className={`dv-dot${i === activeTimelineIdx ? ' now' : ''}`} type="button" aria-label={`Question ${i + 1}: ${w.question}`} onClick={() => selectAnswer(i)}>
+                        <button className={`dv-dot${i === activeTimelineIdx ? ' now' : ''}`} type="button" aria-label={tm('Question {n}: {m}', i + 1, w.question)} onClick={() => selectAnswer(i)}>
                           {i + 1}
                           <span className="dv-hc" role="tooltip">
                             <span className="dv-hq">{w.question}</span>
@@ -991,7 +996,7 @@ export default function DivergePage() {
                     )
                   })}
                 </div>
-                <button className="dv-circ" type="button" aria-label="Next answer" disabled={whatIfs.length === 0 || activeTimelineIdx >= whatIfs.length - 1} onClick={() => selectAnswer(activeTimelineIdx + 1)}>
+                <button className="dv-circ" type="button" aria-label={t('Next answer')} disabled={whatIfs.length === 0 || activeTimelineIdx >= whatIfs.length - 1} onClick={() => selectAnswer(activeTimelineIdx + 1)}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
                 </button>
               </div>
@@ -1001,14 +1006,14 @@ export default function DivergePage() {
                   value={currentInput}
                   onChange={e => setCurrentInput(e.target.value.slice(0, 500))}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAsk() } }}
-                  placeholder="What if…"
-                  aria-label="Ask a what-if question"
+                  placeholder={t('What if…')}
+                  aria-label={t('Ask a what-if question')}
                   aria-keyshortcuts="/"
-                  title="Press / to jump here"
+                  title={t('Press / to jump here')}
                   disabled={loading}
                 />
                 <span className="dv-cnt">{currentInput.length}/500</span>
-                <button className="dv-send" type="button" aria-label="Ask Diverge" onClick={() => handleAsk()} disabled={loading || !currentInput.trim()}>
+                <button className="dv-send" type="button" aria-label={t('Ask Diverge')} onClick={() => handleAsk()} disabled={loading || !currentInput.trim()}>
                   {loading ? <span className="dv-spin sm" aria-hidden="true" /> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>}
                 </button>
               </label>
@@ -1017,30 +1022,30 @@ export default function DivergePage() {
         </div>
 
         {worldOpen && <div className="dv-scrim" onClick={() => setWorldOpen(false)} />}
-        <aside className={`dv-world${worldOpen ? ' open' : ''}`} aria-label="World state">
+        <aside className={`dv-world${worldOpen ? ' open' : ''}`} aria-label={t('World state')}>
           <div
             className="dv-sheet-head"
             onTouchStart={e => { sheetY.current = e.touches[0].clientY }}
             onTouchEnd={e => { if (sheetY.current !== null && e.changedTouches[0].clientY - sheetY.current > 60) setWorldOpen(false); sheetY.current = null }}
           >
-            <b>World</b>
-            <button type="button" className="dv-circ" aria-label="Close the world panel" onClick={() => setWorldOpen(false)}>
+            <b>{t('World')}</b>
+            <button type="button" className="dv-circ" aria-label={t('Close the world panel')} onClick={() => setWorldOpen(false)}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
             </button>
           </div>
           <div className="dv-card gauge-card" style={{ ['--mood' as string]: MOOD_COLORS[mood] || '#F59E0B' }}>
-            <div className="dv-gauge" style={{ ['--p' as string]: divergence }} role="img" aria-label={`${divergence}% diverged from real history`}>
-              <div><b><CountUp value={divergence} />%</b><small>diverged</small></div>
+            <div className="dv-gauge" style={{ ['--p' as string]: divergence }} role="img" aria-label={tm('{n}% diverged from real history', divergence)}>
+              <div><b><CountUp value={divergence} />%</b><small>{t('diverged')}</small></div>
             </div>
             {showTags && <div className="dv-tags center">
                 {currentYear !== '?' && <span className="dv-tag">{currentYear}</span>}
                 {currentResponse ? (
                   <>
-                    <span className="dv-tag" style={{ ['--c' as string]: MOOD_COLORS[mood] || '#fff' }}><i />{moodLabel(mood)}</span>
-                    <span className="dv-tag" style={{ ['--c' as string]: confidenceInfo(currentResponse.uncertaintyLevel).color }}><i />{confidenceInfo(currentResponse.uncertaintyLevel).label}</span>
+                    <span className="dv-tag" style={{ ['--c' as string]: MOOD_COLORS[mood] || '#fff' }}><i />{t(moodLabel(mood))}</span>
+                    <span className="dv-tag" style={{ ['--c' as string]: confidenceInfo(currentResponse.uncertaintyLevel).color }}><i />{t(confidenceInfo(currentResponse.uncertaintyLevel).label)}</span>
                   </>
                 ) : (
-                  <span className="dv-tag">Real history</span>
+                  <span className="dv-tag">{t('Real history')}</span>
                 )}
               {currentResponse && activeTimelineIdx >= 0 && <span className="dv-tag">{fmtDelta(deltaAt(activeTimelineIdx))}</span>}
             </div>}
@@ -1061,8 +1066,8 @@ export default function DivergePage() {
 
           {whatChangedOn && whatIfs.length > 0 && (
             <div className="dv-card">
-              <h3>What changed</h3>
-              <p className="dv-sub">How this timeline differs from real history, one line per answer. Tap one to jump to it.</p>
+              <h3>{t('What changed')}</h3>
+              <p className="dv-sub">{t('How this timeline differs from real history, one line per answer. Tap one to jump to it.')}</p>
               <div className="dv-chg">
                 {whatIfs.map((w, i) => (
                   <button key={i} type="button" className={`dv-chg-b${i === activeTimelineIdx ? ' on' : ''}`} onClick={() => { setWorldOpen(false); selectAnswer(i) }}>
@@ -1075,12 +1080,12 @@ export default function DivergePage() {
 
           {unanswered.length > 0 && (
             <div className="dv-card">
-              <h3>Unanswered history</h3>
-              <p className="dv-sub">Real events after {currentYear} that this timeline hasn’t touched. Tap one to ask about it.</p>
+              <h3>{t('Unanswered history')}</h3>
+              <p className="dv-sub">{tm('Real events after {n} that this timeline hasn’t touched. Tap one to ask about it.', currentYear)}</p>
               <div className="dv-un">
                 {unanswered.map(e => (
                   <button key={e.id} type="button" className="dv-un-b" disabled={loading} onClick={() => { setWorldOpen(false); askAboutEvent(e) }}>
-                    <b>{formatEventYear(e.year)}</b>{e.title}
+                    <b>{formatEventYear(e.year)}</b>{at(e.title)}
                   </button>
                 ))}
               </div>
@@ -1089,23 +1094,23 @@ export default function DivergePage() {
 
           {realHistoryOn && (
             <div className="dv-card">
-              <h3>{event ? `Real timeline · ${formatEventYear(event.year)}` : customInfo ? `Real history · ${customInfo.title}` : 'Real history'}</h3>
+              <h3>{event ? tm('Real timeline · {n}', formatEventYear(event.year)) : customInfo ? tm('Real history · {n}', customInfo.title) : t('Real history')}</h3>
               <div className="dv-ph">
                 {!event && customInfo?.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={customInfo.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.75) saturate(0.8)' }} />
                 ) : (
-                  <EventImage key={event?.id || 'custom'} id={event?.id} title={event?.title || customCardTitle} year={event?.year} imgStyle={{ filter: 'brightness(0.75) saturate(0.8)' }} />
+                  <EventImage key={event?.id || 'custom'} id={event?.id} title={event?.title || t(customCardTitle)} year={event?.year} imgStyle={{ filter: 'brightness(0.75) saturate(0.8)' }} />
                 )}
               </div>
               <p className="dv-prose soft">
-                {event?.fullDesc || (customInfo ? trimSummary(customInfo.extract) : whatIfs.length === 0 ? 'Ask a what-if and the real history behind it will show up here.' : CUSTOM_START_COPY)}
+                {event ? at(event.fullDesc) : (customInfo ? at(trimSummary(customInfo.extract)) : whatIfs.length === 0 ? t('Ask a what-if and the real history behind it will show up here.') : t(CUSTOM_START_COPY))}
               </p>
               {!event && customInfo && (
-                <p className="dv-sources" style={{ marginTop: '.6em' }}><a href={customInfo.url} target="_blank" rel="noreferrer">Read more on Wikipedia</a></p>
+                <p className="dv-sources" style={{ marginTop: '.6em' }}><a href={customInfo.url} target="_blank" rel="noreferrer">{t('Read more on Wikipedia')}</a></p>
               )}
               <ul className="dv-facts">
-                {realFacts.map(f => <li key={f}>{f}</li>)}
+                {realFacts.map(f => <li key={f}>{at(f)}</li>)}
               </ul>
             </div>
           )}
@@ -1143,7 +1148,7 @@ export default function DivergePage() {
                 <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Couldn’t build the summary</div>
                 <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.6, marginBottom: 18 }}>{summaryError}</div>
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                  <button onClick={handleSummary} style={{ ...btnStyle, color: 'var(--text)' }}>Try again</button>
+                  <button onClick={handleSummary} style={{ ...btnStyle, color: 'var(--text)' }}>{t('Try again')}</button>
                   <button onClick={() => setShowSummary(false)} style={{ ...btnStyle, background: 'transparent' }}>Close</button>
                 </div>
               </div>
@@ -1215,37 +1220,37 @@ export default function DivergePage() {
               </button>
 
               <div style={{ textAlign: 'center', marginTop: 12, marginBottom: 24 }}>
-                <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)' }}>AI Settings</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)' }}>{t('AI Settings')}</div>
               </div>
 
               <div style={{ marginBottom: 22 }}>
                 <AIResponseSettings showDescriptions />
               </div>
 
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Features</div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>{t('Features')}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <AIToggle
-                  label="Ask next questions"
-                  info="Two or three follow-up what-if questions you can tap after each answer."
+                  label={t('Ask next questions')}
+                  info={t('Two or three follow-up what-if questions you can tap after each answer.')}
                   value={askNextOn}
                   onChange={() => setAskNextOn(!askNextOn)}
                 />
                 <AIToggle
-                  label="What changed"
-                  info="A card in the World panel with one line per answer, showing how your timeline differs from real history."
+                  label={t('What changed')}
+                  info={t('A card in the World panel with one line per answer, showing how your timeline differs from real history.')}
                   value={whatChangedOn}
                   onChange={() => setWhatChangedOn(!whatChangedOn)}
                 />
                 <AIToggle
-                  label="Real history"
-                  info="A card in the World panel with the real event's picture, summary and key facts, to compare against your alternate timeline."
+                  label={t('Real history')}
+                  info={t('A card in the World panel with the real event\'s picture, summary and key facts, to compare against your alternate timeline.')}
                   value={realHistoryOn}
                   onChange={() => setRealHistoryOn(!realHistoryOn)}
                 />
                 {/* The same setting as Settings, Display Options */}
                 <AIToggle
-                  label="Answer tags"
-                  info="Small labels on each answer: the year, world mood, how confident the AI is, and the % change from the last answer."
+                  label={t('Answer tags')}
+                  info={t('Small labels on each answer: the year, world mood, how confident the AI is, and the % change from the last answer.')}
                   value={showTags}
                   onChange={() => updateSettings({ show_confidence_level: !showTags })}
                 />
@@ -1295,6 +1300,7 @@ const btnStyle: React.CSSProperties = {
 }
 
 function AIToggle({ label, info, value, onChange }: { label: string; info?: string; value: boolean; onChange: () => void }) {
+  const { t } = useT()
   return (
     <div
       role="switch"
@@ -1306,7 +1312,7 @@ function AIToggle({ label, info, value, onChange }: { label: string; info?: stri
     >
       <span style={{ fontSize: 13, color: 'var(--text)', display: 'inline-flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
         {label}
-        {info && <button type="button" className="dv-info" aria-label={`About ${label}`} data-tip={info} onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}><svg viewBox="0 0 16 16" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" aria-hidden="true"><circle cx="8" cy="8" r="6.6" /><path d="M8 7.2v3.6" /><circle cx="8" cy="4.9" r=".5" fill="currentColor" /></svg></button>}
+        {info && <button type="button" className="dv-info" aria-label={t('About {n}').replace('{n}', label)} data-tip={info} onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}><svg viewBox="0 0 16 16" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" aria-hidden="true"><circle cx="8" cy="8" r="6.6" /><path d="M8 7.2v3.6" /><circle cx="8" cy="4.9" r=".5" fill="currentColor" /></svg></button>}
       </span>
       <div style={{
         width: 40, height: 22, borderRadius: 99, flexShrink: 0,

@@ -9,6 +9,8 @@ import EventImage from '@/components/EventImage'
 import { ALL_EVENTS } from '@/lib/events'
 import { motion, AnimatePresence } from 'motion/react'
 import { useToast } from '@/components/useToast'
+import { useT } from '@/lib/useT'
+import { useAutoT } from '@/lib/autoTranslate'
 import { createShare, revokeShare, shareUrl } from '@/lib/share'
 import type { WhatIfEntry } from '@/types'
 
@@ -62,6 +64,8 @@ export default function SessionsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortMode, setSortMode] = useState<SortMode>('newest')
   const { toast, showToast } = useToast()
+  const { t, tn, locale } = useT()
+  const { at } = useAutoT()
   // One link per session until its answers change, so tapping Share twice does not make two links.
   const shared = useRef<Record<string, { signature: string; id: string }>>({})
 
@@ -97,10 +101,10 @@ export default function SessionsPage() {
   async function handleRename(id: string) {
     if (!renameValue.trim()) { setRenamingId(null); return }
     const { error } = await supabase.from('sessions').update({ event_title: renameValue.trim() }).eq('id', id)
-    if (error) { console.error(error); showToast('Could not rename this session.'); setRenamingId(null); return }
+    if (error) { console.error(error); showToast(t('Could not rename this session.')); setRenamingId(null); return }
     setSessions(prev => prev.map(s => s.id === id ? { ...s, event_title: renameValue.trim() } : s))
     setRenamingId(null)
-    showToast('Renamed.')
+    showToast(t('Renamed.'))
   }
 
   async function handleDuplicate(session: Session) {
@@ -115,8 +119,8 @@ export default function SessionsPage() {
       })
       .select()
       .single()
-    if (data) { setSessions(prev => [data, ...prev]); showToast('Session duplicated.') }
-    else { if (error) console.error(error); showToast('Could not duplicate this session.') }
+    if (data) { setSessions(prev => [data, ...prev]); showToast(t('Session duplicated.')) }
+    else { if (error) console.error(error); showToast(t('Could not duplicate this session.')) }
     setOpenMenuId(null)
   }
 
@@ -128,13 +132,13 @@ export default function SessionsPage() {
       const o = w as { question?: unknown; response?: { paragraph?: unknown } } | null
       return !!o && typeof o.question === 'string' && !!o.response && typeof o.response.paragraph === 'string'
     })
-    if (entries.length === 0) { showToast('There is nothing to share in this session yet.'); return }
+    if (entries.length === 0) { showToast(t('There is nothing to share in this session yet.')); return }
     const signature = `${entries.length}:${session.divergence_score}`
     try {
       let id = shared.current[session.id]?.signature === signature ? shared.current[session.id].id : null
       const isNew = !id
       if (!id) {
-        id = await createShare({ userId: user.id, eventId: session.event_id, title: cleanTitle(session.event_title) || 'Alternate timeline', whatIfs: entries, divergence: session.divergence_score })
+        id = await createShare({ userId: user.id, eventId: session.event_id, title: cleanTitle(session.event_title) || t('Alternate timeline'), whatIfs: entries, divergence: session.divergence_score })
         shared.current[session.id] = { signature, id }
       }
       const link = shareUrl(id)
@@ -142,19 +146,19 @@ export default function SessionsPage() {
       try { await navigator.clipboard.writeText(link) } catch { copied = false }
       const shareId = id
       showToast(
-        copied ? 'Link copied. Anyone with it can read this timeline.' : `Share link: ${link}`,
+        copied ? t('Link copied. Anyone with it can read this timeline.') : `${t('Share link:')} ${link}`,
         isNew ? {
-          label: 'Stop sharing',
+          label: t('Stop sharing'),
           run: async () => {
-            try { await revokeShare(shareId); delete shared.current[session.id]; showToast('Link removed. It no longer works.') }
-            catch (err) { console.error(err); showToast('Could not stop sharing. Try again.') }
+            try { await revokeShare(shareId); delete shared.current[session.id]; showToast(t('Link removed. It no longer works.')) }
+            catch (err) { console.error(err); showToast(t('Could not stop sharing. Try again.')) }
           },
         } : undefined,
       )
     } catch (err) {
       console.error(err)
       const code = (err as { code?: string } | null)?.code
-      showToast(code === 'PGRST205' || code === '42P01' ? 'Sharing is not switched on for this site yet.' : 'Could not create a share link. Please try again.')
+      showToast(code === 'PGRST205' || code === '42P01' ? t('Sharing is not switched on for this site yet.') : t('Could not create a share link. Please try again.'))
     }
   }
 
@@ -164,7 +168,7 @@ export default function SessionsPage() {
     console.log('delete result:', { error, data, count })
     if (error) {
       console.error('Failed to delete session:', error)
-      showToast('Could not delete this session.')
+      showToast(t('Could not delete this session.'))
       return
     }
     if (!data || data.length === 0) {
@@ -172,12 +176,12 @@ export default function SessionsPage() {
     }
     setSessions(prev => prev.filter(s => s.id !== id))
     setDeleteTargetId(null)
-    showToast('Session deleted.')
+    showToast(t('Session deleted.'))
     await loadSessions()
   }
 
   function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    return new Date(dateStr).toLocaleDateString(locale, {
       month: 'short', day: 'numeric', year: 'numeric'
     })
   }
@@ -217,14 +221,14 @@ export default function SessionsPage() {
       <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Figtree, system-ui, sans-serif', position: 'relative' }}>
         <Nav active="sessions" />
         <div className="page-wrap" style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto', padding: '140px 24px 60px' }}>
-          <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 8, letterSpacing: '-0.02em' }}>Sessions</h1>
-          <p style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 24 }}>Sign in to access your saved history.</p>
+          <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 8, letterSpacing: '-0.02em' }}>{t('Sessions')}</h1>
+          <p style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 24 }}>{t('Sign in to access your saved history.')}</p>
           <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
             <button
               onClick={() => router.push('/auth')}
               style={{ padding: '8px 20px', borderRadius: 8, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
             >
-              Sign In
+              {t('Sign In')}
             </button>
           </div>
         </div>
@@ -237,30 +241,30 @@ export default function SessionsPage() {
       <Nav active="sessions" />
 
       <div className="page-wrap" style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto', padding: '140px 24px 60px' }}>
-        <h1 style={{ fontSize: 'calc(var(--font-scale) * 2.67)', fontWeight: 900, marginBottom: 8, letterSpacing: '-0.02em' }}>Sessions</h1>
-        <p style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', marginBottom: 24 }}>Your saved alternate timelines.</p>
+        <h1 style={{ fontSize: 'calc(var(--font-scale) * 2.67)', fontWeight: 900, marginBottom: 8, letterSpacing: '-0.02em' }}>{t('Sessions')}</h1>
+        <p style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', marginBottom: 24 }}>{t('Your saved alternate timelines.')}</p>
 
         {/* Filter bar removed for now */}
 
         {loadingSessions ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} role="status" aria-label="Loading your sessions">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} role="status" aria-label={t('Loading your sessions')}>
             <div className="skel-row" /><div className="skel-row" style={{ opacity: 0.75 }} /><div className="skel-row" style={{ opacity: 0.5 }} />
           </div>
         ) : filteredSorted.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
             <div style={{ fontSize: 20, color: 'var(--text-dim)' }}>
-              {sessions.length === 0 ? 'No saved sessions yet' : 'No sessions match your search'}
+              {sessions.length === 0 ? t('No saved sessions yet') : t('No sessions match your search')}
             </div>
             {sessions.length === 0 && (
               <>
-                <div style={{ fontSize: 16, color: 'var(--text-dim)', marginTop: 8, opacity: 0.7 }}>Start exploring history to save your timelines</div>
+                <div style={{ fontSize: 16, color: 'var(--text-dim)', marginTop: 8, opacity: 0.7 }}>{t('Start exploring history to save your timelines')}</div>
                 <button
                   onClick={() => router.push('/explore')}
                   style={{ marginTop: 20, padding: '10px 20px', borderRadius: 10, border: '1px solid color-mix(in srgb, var(--accent) 30%, var(--card-bg))', background: 'color-mix(in srgb, var(--accent) 8%, var(--card-bg))', color: 'var(--accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
                   onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.fontSize = '15px'; el.style.color = 'var(--text)' }}
                   onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.fontSize = '13px'; el.style.color = 'var(--accent)' }}
                 >
-                  Explore events
+                  {t('Explore events')}
                 </button>
               </>
             )}
@@ -310,7 +314,7 @@ export default function SessionsPage() {
                       />
                     ) : (
                       <div className="ses-title" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {cleanTitle(session.event_title) || 'Untitled Session'}
+                        {at(cleanTitle(session.event_title)) || t('Untitled Session')}
                       </div>
                     )}
                     <div className="ses-meta" style={{ display: 'contents' }}>
@@ -323,7 +327,7 @@ export default function SessionsPage() {
                       color: session.divergence_score > 70 ? '#EF4444' : session.divergence_score > 40 ? '#F59E0B' : '#10B981',
                       whiteSpace: 'nowrap',
                     }}>
-                      {session.divergence_score}% diverged
+                      {tn('{n}% diverged', session.divergence_score)}
                     </div>
                     </div>
                     <div className="ses-menu-wrap" style={{ position: 'relative' }}>
@@ -347,7 +351,7 @@ export default function SessionsPage() {
                             onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'var(--card-bg)'}
                             onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
                           >
-                            Rename
+                            {t('Rename')}
                           </button>
                           <button
                             onClick={() => handleShare(session)}
@@ -355,7 +359,7 @@ export default function SessionsPage() {
                             onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'var(--card-bg)'}
                             onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
                           >
-                            Share
+                            {t('Share')}
                           </button>
                           <button
                             onClick={() => handleDuplicate(session)}
@@ -363,7 +367,7 @@ export default function SessionsPage() {
                             onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'var(--card-bg)'}
                             onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
                           >
-                            Duplicate
+                            {t('Duplicate')}
                           </button>
                           <button
                               onClick={() => { setDeleteTargetId(session.id); setOpenMenuId(null) }}
@@ -371,7 +375,7 @@ export default function SessionsPage() {
                               onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.12)'}
                               onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
                             >
-                              Delete
+                              {t('Delete')}
                             </button>
                         </div>
                       )}
@@ -381,7 +385,7 @@ export default function SessionsPage() {
                   {isExpanded && (
                     <div style={{ position: 'relative', zIndex: 1, padding: '0 18px 16px', borderTop: '1px solid var(--border-color)', paddingTop: 14 }}>
                       <div style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 10 }}>
-                        {session.what_ifs?.length || 0} what-if{session.what_ifs?.length !== 1 ? 's' : ''} explored
+                        {tn((session.what_ifs?.length || 0) === 1 ? '{n} what-if explored' : '{n} what-ifs explored', session.what_ifs?.length || 0)}
                       </div>
                       {session.what_ifs?.slice(0, 5).map((w: any, i: number) => (
                         <div key={i} style={{ fontSize: 12, color: 'var(--text-dim)', padding: '5px 0', borderBottom: i < Math.min(session.what_ifs.length, 5) - 1 ? '1px solid var(--border-color)' : 'none' }}>
@@ -394,7 +398,7 @@ export default function SessionsPage() {
                         onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.12)'}
                         onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
                       >
-                        Continue exploring
+                        {t('Continue exploring')}
                       </button>
                     </div>
                   )}
@@ -425,9 +429,9 @@ export default function SessionsPage() {
               style={{ background: 'var(--surface)', border: '1px solid var(--border-color)', borderRadius: 18, padding: '36px', maxWidth: 560, width: '100%' }}
               onClick={e => e.stopPropagation()}
             >
-              <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)', marginBottom: 10 }}>Delete this session?</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)', marginBottom: 10 }}>{t('Delete this session?')}</div>
               <div style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.6, marginBottom: 24 }}>
-                Are you sure you want to delete <span style={{ fontWeight: 700, color: 'var(--text)' }}>{cleanTitle(deleteTarget?.event_title || '') || 'Untitled Session'}</span>. This action cannot be undone.
+                {t('Are you sure you want to delete {name}? This action cannot be undone.').split('{name}').flatMap((part, k) => k === 0 ? [part] : [<span key={k} style={{ fontWeight: 700, color: 'var(--text)' }}>{cleanTitle(deleteTarget?.event_title || '') || t('Untitled Session')}</span>, part])}
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
@@ -436,7 +440,7 @@ export default function SessionsPage() {
                   onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)'}
                   onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)'}
                 >
-                  Back
+                  {t('Back')}
                 </button>
                 <button
                   onClick={() => { console.log('Delete clicked, target:', deleteTargetId); if (deleteTargetId) handleDelete(deleteTargetId) }}
@@ -444,7 +448,7 @@ export default function SessionsPage() {
                   onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.12)'}
                   onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
                 >
-                  Continue
+                  {t('Continue')}
                 </button>
               </div>
             </motion.div>

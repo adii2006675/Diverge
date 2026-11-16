@@ -36,7 +36,7 @@ export default function LandingPage() {
         {user && profile?.username && (
           <motion.p
             {...rise(0)}
-            style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-dim)', marginBottom: 16, letterSpacing: '-0.01em' }}
+            style={{ fontSize: 'clamp(14px, 1.75vw, 22px)', fontWeight: 700, color: 'var(--text-dim)', marginBottom: 16, letterSpacing: '-0.01em' }}
           >
             {t('Hey,')} <span style={{ color: 'var(--text)' }}>{profile.username}</span>
           </motion.p>
@@ -53,7 +53,7 @@ export default function LandingPage() {
         <motion.p
           {...rise(1.05)}
           className="home-sub"
-          style={{ fontSize: 19, color: 'var(--text-dim)', marginBottom: 52, lineHeight: 1.6, whiteSpace: 'nowrap' }}
+          style={{ fontSize: 'clamp(12px, 1.5vw, 19px)', color: 'var(--text-dim)', marginBottom: 52, lineHeight: 1.6, whiteSpace: 'nowrap' }}
         >
           {t('Pick any event in time. Ask to see a change. Watch it Diverge.')}
         </motion.p>

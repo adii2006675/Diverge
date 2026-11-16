@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { ALL_EVENTS, formatEventYear } from '@/lib/events'
-import { eventText } from '@/lib/localizeEvent'
+import { eventText, useEventText } from '@/lib/localizeEvent'
 import { useT } from '@/lib/useT'
 import { SPRING } from '@/lib/motion'
 
@@ -24,6 +24,7 @@ export default function CommandPalette() {
   const router = useRouter()
   const { user } = useAuth()
   const { t, language } = useT()
+  const { eventText: et, version } = useEventText()
   const reduce = useReducedMotion()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -73,10 +74,10 @@ export default function CommandPalette() {
       .map(s => ({ id: `s-${s.id}`, group: 'Your sessions' as const, label: s.event_title || 'Untitled session', hint: '', path: `/diverge/${s.event_id || 'custom'}?session=${s.id}` }))
     const events = q
       ? ALL_EVENTS.filter(e => { const l = eventText(language, e); return match(e.title, l.title, e.era, String(e.year)) }).slice(0, 8)
-          .map(e => ({ id: `e-${e.id}`, group: 'Events' as const, label: eventText(language, e).title, hint: formatEventYear(e.year), path: `/diverge/${e.id}` }))
+          .map(e => ({ id: `e-${e.id}`, group: 'Events' as const, label: et(e).title, hint: formatEventYear(e.year), path: `/diverge/${e.id}` }))
       : []
     return [...pages, ...sess, ...events]
-  }, [query, sessions, language, t])
+  }, [query, sessions, language, t, et, version])
 
   useEffect(() => {
     document.getElementById(`cp-opt-${active}`)?.scrollIntoView({ block: 'nearest' })

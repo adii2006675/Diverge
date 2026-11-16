@@ -8,7 +8,7 @@ import DualSlider from '@/components/DualSlider'
 import TiltCard from '@/components/TiltCard'
 import EventImage from '@/components/EventImage'
 import { useT } from '@/lib/useT'
-import { eventText } from '@/lib/localizeEvent'
+import { useEventText } from '@/lib/localizeEvent'
 import { translate } from '@/lib/i18n'
 import type { HistoricalEvent } from '@/lib/events'
 import { useBookmarks } from '@/lib/bookmarks'
@@ -92,7 +92,8 @@ type CardProps = {
 const EventCardItem = memo(function EventCardItem({ event, idx, entered, language, saved, lifted, onOpen, onToggle }: CardProps) {
   const tr = (text: string) => translate(language, text)
   const year = event.year < 0 ? `${Math.abs(event.year)} ${tr('BC')}` : String(event.year)
-  const text = eventText(language, event)
+  const { eventText: et } = useEventText()
+  const text = et(event)
   return (
     <motion.div
       className={`event-card${lifted ? ' is-lifted' : ''}`}
@@ -127,6 +128,7 @@ const EventCardItem = memo(function EventCardItem({ event, idx, entered, languag
 export default function ExplorePage() {
   const router = useRouter()
   const { t, language } = useT()
+  const { eventText: et } = useEventText()
   const fmtYear = (y: number) => (y < 0 ? `${Math.abs(y)} ${t('BC')}` : String(y))
   const reduce = useReducedMotion()
   // Several eras can be on at once. An empty list means "All".
@@ -193,7 +195,7 @@ export default function ExplorePage() {
     if (!eraMatch || !yearMatch) return false
     if (savedOnly && !bookmarks.has(e.id)) return false
     if (!needle) return true
-    const local = eventText(language, e)
+    const local = et(e)
     return [e.title, e.shortDesc, local.title, local.shortDesc, e.era, fmtYear(e.year), String(e.year)].some(f => f.toLowerCase().includes(needle))
   })
 
@@ -465,9 +467,9 @@ export default function ExplorePage() {
                     </div>
                   </div>
                   <div style={{ padding: '20px 24px 24px' }}>
-                    <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 12, color: 'var(--text)' }}>{eventText(language, expandedEvent).title}</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 12, color: 'var(--text)' }}>{et(expandedEvent).title}</div>
                     <div style={{ fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: 24 }}>
-                      {eventText(language, expandedEvent).fullDesc}
+                      {et(expandedEvent).fullDesc}
                     </div>
                     <div style={{ display: 'flex', gap: 10 }}>
                       <button

@@ -2,6 +2,12 @@
 // A missing entry falls back to the English text. Each entry lists: Spanish, French, German, Japanese, Portuguese, Hindi, Chinese.
 // Historical content (event data) and the AI's answers are not here: answers are written in the chosen language by the API.
 
+import { AUTH_ROWS } from '@/lib/i18nAuth'
+import { SESSIONS_ROWS } from '@/lib/i18nSessions'
+import { COMMON_ROWS } from '@/lib/i18nCommon'
+import { CREDITS_ROWS } from '@/lib/i18nCredits'
+import { CHAT_ROWS } from '@/lib/i18nChat'
+
 export const LANGUAGES = ['English', 'Spanish', 'French', 'German', 'Japanese', 'Portuguese', 'Hindi', 'Chinese'] as const
 export type Language = (typeof LANGUAGES)[number]
 
@@ -168,7 +174,7 @@ const RAW: Record<string, Row> = {
 const DICT: Record<Language, Record<string, string>> = {
   English: {}, Spanish: {}, French: {}, German: {}, Japanese: {}, Portuguese: {}, Hindi: {}, Chinese: {},
 }
-for (const [en, row] of Object.entries(RAW)) ORDER.forEach((lang, i) => { DICT[lang][en] = row[i] })
+for (const [en, row] of Object.entries({ ...RAW, ...AUTH_ROWS, ...SESSIONS_ROWS, ...COMMON_ROWS, ...CREDITS_ROWS, ...CHAT_ROWS })) ORDER.forEach((lang, i) => { DICT[lang][en] = row[i] })
 
 export function normalizeLanguage(value: unknown): Language {
   return (LANGUAGES as readonly string[]).includes(value as string) ? (value as Language) : 'English'
@@ -176,4 +182,9 @@ export function normalizeLanguage(value: unknown): Language {
 
 export function translate(language: unknown, text: string): string {
   return DICT[normalizeLanguage(language)][text] ?? text
+}
+
+/** Like translate, then fills {n} with a number: tn('Send a new code in {n}s', 30). */
+export function translateN(language: unknown, text: string, n: number | string): string {
+  return translate(language, text).replace('{n}', String(n))
 }

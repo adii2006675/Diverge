@@ -1,5 +1,4 @@
-import Link from 'next/link'
-import Nav from '@/components/Nav'
+import LegalView from '@/components/LegalView'
 
 export const metadata = { title: 'Privacy · Diverge' }
 
@@ -45,24 +44,5 @@ const sections: { title: string; body: string[] }[] = [
 ]
 
 export default function PrivacyPage() {
-  return (
-    <main style={{ minHeight: 'var(--vh-fit, 100vh)', color: 'var(--text)', fontFamily: 'Figtree, system-ui, sans-serif', position: 'relative' }}>
-      <Nav />
-      <div className="page-wrap" style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto', padding: '140px 24px 80px' }}>
-        <h1 style={{ fontSize: 'calc(var(--font-scale) * 2.67)', fontWeight: 900, letterSpacing: '-0.02em', margin: '0 0 8px' }}>Privacy</h1>
-        <p style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', margin: '0 0 36px', lineHeight: 1.7 }}>
-          Diverge is a small project. This page says in plain words what it stores and who sees it.
-        </p>
-        {sections.map(s => (
-          <section key={s.title} style={{ marginBottom: 28 }}>
-            <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.3)', fontWeight: 800, margin: '0 0 8px' }}>{s.title}</h2>
-            {s.body.map((p, i) => (
-              <p key={i} style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', lineHeight: 1.75, margin: '0 0 8px' }}>{p}</p>
-            ))}
-          </section>
-        ))}
-        <Link href="/" style={{ color: 'var(--accent)', fontSize: 'var(--font-scale)', fontWeight: 600 }}>Back to Diverge</Link>
-      </div>
-    </main>
-  )
+  return <LegalView title="Privacy" intro="Diverge is a small project. This page says in plain words what it stores and who sees it." sections={sections} />
 }

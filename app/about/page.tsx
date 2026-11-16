@@ -1,6 +1,8 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
+import { useAutoT } from '@/lib/autoTranslate'
+import { useT } from '@/lib/useT'
 import { useId, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { EASE_OUT } from '@/lib/motion'
@@ -39,12 +41,13 @@ const WHY: Point[] = [
 
 // A plain list. It sits inside a dropdown, which does the reveal.
 function PointList({ items }: { items: Point[] }) {
+  const { at } = useAutoT()
   return (
     <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
       {items.map(it => (
         <li key={it.lead} style={{ position: 'relative', paddingLeft: 20, fontSize: 'calc(var(--font-scale) * 1.2)', lineHeight: 1.7, color: 'var(--text-dim)' }}>
           <span aria-hidden="true" style={{ position: 'absolute', left: 0, top: '0.72em', width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)' }} />
-          <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{it.lead}</strong> {it.text}
+          <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{at(it.lead)}</strong> {at(it.text)}
         </li>
       ))}
     </ul>
@@ -92,6 +95,8 @@ function Words({ text, reduce }: { text: string; reduce: boolean | null }) {
 
 export default function AboutPage() {
   const router = useRouter()
+  const { at } = useAutoT()
+  const { t } = useT()
 
   const reduce = useReducedMotion()
   // A lighter reveal for the very tall accuracy section.
@@ -104,12 +109,12 @@ export default function AboutPage() {
     : { hidden: { opacity: 0, y: 30, scale: 0.985, filter: 'blur(10px)' }, show: { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' } }
 
   return (
-    <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
+    <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Figtree, system-ui, sans-serif', position: 'relative' }}>
       <Nav active="about" />
 
       <div className="font-scale-wrapper page-wrap" style={{ position: 'relative', zIndex: 1, maxWidth: 680, margin: '0 auto', padding: '120px 24px 80px' }}>
         <h1 className="about-title" style={{ fontSize: 'calc(var(--font-scale) * 3.5)', fontWeight: 900, marginBottom: 24, letterSpacing: '-0.02em', textAlign: 'center' }}>
-          <Words text="What is Diverge?" reduce={reduce} />
+          <Words text={at('What is Diverge?')} reduce={reduce} />
         </h1>
 
         <motion.p
@@ -120,7 +125,7 @@ export default function AboutPage() {
           transition={{ ...SOFT, delay: 0.05 }}
           style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.85, color: 'var(--text-dim)', marginBottom: 24 }}
         >
-          Diverge is a site where you pick a moment in history and ask what would have happened if it went a different way. You get an answer right away, and you can see how it compares to what really happened.
+          {at("Diverge is a site where you pick a moment in history and ask what would have happened if it went a different way. You get an answer right away, and you can see how it compares to what really happened.")}
         </motion.p>
 
         <motion.p
@@ -131,7 +136,7 @@ export default function AboutPage() {
           transition={{ ...SOFT, delay: 0.1 }}
           style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.85, color: 'var(--text-dim)', marginBottom: 24 }}
         >
-          The answers come from Claude, an AI made by Anthropic. It uses real history, like who was allied with who, how strong each army was, and how the economy worked, to figure out what would change. It reasons through cause and effect the way a historian would, and it leans on documented history.
+          {at("The answers come from Claude, an AI made by Anthropic. It uses real history, like who was allied with who, how strong each army was, and how the economy worked, to figure out what would change. It reasons through cause and effect the way a historian would, and it leans on documented history.")}
         </motion.p>
 
         <motion.p
@@ -142,7 +147,7 @@ export default function AboutPage() {
           transition={{ ...SOFT, delay: 0.15 }}
           style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.85, color: 'var(--text-dim)', marginBottom: 40 }}
         >
-          You can keep going, too. Each answer builds on the one before it, so your what ifs stack up into one alternate world that gets further from ours with every question. When you&apos;re done, a summary shows how different your world turned out.
+          {at("You can keep going, too. Each answer builds on the one before it, so your what ifs stack up into one alternate world that gets further from ours with every question. When you're done, a summary shows how different your world turned out.")}
         </motion.p>
 
         <div style={{ borderTop: '1px solid var(--accent)', paddingTop: 40, marginBottom: 40 }}>
@@ -154,7 +159,7 @@ export default function AboutPage() {
             transition={{ ...SOFT }}
             style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 16, textAlign: 'center' }}
           >
-            How it works
+            {at('How it works')}
           </motion.h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {[
@@ -205,8 +210,8 @@ export default function AboutPage() {
                   {item.step.replace('0', '')}
                 </motion.div>
                 <div style={{ marginLeft: 14 }}>
-                  <div style={{ fontSize: 'calc(var(--font-scale) * 1.25)', fontWeight: 600, marginBottom: 4 }}>{item.title}</div>
-                  <div style={{ fontSize: 'calc(var(--font-scale) * 1.33)', color: 'var(--text-dim)', lineHeight: 1.65 }}>{item.desc}</div>
+                  <div style={{ fontSize: 'calc(var(--font-scale) * 1.25)', fontWeight: 600, marginBottom: 4 }}>{at(item.title)}</div>
+                  <div style={{ fontSize: 'calc(var(--font-scale) * 1.33)', color: 'var(--text-dim)', lineHeight: 1.65 }}>{at(item.desc)}</div>
                 </div>
               </motion.div>
             ))}
@@ -221,19 +226,19 @@ export default function AboutPage() {
           transition={{ ...SOFT }}
           style={{ borderTop: '1px solid var(--accent)', paddingTop: 40, marginBottom: 40 }}
         >
-          <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 12, textAlign: 'center' }}>Accuracy disclaimer</h2>
+          <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 12, textAlign: 'center' }}>{at('Accuracy disclaimer')}</h2>
           <p style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.75, color: 'var(--text-dim)' }}>
-            Diverge writes alternate history, so there is no answer key. Nobody can check what would really have happened. What I can do is make the AI be honest about what is real and what is a guess, so I built in a bunch of safeguards. Here is what they are and why it still is not perfect. Tap a heading to open it.
+            {at("Diverge writes alternate history, so there is no answer key. Nobody can check what would really have happened. What I can do is make the AI be honest about what is real and what is a guess, so I built in a bunch of safeguards. Here is what they are and why it still is not perfect. Tap a heading to open it.")}
           </p>
           <div style={{ marginTop: 28 }}>
-            <Dropdown title="How an answer gets made">
+            <Dropdown title={at('How an answer gets made')}>
               <PointList items={HOW} />
             </Dropdown>
-            <Dropdown title="The numbers"><PointList items={NUMBERS} /></Dropdown>
-            <Dropdown title="Why it can still be wrong"><PointList items={WHY} /></Dropdown>
+            <Dropdown title={at('The numbers')}><PointList items={NUMBERS} /></Dropdown>
+            <Dropdown title={at('Why it can still be wrong')}><PointList items={WHY} /></Dropdown>
           </div>
           <p style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.75, color: 'var(--text-dim)', marginTop: 28 }}>
-            So use Diverge to explore and get curious, not as a source for homework or for facts you plan to repeat. If something really matters, check it with a real source.
+            {at("So use Diverge to explore and get curious, not as a source for homework or for facts you plan to repeat. If something really matters, check it with a real source.")}
           </p>
         </motion.div>
 
@@ -245,16 +250,16 @@ export default function AboutPage() {
           transition={{ ...SOFT }}
           style={{ borderTop: '1px solid var(--accent)', paddingTop: 40 }}
         >
-          <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 12, textAlign: 'center' }}>Built by</h2>
+          <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 12, textAlign: 'center' }}>{at('Built by')}</h2>
           <p style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.75, color: 'var(--text-dim)', marginBottom: 20 }}>
-            Diverge was built by Adi Sharma, a CS student at the University of Delaware. It uses the Claude API from Anthropic for the AI answers, Next.js for the front end, and Supabase to store your sessions.
+            {at("Diverge was built by Adi Sharma, a CS student at the University of Delaware. It uses the Claude API from Anthropic for the AI answers, Next.js for the front end, and Supabase to store your sessions.")}
           </p>
 
           <div className="about-links" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
             <a href="https://github.com/adii2006675/Diverge" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-dim)', fontSize: 14, textDecoration: 'none', transition: 'all 0.2s' }} onMouseEnter={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.borderColor = '#9CA3AF'; el.style.transform = 'scale(1.06)'; const span = el.querySelector('span') as HTMLSpanElement; span.style.backgroundImage = 'linear-gradient(45deg, #ffffff, #6e7681, #24292e)'; span.style.webkitBackgroundClip = 'text'; span.style.backgroundClip = 'text'; span.style.color = 'transparent' }} onMouseLeave={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.borderColor = 'var(--border-color)'; el.style.transform = 'scale(1)'; const span = el.querySelector('span') as HTMLSpanElement; span.style.backgroundImage = 'none'; span.style.color = 'var(--text-dim)' }}><span style={{ transition: 'color 0.2s' }}>GitHub</span></a>
             <a href="https://www.linkedin.com/in/adisharma06/" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-dim)', fontSize: 14, textDecoration: 'none', transition: 'all 0.2s' }} onMouseEnter={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.borderColor = '#0A66C2'; el.style.transform = 'scale(1.06)'; const span = el.querySelector('span') as HTMLSpanElement; span.style.backgroundImage = 'linear-gradient(45deg, #0A66C2, #ffffff)'; span.style.webkitBackgroundClip = 'text'; span.style.backgroundClip = 'text'; span.style.color = 'transparent' }} onMouseLeave={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.borderColor = 'var(--border-color)'; el.style.transform = 'scale(1)'; const span = el.querySelector('span') as HTMLSpanElement; span.style.backgroundImage = 'none'; span.style.color = 'var(--text-dim)' }}><span style={{ transition: 'color 0.2s' }}>LinkedIn</span></a>
             <a href="https://www.instagram.com/adii.sharma__/" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-dim)', fontSize: 14, textDecoration: 'none', transition: 'all 0.2s' }} onMouseEnter={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.borderColor = '#d62976'; el.style.transform = 'scale(1.06)'; const span = el.querySelector('span') as HTMLSpanElement; span.style.backgroundImage = 'linear-gradient(45deg, #4f5bd5, #962fbf, #d62976, #fa7e1e, #feda75)'; span.style.webkitBackgroundClip = 'text'; span.style.backgroundClip = 'text'; span.style.color = 'transparent' }} onMouseLeave={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.borderColor = 'var(--border-color)'; el.style.transform = 'scale(1)'; const span = el.querySelector('span') as HTMLSpanElement; span.style.backgroundImage = 'none'; span.style.color = 'var(--text-dim)' }}><span style={{ transition: 'color 0.2s' }}>Instagram</span></a>
-            <a href="https://adii2006675.github.io" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-dim)', fontSize: 14, textDecoration: 'none', transition: 'all 0.2s' }} onMouseEnter={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.color = 'var(--accent)'; el.style.borderColor = 'var(--accent)'; el.style.transform = 'scale(1.06)' }} onMouseLeave={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.color = 'var(--text-dim)'; el.style.borderColor = 'var(--border-color)'; el.style.transform = 'scale(1)' }}>Portfolio</a>
+            <a href="https://adii2006675.github.io" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-dim)', fontSize: 14, textDecoration: 'none', transition: 'all 0.2s' }} onMouseEnter={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.color = 'var(--accent)'; el.style.borderColor = 'var(--accent)'; el.style.transform = 'scale(1.06)' }} onMouseLeave={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.color = 'var(--text-dim)'; el.style.borderColor = 'var(--border-color)'; el.style.transform = 'scale(1)' }}>{t('Portfolio')}</a>
           </div>
 
         </motion.div>

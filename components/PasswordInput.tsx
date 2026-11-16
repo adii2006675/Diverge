@@ -1,9 +1,13 @@
 'use client'
 import { useState, type InputHTMLAttributes } from 'react'
+import { useT } from '@/lib/useT'
 
 /** A password field with an eye button that shows or hides what was typed. Takes the same props and style as an <input>. */
-export default function PasswordInput({ style, showLabel = 'Show password', hideLabel = 'Hide password', ...rest }: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & { showLabel?: string; hideLabel?: string }) {
+export default function PasswordInput({ style, showLabel, hideLabel, ...rest }: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & { showLabel?: string; hideLabel?: string }) {
   const [visible, setVisible] = useState(false)
+  const { t } = useT()
+  showLabel = showLabel ?? t('Show password')
+  hideLabel = hideLabel ?? t('Hide password')
   return (
     <div style={{ position: 'relative', width: '100%' }}>
       <input {...rest} type={visible ? 'text' : 'password'} style={{ ...style, width: '100%', paddingRight: 46 }} />

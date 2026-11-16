@@ -6,9 +6,11 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import StarBackground from '@/components/StarBackground'
+import { useT } from '@/lib/useT'
 
 export default function AuthPage() {
   const router = useRouter()
+  const { t, tn } = useT()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
@@ -40,13 +42,13 @@ export default function AuthPage() {
 
   // Sends the email with a code. The answer is the same whether or not the address has an account.
   async function sendCode() {
-    if (!email.trim()) { setError('Enter your email first'); return }
+    if (!email.trim()) { setError(t('Enter your email first')); return }
     if (cooldown > 0) return
     setLoading(true); setError('')
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim())
     setLoading(false)
     if (resetError) {
-      setError(/rate|too many|seconds/i.test(resetError.message) ? 'Too many requests. Wait a minute and try again.' : resetError.message)
+      setError(/rate|too many|seconds/i.test(resetError.message) ? t('Too many requests. Wait a minute and try again.') : resetError.message)
       return
     }
     setCooldown(45)
@@ -61,7 +63,7 @@ export default function AuthPage() {
     const { error: verifyError } = await supabase.auth.verifyOtp({ email: email.trim(), token, type: 'recovery' })
     setLoading(false)
     if (verifyError) {
-      setError(/expired|invalid/i.test(verifyError.message) ? 'That code is wrong or has expired. Try again or send a new one.' : verifyError.message)
+      setError(/expired|invalid/i.test(verifyError.message) ? t('That code is wrong or has expired. Try again or send a new one.') : verifyError.message)
       setCode('')
       window.setTimeout(() => boxRefs.current[0]?.focus(), 30)
       return
@@ -81,10 +83,10 @@ export default function AuthPage() {
     setError('')
     const okLength = newPassword.length >= 8 && newPassword.length <= 16
     if (!okLength || !/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword)) {
-      setError('Password must be 8-16 characters with 1 uppercase, 1 lowercase, 1 number, and 1 special character')
+      setError(t('Password must be 8-16 characters with 1 uppercase, 1 lowercase, 1 number, and 1 special character'))
       return
     }
-    if (newPassword !== confirmPassword) { setError('Passwords do not match'); return }
+    if (newPassword !== confirmPassword) { setError(t('Passwords do not match')); return }
     setLoading(true)
     const { error: updateError } = await supabase.auth.updateUser({ password: newPassword })
     setLoading(false)
@@ -98,8 +100,8 @@ export default function AuthPage() {
 
     try {
       if (isSignUp) {
-        if (!name.trim()) { setError('Please enter your name'); setLoading(false); return }
-        if (!age || parseInt(age) < 8 || parseInt(age) > 120) { setError('Please enter a valid age'); setLoading(false); return }
+        if (!name.trim()) { setError(t('Please enter your name')); setLoading(false); return }
+        if (!age || parseInt(age) < 8 || parseInt(age) > 120) { setError(t('Please enter a valid age')); setLoading(false); return }
 
         console.log('Attempting signup with:', email)
         const res = await fetch('/api/auth/signup', {
@@ -119,14 +121,14 @@ export default function AuthPage() {
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
         if (signInError) {
-          if (/invalid login credentials/i.test(signInError.message)) throw new Error('Incorrect email or password. Forgot your password? Use the link below.')
+          if (/invalid login credentials/i.test(signInError.message)) throw new Error(t('Incorrect email or password. Forgot your password? Use the link below.'))
           throw signInError
         }
         router.push('/')
       }
     } catch (err: any) {
       console.error('Auth error:', err)
-      setError(err?.message || err?.error_description || JSON.stringify(err) || 'Something went wrong. Please try again.')
+      setError(err?.message || err?.error_description || JSON.stringify(err) || t('Something went wrong. Please try again.'))
     }
     setLoading(false)
   }
@@ -143,7 +145,7 @@ export default function AuthPage() {
           DIVERGE
         </div>
         <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginBottom: 28 }}>
-          {reset === 'email' ? 'Enter your email and we will send you a code' : reset === 'code' ? `We sent a code to ${email.trim()}` : reset === 'newpass' ? 'Code confirmed. Choose a new password' : isSignUp ? 'Create an account to save your history' : 'Sign in to access your saved history'}
+          {reset === 'email' ? t('Enter your email and we will send you a code') : reset === 'code' ? `${t('We sent a code to')} ${email.trim()}` : reset === 'newpass' ? t('Code confirmed. Choose a new password') : isSignUp ? t('Create an account to save your history') : t('Sign in to access your saved history')}
         </div>
 
         {reset ? (
@@ -154,7 +156,7 @@ export default function AuthPage() {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   type="email"
-                  placeholder="Email"
+                  placeholder={t('Email')}
                   style={inp}
                   onKeyDown={e => e.key === 'Enter' && sendCode()}
                 />
@@ -162,7 +164,7 @@ export default function AuthPage() {
             )}
 
             {reset === 'code' && (
-              <div role="group" aria-label="6-digit code" style={{ display: 'flex', gap: 8, justifyContent: 'space-between' }}>
+              <div role="group" aria-label={t('6-digit code')} style={{ display: 'flex', gap: 8, justifyContent: 'space-between' }}>
                 {Array.from({ length: 6 }).map((_, i) => (
                   <input
                     key={i}
@@ -172,7 +174,7 @@ export default function AuthPage() {
                     autoComplete={i === 0 ? 'one-time-code' : 'off'}
                     maxLength={6}
                     disabled={loading}
-                    aria-label={`Digit ${i + 1}`}
+                    aria-label={`${t('Digit')} ${i + 1}`}
                     onChange={e => {
                       const v = e.target.value.replace(/\D/g, '')
                       if (!v) return
@@ -203,14 +205,14 @@ export default function AuthPage() {
             {reset === 'newpass' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>New password</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>{t('New password')}</div>
                 </div>
-                <PasswordInput value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="New password" style={inp} autoFocus autoComplete="new-password" />
+                <PasswordInput value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder={t('New password')} style={inp} autoFocus autoComplete="new-password" />
                 <PasswordChecklist password={newPassword} />
                 <PasswordInput
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm new password"
+                  placeholder={t('Confirm new password')}
                   autoComplete="new-password"
                   style={inp}
                   onKeyDown={e => e.key === 'Enter' && savePassword()}
@@ -231,7 +233,7 @@ export default function AuthPage() {
                 disabled={loading}
                 style={{ width: '100%', marginTop: 20, padding: '13px', borderRadius: 10, border: 'none', background: '#3B82F6', color: '#fff', fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, fontFamily: 'inherit' }}
               >
-                {loading ? 'Loading...' : 'Send code'}
+                {loading ? t('Loading...') : t('Send code')}
               </button>
             )}
 
@@ -241,20 +243,20 @@ export default function AuthPage() {
                 disabled={loading}
                 style={{ width: '100%', marginTop: 20, padding: '13px', borderRadius: 10, border: 'none', background: '#3B82F6', color: '#fff', fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, fontFamily: 'inherit' }}
               >
-                {loading ? 'Loading...' : 'Change password'}
+                {loading ? t('Loading...') : t('Change password')}
               </button>
             )}
 
             {reset === 'code' && (
               <div style={{ marginTop: 18, textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>
-                {loading ? 'Checking...' : cooldown > 0 ? `Send a new code in ${cooldown}s` : (
-                  <span onClick={sendCode} style={{ color: '#3B82F6', cursor: 'pointer', fontWeight: 600 }}>Send a new code</span>
+                {loading ? t('Checking...') : cooldown > 0 ? tn('Send a new code in {n}s', cooldown) : (
+                  <span onClick={sendCode} style={{ color: '#3B82F6', cursor: 'pointer', fontWeight: 600 }}>{t('Send a new code')}</span>
                 )}
               </div>
             )}
 
             <div style={{ marginTop: 14, textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
-              <span onClick={stopReset} style={{ color: '#3B82F6', cursor: 'pointer', fontWeight: 600 }}>Back to sign in</span>
+              <span onClick={stopReset} style={{ color: '#3B82F6', cursor: 'pointer', fontWeight: 600 }}>{t('Back to sign in')}</span>
             </div>
           </>
         ) : (
@@ -266,14 +268,14 @@ export default function AuthPage() {
                     value={name}
                     onChange={e => setName(e.target.value)}
                     type="text"
-                    placeholder="Your name"
+                    placeholder={t('Your name')}
                     style={inp}
                   />
                   <input
                     value={age}
                     onChange={e => setAge(e.target.value)}
                     type="number"
-                    placeholder="Your age"
+                    placeholder={t('Your age')}
                     min={8}
                     max={120}
                     style={inp}
@@ -284,13 +286,13 @@ export default function AuthPage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 type="email"
-                placeholder="Email"
+                placeholder={t('Email')}
                 style={inp}
               />
               <PasswordInput
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="Password"
+                placeholder={t('Password')}
                 autoComplete={isSignUp ? 'new-password' : 'current-password'}
                 style={inp}
                 onKeyDown={e => e.key === 'Enter' && handleAuth()}
@@ -309,31 +311,31 @@ export default function AuthPage() {
               disabled={loading}
               style={{ width: '100%', marginTop: 20, padding: '13px', borderRadius: 10, border: 'none', background: '#3B82F6', color: '#fff', fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, fontFamily: 'inherit', transition: 'all 0.2s' }}
             >
-              {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
+              {loading ? t('Loading...') : isSignUp ? t('Create Account') : t('Sign In')}
             </button>
     
             <div style={{ marginTop: 16, textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
-              {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+              {isSignUp ? t('Already have an account?') + ' ' : t("Don't have an account?") + ' '}
               <span
                 onClick={() => { setIsSignUp(!isSignUp); setError('') }}
                 style={{ color: '#3B82F6', cursor: 'pointer', fontWeight: 600 }}
               >
-                {isSignUp ? 'Sign in' : 'Sign up'}
+                {isSignUp ? t('Sign in') : t('Sign up')}
               </span>
             </div>
 
             {!isSignUp && (
               <div style={{ marginTop: 10, textAlign: 'center', fontSize: 13 }}>
-                <span onClick={startReset} style={{ color: '#3B82F6', cursor: 'pointer', fontWeight: 600 }}>Forgot password?</span>
+                <span onClick={startReset} style={{ color: '#3B82F6', cursor: 'pointer', fontWeight: 600 }}>{t('Forgot password?')}</span>
               </div>
             )}
           </>
         )}
       </div>
       <div style={{ position: 'absolute', bottom: 20, left: 0, right: 0, textAlign: 'center', fontSize: 12 }}>
-        <Link href="/privacy" style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>Privacy</Link>
+        <Link href="/privacy" style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>{t('Privacy')}</Link>
         <span style={{ color: 'rgba(255,255,255,0.2)', margin: '0 10px' }}>·</span>
-        <Link href="/terms" style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>Terms</Link>
+        <Link href="/terms" style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>{t('Terms')}</Link>
       </div>
     </main>
   )
