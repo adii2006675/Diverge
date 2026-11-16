@@ -96,7 +96,7 @@ export default function ProfilePage() {
   const initials = profile?.username?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?'
 
   return (
-    <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
+    <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Figtree, system-ui, sans-serif', position: 'relative' }}>
       <Nav active="profile" />
 
       <div className="page-wrap" style={{ position: 'relative', zIndex: 1, maxWidth: 640, margin: '0 auto', padding: '140px 24px 60px' }}>

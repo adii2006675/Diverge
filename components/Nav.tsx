@@ -42,10 +42,9 @@ export default function Nav({ active }: { active?: string }) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '18px 40px',
         background: 'var(--nav-bg)',
-        backdropFilter: 'blur(12px)',
         borderBottom: '1px solid var(--border-color)',
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-        fontFamily: 'Inter, system-ui, sans-serif',
+        fontFamily: 'Figtree, system-ui, sans-serif',
       }}>
         {/* Left — logo mark; hover spells out the name */}
         <button

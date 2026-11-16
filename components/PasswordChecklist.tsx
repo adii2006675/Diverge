@@ -34,7 +34,7 @@ export function PasswordChecklist({ password }: { password: string }) {
       <ul>
         {list.map(r => (
           <li key={r.text} className={r.ok ? 'ok' : r.bad ? 'bad' : ''}>
-            <i aria-hidden="true">{r.ok ? '✓' : ''}</i>
+            <i aria-hidden="true"></i>
             <span>{r.text}</span>
           </li>
         ))}
@@ -51,7 +51,7 @@ export function MatchHint({ password, confirm }: { password: string; confirm: st
   const text = matches ? 'Passwords match' : stillTyping ? `Keep going, ${password.length - confirm.length} more character${password.length - confirm.length === 1 ? '' : 's'}` : 'Doesn’t match the password above yet'
   return (
     <div className={`pw-match ${matches ? 'ok' : stillTyping ? '' : 'bad'}`} aria-live="polite">
-      <i aria-hidden="true">{matches ? '✓' : stillTyping ? '' : '!'}</i>
+      <i aria-hidden="true"></i>
       <span>{text}</span>
     </div>
   )

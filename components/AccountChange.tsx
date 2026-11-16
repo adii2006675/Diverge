@@ -78,7 +78,7 @@ export default function AccountChange({ mode }: { mode: 'password' | 'email' }) 
   }
 
   return (
-    <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
+    <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Figtree, system-ui, sans-serif', position: 'relative' }}>
       <Nav active="profile" />
       <div className="acct-main" style={{ minHeight: 'var(--vh-fit, 100vh)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px 16px 40px', position: 'relative', zIndex: 1 }}>
         <div className="auth-card" style={{ width: '100%', maxWidth: 420, padding: 32, borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)', background: '#0d0d16', position: 'relative', zIndex: 1 }}>

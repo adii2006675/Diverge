@@ -51,7 +51,7 @@ export async function renderTimelineImage(opts: { title: string; startYear: numb
   const accent = cssVar('--accent', '#F59E0B')
   const onAccent = cssVar('--on-accent-dark', '#1b1305')
   const real = '#7FD1C7'
-  const font = 'Inter, system-ui, sans-serif'
+  const font = 'Figtree, system-ui, sans-serif'
 
   const canvas = document.createElement('canvas')
   canvas.width = W; canvas.height = H

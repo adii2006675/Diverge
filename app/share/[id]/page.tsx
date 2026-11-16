@@ -118,7 +118,7 @@ export default function SharedTimelinePage() {
                         ))}
                       </ol>
                       {r.sources && r.sources.length > 0 && (
-                        <p className="dv-sources">Grounded in: {r.sources.map((src, n) => (
+                        <p className="dv-sources">Sources: {r.sources.map((src, n) => (
                           <span key={src.url}>{n > 0 && ', '}<a href={src.url} target="_blank" rel="noreferrer">{src.title} ({hostOf(src.url) || 'source'})</a></span>
                         ))}</p>
                       )}

@@ -86,6 +86,8 @@ SPECIFICITY REQUIREMENTS:
 - Reference the year range you are modeling so users understand the time horizon
 
 TONE AND STYLE:
+- Never use em dashes or en dashes. Use a comma, a colon or a new sentence instead
+- Avoid the "it's not X, it's Y" and "not just X, but Y" constructions; state the point directly
 - Write like a serious historian, not a science fiction author
 - Be intellectually honest about uncertainty
 - Do not sensationalize or dramatize unnecessarily
@@ -134,7 +136,7 @@ function formatYear(n: number): string {
 }
 
 // Output schema. Property order matters: the paragraph comes first so it can stream to the screen while the rest is written.
-function outputSchema() {
+function outputSchema(wantSuggestions = true) {
   const str = { type: 'string' }
   const strs = { type: 'array', items: { type: 'string' } }
   return {
@@ -153,9 +155,9 @@ function outputSchema() {
       },
       year: str,
       uncertaintyLevel: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] },
-      suggestions: strs,
+      ...(wantSuggestions ? { suggestions: strs } : {}),
     },
-    required: ['paragraph', 'keyFacts', 'factTypes', 'factExplanations', 'worldMood', 'impact', 'year', 'uncertaintyLevel', 'suggestions'],
+    required: ['paragraph', 'keyFacts', 'factTypes', 'factExplanations', 'worldMood', 'impact', 'year', 'uncertaintyLevel', ...(wantSuggestions ? ['suggestions'] : [])],
     additionalProperties: false,
   }
 }
@@ -165,9 +167,10 @@ const clipList = (a: unknown, max: number, n: number) => (Array.isArray(a) ? a.s
 
 function buildPrompt(i: {
   startingEvent: string; previousWhatIfs: string[]; currentWorldState: string; question: string; realFacts: string[]
-  length: AILength; depth: AIDepth; tone: AITone; plausibility: AIPlausibility; previousYear: number | null; ref: Reference | null; research: Research | null; language: string; today: string
+  length: AILength; depth: AIDepth; tone: AITone; plausibility: AIPlausibility; wantSuggestions?: boolean; previousYear: number | null; ref: Reference | null; research: Research | null; language: string; today: string
 }) {
   const spec = LENGTH_SPEC[i.length]
+  const wantSuggestions = i.wantSuggestions !== false
   const yearRule = i.previousYear !== null
     ? `"year" must be a plain year such as "${formatYear(i.previousYear)}" or "${formatYear(i.previousYear + 4)}" (digits only, or digits plus BC), and it must be ${formatYear(i.previousYear)} or LATER, never earlier, because the timeline has already reached ${formatYear(i.previousYear)}.`
     : '"year" must be a plain year such as "1968" (digits only, or digits plus BC), with no words.'
@@ -223,8 +226,8 @@ FIELD RULES:
 - factExplanations: exactly ${spec.facts} items, each ${spec.explanation}, citing real mechanisms or precedents.
 - worldMood, uncertaintyLevel: pick the best fit. uncertaintyLevel is how confident you are (HIGH = very confident).
 - impact: four whole numbers from 0 to 10 rating how big THIS one change is on its own (not a running total; the app turns your ratings into the divergence score and adds them to the earlier answers). scale = how large a change to the course of events (2 a local incident, 5 a national turning point, 8 a world-changing shift, 10 a civilization-level break). people = how many lives it touches (1 hundreds, 3 hundreds of thousands, 5 tens of millions, 8 hundreds of millions, 10 billions). lasting = how long the effects last (1 months, 3 a few years, 5 a generation, 8 centuries, 10 permanent). breadth = how many areas of life change (1 a single area such as sports, 3 two or three, 6 most of politics, economy and culture, 9 nearly everything). Judge each one separately and use the whole range, so the four numbers are usually different. If you refuse the question, all four are 0.
-- ${yearRule}
-- suggestions: exactly ${spec.suggestions} short "What if..." follow-ups about THIS alternate timeline, each under 20 words and not a restatement of the question.`
+- ${yearRule}${wantSuggestions ? `
+- suggestions: exactly ${spec.suggestions} short "What if..." follow-ups about THIS alternate timeline, each under 20 words and not a restatement of the question.` : ''}`
 }
 
 // ---- divergence score
@@ -243,7 +246,7 @@ function scoreFrom(impact: any, previousScore: number): number {
 // ---- post-processing shared by every path
 type Answer = Record<string, any>
 function finish(data: Answer, depth: AIDepth, spec: { facts: number; suggestions: number }, previousYear: number | null, previousScore: number): Answer {
-  const plain = (t: unknown) => (typeof t === 'string' && depth === 'simple' ? t.replace(/\s*[—–]\s*/g, ', ') : t)
+  const plain = (t: unknown) => (typeof t === 'string' ? t.replace(/\s*[—–]\s*/g, ', ') : t)
   data.paragraph = plain(String(data.paragraph ?? ''))
   const n = Math.min(Array.isArray(data.keyFacts) ? data.keyFacts.length : 0, spec.facts)
   data.keyFacts = (data.keyFacts || []).slice(0, n).map(plain)
@@ -286,7 +289,8 @@ export async function POST(req: NextRequest) {
   const plausibility = normalizePlausibility(body.plausibility)
   const LANGS = ['English', 'Spanish', 'French', 'German', 'Japanese', 'Portuguese', 'Hindi', 'Chinese']
   const language = LANGS.includes(body.language) ? (body.language as string) : 'English'
-  const spec = LENGTH_SPEC[length]
+  const wantSuggestions = body.suggestions !== false
+  const spec = { ...LENGTH_SPEC[length], suggestions: wantSuggestions ? LENGTH_SPEC[length].suggestions : 0 }
   const previousScore = Math.max(0, Math.min(99, Math.round(Number(body.previousScore) || 0)))
   const previousYear = typeof body.previousYear === 'number' && Number.isFinite(body.previousYear) ? Math.round(body.previousYear) : parseYear(body.previousYear)
 
@@ -306,7 +310,7 @@ export async function POST(req: NextRequest) {
           getReference(realFacts.length > 0 ? startingEvent : question),
           researchTopic(caller.client, { startingEvent, question, realFacts, today }),
         ])
-        const prompt = buildPrompt({ startingEvent, previousWhatIfs, currentWorldState, question, realFacts, length, depth, tone, plausibility, previousYear, ref, research, language, today })
+        const prompt = buildPrompt({ startingEvent, previousWhatIfs, currentWorldState, question, realFacts, length, depth, tone, plausibility, wantSuggestions, previousYear, ref, research, language, today })
 
         const params: Record<string, any> = {
           model: MODEL,
@@ -314,7 +318,7 @@ export async function POST(req: NextRequest) {
           // The long, unchanging system prompt is cached, so repeat questions read it at a fraction of the cost and time.
           system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
           messages: [{ role: 'user', content: prompt }],
-          output_config: { format: { type: 'json_schema', schema: outputSchema() } },
+          output_config: { format: { type: 'json_schema', schema: outputSchema(wantSuggestions) } },
         }
         if (SUPPORTS_TEMPERATURE) params.temperature = 0.2
 

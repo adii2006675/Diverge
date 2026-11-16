@@ -17,7 +17,7 @@ type SessionRow = { id: string; event_id: string | null; event_title: string | n
 
 const PAGES: { label: string; path: string }[] = [
   { label: 'Home', path: '/' }, { label: 'Explore', path: '/explore' }, { label: 'Sessions', path: '/sessions' },
-  { label: 'About', path: '/about' }, { label: 'Profile', path: '/profile' }, { label: 'Settings', path: '/settings' }, { label: 'Privacy', path: '/privacy' },
+  { label: 'About', path: '/about' }, { label: 'Profile', path: '/profile' }, { label: 'Settings', path: '/settings' }, { label: 'Privacy', path: '/privacy' }, { label: 'Terms', path: '/terms' },
 ]
 
 export default function CommandPalette() {

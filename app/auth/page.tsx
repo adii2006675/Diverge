@@ -132,7 +132,7 @@ export default function AuthPage() {
   }
 
   return (
-    <main className="auth-main" style={{ minHeight: 'var(--vh-fit, 100vh)', background: '#080810', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
+    <main className="auth-main" style={{ minHeight: 'var(--vh-fit, 100vh)', background: '#080810', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Figtree, system-ui, sans-serif', position: 'relative' }}>
       <StarBackground />
       <div className="auth-card" style={{ width: '100%', maxWidth: 420, padding: 32, borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)', background: '#0d0d16', position: 'relative', zIndex: 1 }}>
 
@@ -332,6 +332,8 @@ export default function AuthPage() {
       </div>
       <div style={{ position: 'absolute', bottom: 20, left: 0, right: 0, textAlign: 'center', fontSize: 12 }}>
         <Link href="/privacy" style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>Privacy</Link>
+        <span style={{ color: 'rgba(255,255,255,0.2)', margin: '0 10px' }}>·</span>
+        <Link href="/terms" style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>Terms</Link>
       </div>
     </main>
   )

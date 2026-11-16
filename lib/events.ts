@@ -33,7 +33,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     year: 1939,
     title: 'Hitler Rises to Power',
     shortDesc: 'Adolf Hitler consolidates control of Germany, setting Europe on a path to war.',
-    fullDesc: 'By 1939 Hitler had remilitarized Germany, annexed Austria and Czechoslovakia, and was poised to invade Poland — triggering World War II.',
+    fullDesc: 'By 1939 Hitler had remilitarized Germany, annexed Austria and Czechoslovakia, and was poised to invade Poland, triggering World War II.',
     era: 'WWI/WWII',
     image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Adolf_Hitler_Berghof-1936.jpg/800px-Adolf_Hitler_Berghof-1936.jpg',
     realFacts: [
@@ -65,7 +65,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     year: 2001,
     title: '9/11 Attacks',
     shortDesc: 'Al-Qaeda hijackers crash planes into the Twin Towers, killing nearly 3,000.',
-    fullDesc: 'On September 11, 2001, 19 al-Qaeda operatives hijacked four planes, destroying the World Trade Center and killing nearly 3,000 people — triggering the War on Terror.',
+    fullDesc: 'On September 11, 2001, 19 al-Qaeda operatives hijacked four planes, destroying the World Trade Center and killing nearly 3,000 people, triggering the War on Terror.',
     era: 'Modern',
     image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/FEMA_-_4240_-_Photograph_by_Bri_Rodriguez_taken_on_09-11-2001_in_New_York.jpg/800px-FEMA_-_4240_-_Photograph_by_Bri_Rodriguez_taken_on_09-11-2001_in_New_York.jpg',
     realFacts: [
@@ -81,7 +81,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     year: 1962,
     title: 'Cuban Missile Crisis',
     shortDesc: 'The US and USSR come to the brink of nuclear war over missiles in Cuba.',
-    fullDesc: 'For 13 days in October 1962, the world held its breath as Kennedy and Khrushchev faced off over Soviet missiles in Cuba — the closest the Cold War came to going nuclear.',
+    fullDesc: 'For 13 days in October 1962, the world held its breath as Kennedy and Khrushchev faced off over Soviet missiles in Cuba, the closest the Cold War came to going nuclear.',
     era: 'Cold War',
     image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Cuban_Missile_Crisis_-_Kennedy_signs_proclamation.jpg/800px-Cuban_Missile_Crisis_-_Kennedy_signs_proclamation.jpg',
     realFacts: [
@@ -113,7 +113,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     year: 1912,
     title: 'Titanic Sinks',
     shortDesc: 'On the Titanics maiden voyage it unfortunately struck an iceberg and sank after only 2 hours.',
-    fullDesc: 'On April 15, 1912, the RMS Titanic sank after hitting an iceberg, killing over 1,500 passengers and crew — transforming maritime safety regulations worldwide.',
+    fullDesc: 'On April 15, 1912, the RMS Titanic sank after hitting an iceberg, killing over 1,500 passengers and crew, transforming maritime safety regulations worldwide.',
     era: 'Industrial',
     image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/RMS_Titanic_3.jpg/800px-RMS_Titanic_3.jpg',
     realFacts: [
@@ -128,7 +128,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     id: 'moon-1969',
     year: 1969,
     title: 'Moon Landing',
-    shortDesc: 'Apollo 11 lands on the moon — humanity\'s greatest technological achievement.',
+    shortDesc: 'Apollo 11 lands on the moon, humanity\'s greatest technological achievement.',
     fullDesc: 'On July 20, 1969, Neil Armstrong and Buzz Aldrin became the first humans to walk on the Moon, winning the Space Race and defining American technological supremacy.',
     era: 'Cold War',
     image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Aldrin_Apollo_11_original.jpg/800px-Aldrin_Apollo_11_original.jpg',
@@ -150,7 +150,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Archduke_Franz_Ferdinand_of_Austria_1914.jpg/800px-Archduke_Franz_Ferdinand_of_Austria_1914.jpg',
     realFacts: [
       '20 million people die in WWI 1914-1918',
-      'Four empires collapse — Ottoman, Austro-Hungarian, Russian, German',
+      'Four empires collapse: Ottoman, Austro-Hungarian, Russian, German',
       'Treaty of Versailles humiliates Germany',
       'Conditions created directly lead to WWII',
       'Map of Europe completely redrawn'
@@ -257,7 +257,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     year: 1215,
     title: 'Magna Carta Signed',
     shortDesc: 'King John of England is forced to sign the Magna Carta, limiting royal power.',
-    fullDesc: 'On June 15, 1215, English barons forced King John to sign the Magna Carta, establishing the principle that even a king is subject to the law — a cornerstone of modern democracy.',
+    fullDesc: 'On June 15, 1215, English barons forced King John to sign the Magna Carta, establishing the principle that even a king is subject to the law, a cornerstone of modern democracy.',
     era: 'Medieval',
     image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Magna_Carta_%28British_Library_Cotton_MS_Augustus_II.106%29.jpg/800px-Magna_Carta_%28British_Library_Cotton_MS_Augustus_II.106%29.jpg',
     realFacts: [

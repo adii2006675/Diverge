@@ -1176,7 +1176,7 @@ export const MORE_EVENTS: HistoricalEvent[] = [
       "Messi scored twice in the final and won the Golden Ball as the tournament's best player",
       "Kylian Mbappé scored a hat-trick for France",
       "It was Argentina's third World Cup, after 1978 and 1986",
-      "Messi joined Inter Miami in 2023",
+      "Messi joined Figtree Miami in 2023",
       "It was the first World Cup held in the Middle East and the first played in November and December"
     ]
   }

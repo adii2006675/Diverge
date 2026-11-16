@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: "(function(){try{if(!CSS.supports('zoom','1.2'))return;var s=Math.min(1.5,Math.max(1,innerWidth/1760));document.documentElement.style.setProperty('--ui-scale',s.toFixed(3))}catch(e){}})()" }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800;900&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet" />
       </head>
       <body style={{ margin: 0, position: 'relative' }}>
         <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>

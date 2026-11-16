@@ -1,4 +1,5 @@
 'use client'
+import { useAskNext, useFeature } from '@/lib/askNext'
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { ALL_EVENTS, formatEventYear } from '@/lib/events'
@@ -73,6 +74,10 @@ const CUSTOM_START_COPY =
 type CustomInfo = { title: string; extract: string; image: string | null; url: string }
 
 // Up to about 420 characters of a summary, ended on a full sentence.
+function cleanSessionTitle(t: string) {
+  return (t || '').replace(/\s+[-–—]\s+\d{1,4}(\s*BC)?\s*$/i, '').trim() || 'Diverge timeline'
+}
+
 function trimSummary(text: string, max = 420) {
   if (text.length <= max) return text
   const cut = text.slice(0, max)
@@ -216,8 +221,11 @@ export default function DivergePage() {
     .sort((a, b) => a.year - b.year)
     .slice(0, 4)
   // Optional field: the API will start returning 2-3 next questions in a later step.
-  const suggestions = (latest?.response.suggestions || []).filter(s => typeof s === 'string' && s.trim()).slice(0, 3)
-  const startingEvent = event ? `${event.title} — ${formatEventYear(event.year)}` : resumedTitle || customQ || 'Custom starting point'
+  const [askNextOn, setAskNextOn] = useAskNext()
+  const [whatChangedOn, setWhatChangedOn] = useFeature('whatChanged')
+  const [realHistoryOn, setRealHistoryOn] = useFeature('realHistory')
+  const suggestions = !askNextOn ? [] : (latest?.response.suggestions || []).filter(s => typeof s === 'string' && s.trim()).slice(0, 3)
+  const startingEvent = event ? `${event.title} - ${formatEventYear(event.year)}` : resumedTitle || customQ || 'Custom starting point'
 
   // A custom starting point (from the home page) arrives as ?q=... and is asked automatically,
   // once auth has resolved so the user's AI settings and autosave apply to this first question.
@@ -281,6 +289,7 @@ export default function DivergePage() {
         // The timeline can only move forward: the next answer's year must not be earlier than this.
         previousYear: latest ? parseYear(latest.response.year) : (event?.year ?? null),
         previousScore: latest ? latest.response.divergenceScore : 0,
+        suggestions: askNextOn, // off means the AI is not asked to write them, so it costs nothing
       }, ev => {
         if (ev.t === 'delta') setStreamText(t => t + ev.text)
         else if (ev.t === 'done') data = { ...ev.data }
@@ -350,6 +359,28 @@ export default function DivergePage() {
     }
     setPendingQuestion(null)
     setLoading(false)
+  }
+
+  // Downloads the real history and every question and answer as a PDF. The Ask next questions are not included.
+  const [downloading, setDownloading] = useState(false)
+  async function handleDownloadPdf() {
+    if (downloading || whatIfs.length === 0) return
+    setDownloading(true)
+    try {
+      const { downloadChatPdf } = await import('@/lib/exportPdf')
+      await downloadChatPdf({
+        title: cleanSessionTitle(startingEvent),
+        realTitle: event?.title || customInfo?.title || customCardTitle,
+        realSummary: event?.fullDesc || (customInfo ? trimSummary(customInfo.extract, 900) : ''),
+        realFacts,
+        whatIfs,
+      })
+    } catch (err) {
+      console.error(err)
+      showToast('Could not make the PDF. Please try again.')
+    } finally {
+      setDownloading(false)
+    }
   }
 
   async function handleManualSave() {
@@ -638,7 +669,14 @@ export default function DivergePage() {
 
       <div className="dv-bar">
         <div className="dv-ev">
-          <div className="dv-ev-th"><EventImage id={event?.id} title={event?.title || 'Custom'} year={event?.year} compact /></div>
+          <div className="dv-ev-th">
+            {!event && customInfo?.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={customInfo.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <EventImage id={event?.id} title={event?.title || 'Custom'} year={event?.year} compact />
+            )}
+          </div>
           <div>
             <b title={startingEvent}>{event?.title || 'Custom starting point'}</b>
             <span>
@@ -660,13 +698,14 @@ export default function DivergePage() {
         )}
         {whatIfs.length > 0 && (
           <button
-            className="dv-btn pri"
+            className="dv-btn pri dv-dl"
             type="button"
-            onClick={user ? handleManualSave : () => window.open('/auth', '_blank', 'noopener')}
-            disabled={saving}
-            title={user ? undefined : 'Opens sign in in a new tab so this session stays open'}
+            onClick={handleDownloadPdf}
+            disabled={downloading}
+            aria-label="Download this timeline as a PDF"
+            title="Download as PDF"
           >
-            {!user ? 'Sign in to save' : saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save'}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11" /><path d="M7 11l5 5 5-5" /><path d="M5 20h14" /></svg>
           </button>
         )}
       </div>
@@ -760,7 +799,7 @@ export default function DivergePage() {
                           </div>
                           <div className="dv-foot-row">
                           {r.sources && r.sources.length > 0 && (
-                            <p className="dv-sources">Grounded in: {r.sources.map((src, n) => (
+                            <p className="dv-sources">Sources: {r.sources.map((src, n) => (
                               <span key={src.url}>{n > 0 && ', '}<a href={src.url} target="_blank" rel="noreferrer">{src.title} ({hostOf(src.url) || 'source'})</a></span>
                             ))}</p>
                           )}
@@ -915,6 +954,13 @@ export default function DivergePage() {
 
           <div className="dv-dockwrap">
             <div className="dv-dock">
+              {suggestions.length > 0 && (
+                <div className="dv-chiprow">
+                  {suggestions.map(sg => (
+                    <button key={sg} type="button" disabled={loading} onClick={() => handleAsk(sg)}>{sg}</button>
+                  ))}
+                </div>
+              )}
               <div className="dv-trackrow">
                 <button className="dv-circ" type="button" aria-label="Previous answer" disabled={whatIfs.length === 0 || activeTimelineIdx <= 0} onClick={() => selectAnswer(activeTimelineIdx - 1)}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
@@ -948,7 +994,6 @@ export default function DivergePage() {
                 <button className="dv-circ" type="button" aria-label="Next answer" disabled={whatIfs.length === 0 || activeTimelineIdx >= whatIfs.length - 1} onClick={() => selectAnswer(activeTimelineIdx + 1)}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
                 </button>
-                <button className="dv-btn" type="button" onClick={handleSummary} disabled={whatIfs.length === 0}>View summary</button>
               </div>
               <label className="dv-ask">
                 <input
@@ -983,7 +1028,6 @@ export default function DivergePage() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
             </button>
           </div>
-          <button type="button" className="dv-btn dv-phone-only" onClick={() => { setWorldOpen(false); handleSummary() }} disabled={whatIfs.length === 0}>View summary</button>
           <div className="dv-card gauge-card" style={{ ['--mood' as string]: MOOD_COLORS[mood] || '#F59E0B' }}>
             <div className="dv-gauge" style={{ ['--p' as string]: divergence }} role="img" aria-label={`${divergence}% diverged from real history`}>
               <div><b><CountUp value={divergence} />%</b><small>diverged</small></div>
@@ -1015,12 +1059,15 @@ export default function DivergePage() {
             />
           )}
 
-          {suggestions.length > 0 && (
+          {whatChangedOn && whatIfs.length > 0 && (
             <div className="dv-card">
-              <h3>Ask next</h3>
-              <div className="dv-sug">
-                {suggestions.map(s => (
-                  <button key={s} type="button" className="dv-sug-b" disabled={loading} onClick={() => { setWorldOpen(false); handleAsk(s) }}>{s}</button>
+              <h3>What changed</h3>
+              <p className="dv-sub">How this timeline differs from real history, one line per answer. Tap one to jump to it.</p>
+              <div className="dv-chg">
+                {whatIfs.map((w, i) => (
+                  <button key={i} type="button" className={`dv-chg-b${i === activeTimelineIdx ? ' on' : ''}`} onClick={() => { setWorldOpen(false); selectAnswer(i) }}>
+                    <b>{w.response.year}</b><span>{w.response.keyFacts?.[0] || w.question}</span>
+                  </button>
                 ))}
               </div>
             </div>
@@ -1040,26 +1087,28 @@ export default function DivergePage() {
             </div>
           )}
 
-          <div className="dv-card">
-            <h3>{event ? `Real timeline · ${formatEventYear(event.year)}` : customInfo ? `Real history · ${customInfo.title}` : 'Real history'}</h3>
-            <div className="dv-ph">
-              {!event && customInfo?.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={customInfo.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.75) saturate(0.8)' }} />
-              ) : (
-                <EventImage key={event?.id || 'custom'} id={event?.id} title={event?.title || customCardTitle} year={event?.year} imgStyle={{ filter: 'brightness(0.75) saturate(0.8)' }} />
+          {realHistoryOn && (
+            <div className="dv-card">
+              <h3>{event ? `Real timeline · ${formatEventYear(event.year)}` : customInfo ? `Real history · ${customInfo.title}` : 'Real history'}</h3>
+              <div className="dv-ph">
+                {!event && customInfo?.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={customInfo.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.75) saturate(0.8)' }} />
+                ) : (
+                  <EventImage key={event?.id || 'custom'} id={event?.id} title={event?.title || customCardTitle} year={event?.year} imgStyle={{ filter: 'brightness(0.75) saturate(0.8)' }} />
+                )}
+              </div>
+              <p className="dv-prose soft">
+                {event?.fullDesc || (customInfo ? trimSummary(customInfo.extract) : whatIfs.length === 0 ? 'Ask a what-if and the real history behind it will show up here.' : CUSTOM_START_COPY)}
+              </p>
+              {!event && customInfo && (
+                <p className="dv-sources" style={{ marginTop: '.6em' }}><a href={customInfo.url} target="_blank" rel="noreferrer">Read more on Wikipedia</a></p>
               )}
+              <ul className="dv-facts">
+                {realFacts.map(f => <li key={f}>{f}</li>)}
+              </ul>
             </div>
-            <p className="dv-prose soft">
-              {event?.fullDesc || (customInfo ? trimSummary(customInfo.extract) : whatIfs.length === 0 ? 'Ask a what-if and the real history behind it will show up here.' : CUSTOM_START_COPY)}
-            </p>
-            {!event && customInfo && (
-              <p className="dv-sources" style={{ marginTop: '.6em' }}><a href={customInfo.url} target="_blank" rel="noreferrer">Read more on Wikipedia</a></p>
-            )}
-            <ul className="dv-facts">
-              {realFacts.map(f => <li key={f}>{f}</li>)}
-            </ul>
-          </div>
+          )}
 
         </aside>
       </div>
@@ -1071,7 +1120,7 @@ export default function DivergePage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
           onClick={() => setShowSummary(false)}
         >
           <motion.div
@@ -1147,7 +1196,7 @@ export default function DivergePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, backdropFilter: 'blur(8px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+            style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
             onClick={() => setShowAISettings(false)}
           >
             <motion.div
@@ -1167,19 +1216,40 @@ export default function DivergePage() {
 
               <div style={{ textAlign: 'center', marginTop: 12, marginBottom: 24 }}>
                 <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)' }}>AI Settings</div>
-                <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>Changes save automatically.</div>
               </div>
 
-              <div style={{ marginBottom: 26 }}>
+              <div style={{ marginBottom: 22 }}>
                 <AIResponseSettings showDescriptions />
               </div>
 
-              {/* The same setting as Settings, Display Options */}
-              <AIToggle
-                label="Show answer tags (year, mood, confidence, change)"
-                value={showTags}
-                onChange={() => updateSettings({ show_confidence_level: !showTags })}
-              />
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>Features</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <AIToggle
+                  label="Ask next questions"
+                  info="Two or three follow-up what-if questions you can tap after each answer."
+                  value={askNextOn}
+                  onChange={() => setAskNextOn(!askNextOn)}
+                />
+                <AIToggle
+                  label="What changed"
+                  info="A card in the World panel with one line per answer, showing how your timeline differs from real history."
+                  value={whatChangedOn}
+                  onChange={() => setWhatChangedOn(!whatChangedOn)}
+                />
+                <AIToggle
+                  label="Real history"
+                  info="A card in the World panel with the real event's picture, summary and key facts, to compare against your alternate timeline."
+                  value={realHistoryOn}
+                  onChange={() => setRealHistoryOn(!realHistoryOn)}
+                />
+                {/* The same setting as Settings, Display Options */}
+                <AIToggle
+                  label="Answer tags"
+                  info="Small labels on each answer: the year, world mood, how confident the AI is, and the % change from the last answer."
+                  value={showTags}
+                  onChange={() => updateSettings({ show_confidence_level: !showTags })}
+                />
+              </div>
 
             </motion.div>
           </motion.div>
@@ -1224,7 +1294,7 @@ const btnStyle: React.CSSProperties = {
   fontFamily: 'inherit',
 }
 
-function AIToggle({ label, value, onChange }: { label: string; value: boolean; onChange: () => void }) {
+function AIToggle({ label, info, value, onChange }: { label: string; info?: string; value: boolean; onChange: () => void }) {
   return (
     <div
       role="switch"
@@ -1234,7 +1304,10 @@ function AIToggle({ label, value, onChange }: { label: string; value: boolean; o
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onChange() } }}
       style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', cursor: 'pointer' }}
     >
-      <span style={{ fontSize: 13, color: 'var(--text)' }}>{label}</span>
+      <span style={{ fontSize: 13, color: 'var(--text)', display: 'inline-flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+        {label}
+        {info && <button type="button" className="dv-info" aria-label={`About ${label}`} data-tip={info} onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}><svg viewBox="0 0 16 16" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" aria-hidden="true"><circle cx="8" cy="8" r="6.6" /><path d="M8 7.2v3.6" /><circle cx="8" cy="4.9" r=".5" fill="currentColor" /></svg></button>}
+      </span>
       <div style={{
         width: 40, height: 22, borderRadius: 99, flexShrink: 0,
         background: value ? 'var(--accent)' : 'var(--border-color)',

@@ -44,7 +44,7 @@ function whatIfText(w: unknown): string {
   return 'Untitled question'
 }
 
-// Saved titles for the built-in events end with the year ("Kendrick Lamar vs. Drake — 2024"). Show just the title.
+// Saved titles for the built-in events end with the year ("Kendrick Lamar vs. Drake - 2024"). Show just the title.
 function cleanTitle(title: string) {
   return (title || '').replace(/\s+[—–-]\s+\d{1,4}(\s*BC)?(?=\s*(\(copy\))?\s*$)/i, '').trim()
 }
@@ -168,7 +168,7 @@ export default function SessionsPage() {
       return
     }
     if (!data || data.length === 0) {
-      console.warn('Delete returned no rows — likely blocked by RLS or id mismatch')
+      console.warn('Delete returned no rows, likely blocked by RLS or id mismatch')
     }
     setSessions(prev => prev.filter(s => s.id !== id))
     setDeleteTargetId(null)
@@ -214,7 +214,7 @@ export default function SessionsPage() {
 
   if (!user) {
     return (
-      <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
+      <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Figtree, system-ui, sans-serif', position: 'relative' }}>
         <Nav active="sessions" />
         <div className="page-wrap" style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto', padding: '140px 24px 60px' }}>
           <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 8, letterSpacing: '-0.02em' }}>Sessions</h1>
@@ -233,7 +233,7 @@ export default function SessionsPage() {
   }
 
   return (
-    <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
+    <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Figtree, system-ui, sans-serif', position: 'relative' }}>
       <Nav active="sessions" />
 
       <div className="page-wrap" style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto', padding: '140px 24px 60px' }}>
@@ -414,7 +414,7 @@ export default function SessionsPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
             onClick={() => setDeleteTargetId(null)}
           >
             <motion.div

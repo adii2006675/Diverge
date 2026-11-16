@@ -131,7 +131,7 @@ export default function AboutPage() {
           transition={{ ...SOFT, delay: 0.1 }}
           style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.85, color: 'var(--text-dim)', marginBottom: 24 }}
         >
-          The answers come from Claude, an AI made by Anthropic. It uses real history, like who was allied with who, how strong each army was, and how the economy worked, to figure out what would change. It&apos;s not just making stuff up. It&apos;s trying to think through cause and effect the way a historian would.
+          The answers come from Claude, an AI made by Anthropic. It uses real history, like who was allied with who, how strong each army was, and how the economy worked, to figure out what would change. It reasons through cause and effect the way a historian would, and it leans on documented history.
         </motion.p>
 
         <motion.p

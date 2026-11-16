@@ -46,7 +46,7 @@ const sections: { title: string; body: string[] }[] = [
 
 export default function PrivacyPage() {
   return (
-    <main style={{ minHeight: 'var(--vh-fit, 100vh)', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
+    <main style={{ minHeight: 'var(--vh-fit, 100vh)', color: 'var(--text)', fontFamily: 'Figtree, system-ui, sans-serif', position: 'relative' }}>
       <Nav />
       <div className="page-wrap" style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto', padding: '140px 24px 80px' }}>
         <h1 style={{ fontSize: 'calc(var(--font-scale) * 2.67)', fontWeight: 900, letterSpacing: '-0.02em', margin: '0 0 8px' }}>Privacy</h1>

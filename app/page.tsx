@@ -27,7 +27,7 @@ export default function LandingPage() {
   }
 
   return (
-    <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', position: 'relative', overflowX: 'hidden', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', position: 'relative', overflowX: 'hidden', fontFamily: 'Figtree, system-ui, sans-serif' }}>
       <Nav active="home" />
 
       {/* Hero */}

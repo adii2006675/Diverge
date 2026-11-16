@@ -1,4 +1,5 @@
 'use client'
+import { useAskNext, useFeature } from '@/lib/askNext'
 import { useAuth } from '@/context/AuthContext'
 import { useT } from '@/lib/useT'
 import { LANGUAGES, NATIVE_NAMES } from '@/lib/i18n'
@@ -59,7 +60,7 @@ export default function SettingsPanel() {
                 onClick={() => updateSettings({ accent_color: c.value })}
                 style={{
                   // Dot first, label after it, both from the left edge, so the dots line up in each column.
-                  display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 12, textAlign: 'left',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, textAlign: 'center',
                   minWidth: 0,
                   padding: '9px 18px', borderRadius: 999, cursor: 'pointer', fontFamily: 'inherit',
                   border: `1px solid ${settings?.accent_color === c.value ? c.hex : 'var(--border-color)'}`,
@@ -129,6 +130,9 @@ export default function SettingsPanel() {
 /** The "Show answer tags" switch. It lives on the Settings page (not the Profile page). */
 export function DisplayOptions() {
   const { settings, updateSettings } = useAuth()
+  const [askNextOn, setAskNextOn] = useAskNext()
+  const [whatChangedOn, setWhatChangedOn] = useFeature('whatChanged')
+  const [realHistoryOn, setRealHistoryOn] = useFeature('realHistory')
   const { t } = useT()
   return (
     <Section title="Display Options">
@@ -138,6 +142,24 @@ export function DisplayOptions() {
           desc={t('The year, world mood, confidence level of the AI, and the % increase or decrease from the last chat')}
           value={settings?.show_confidence_level ?? true}
           onChange={() => updateSettings({ show_confidence_level: !(settings?.show_confidence_level ?? true) })}
+        />
+        <Toggle
+          label="Show Ask next questions"
+          desc="Two or three follow-up what-if questions you can tap after each answer"
+          value={askNextOn}
+          onChange={() => setAskNextOn(!askNextOn)}
+        />
+        <Toggle
+          label="Show What changed"
+          desc="A card listing how your timeline differs from real history, one line per answer"
+          value={whatChangedOn}
+          onChange={() => setWhatChangedOn(!whatChangedOn)}
+        />
+        <Toggle
+          label="Show Real history"
+          desc="A card with the real event's picture, summary and key facts"
+          value={realHistoryOn}
+          onChange={() => setRealHistoryOn(!realHistoryOn)}
         />
       </div>
     </Section>

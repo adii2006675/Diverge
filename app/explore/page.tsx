@@ -248,7 +248,7 @@ export default function ExplorePage() {
   }, [expandedId])
 
   return (
-    <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, system-ui, sans-serif', position: 'relative' }}>
+    <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', color: 'var(--text)', fontFamily: 'Figtree, system-ui, sans-serif', position: 'relative' }}>
       <Nav active="explore" />
 
       {/* Hero */}
@@ -436,8 +436,7 @@ export default function ExplorePage() {
               onClick={closeCard}
               style={{
                 position: 'fixed', inset: 0, zIndex: 100,
-                background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
-              }}
+                background: 'rgba(0,0,0,0.6)', }}
             />
             <div style={{ position: 'fixed', inset: 0, zIndex: 101, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, pointerEvents: 'none' }}>
               <motion.div
