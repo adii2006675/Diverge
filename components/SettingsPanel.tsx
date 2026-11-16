@@ -8,18 +8,50 @@ const THEMES = ['light', 'dark']
 const ACCENT_COLORS = [
   { value: 'none', label: 'None', hex: 'var(--text)' },
   { value: 'red', label: 'Red', hex: '#F43F5E' },
-  { value: 'orange', label: 'Orange', hex: '#F59E0B' },
   { value: 'blue', label: 'Blue', hex: '#3B82F6' },
   { value: 'green', label: 'Green', hex: '#10B981' },
+  { value: 'teal', label: 'Brown', hex: '#B07D4F' },
+  { value: 'orange', label: 'Orange', hex: '#F59E0B' },
   { value: 'purple', label: 'Purple', hex: '#8B5CF6' },
   { value: 'pink', label: 'Pink', hex: '#EC4899' },
-  { value: 'teal', label: 'Brown', hex: '#B07D4F' },
 ]
 const FONT_SIZES = [
   { value: 'small', label: 'Small' },
   { value: 'medium', label: 'Medium' },
   { value: 'large', label: 'Large' },
 ]
+
+
+/** A ring pulses out of the clicked colour's dot and a few specks fly off it. Skipped for keyboard use and with reduced motion. */
+function colourBurst(e: React.MouseEvent, hex: string) {
+  if (typeof window === 'undefined' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  if (e.detail === 0) return
+  const dot = (e.currentTarget as HTMLElement).querySelector('[data-dot]') as HTMLElement | null
+  if (!dot) return
+  const r = dot.getBoundingClientRect()
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2
+  const make = (size: number, css: string) => {
+    const d = document.createElement('div')
+    d.setAttribute('aria-hidden', 'true')
+    d.style.cssText = `position:fixed;left:${cx - size / 2}px;top:${cy - size / 2}px;width:${size}px;height:${size}px;border-radius:50%;pointer-events:none;z-index:9999;${css}`
+    document.body.appendChild(d)
+    return d
+  }
+  const ring = make(r.width, `border:2px solid ${hex}`)
+  const ra = ring.animate([{ transform: 'scale(1)', opacity: 0.9 }, { transform: 'scale(3.6)', opacity: 0 }], { duration: 520, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' })
+  ra.onfinish = () => ring.remove()
+  const n = 8
+  for (let i = 0; i < n; i++) {
+    const ang = (i / n) * Math.PI * 2 + 0.4
+    const dist = 30 + (i % 2) * 10
+    const sp = make(5, `background:${hex}`)
+    const sa = sp.animate([
+      { transform: 'translate(0,0) scale(1)', opacity: 1 },
+      { transform: `translate(${Math.cos(ang) * dist}px, ${Math.sin(ang) * dist}px) scale(0.2)`, opacity: 0 },
+    ], { duration: 560, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' })
+    sa.onfinish = () => sp.remove()
+  }
+}
 
 export default function SettingsPanel() {
   const { settings, updateSettings } = useAuth()
@@ -57,10 +89,10 @@ export default function SettingsPanel() {
             {ACCENT_COLORS.map(c => (
               <button
                 key={c.value}
-                onClick={() => updateSettings({ accent_color: c.value })}
+                onClick={e => { if (settings?.accent_color !== c.value) colourBurst(e, c.hex); updateSettings({ accent_color: c.value }) }}
                 style={{
-                  // Dot first, label after it, both from the left edge, so the dots line up in each column.
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, textAlign: 'center',
+                  // Dot and name sit together, centred as a block as wide as the longest name, so the dots line up in each column.
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, textAlign: 'left',
                   minWidth: 0,
                   padding: '9px 18px', borderRadius: 999, cursor: 'pointer', fontFamily: 'inherit',
                   border: `1px solid ${settings?.accent_color === c.value ? c.hex : 'var(--border-color)'}`,
@@ -70,8 +102,10 @@ export default function SettingsPanel() {
                   transition: 'all 0.18s',
                 }}
               >
-                <span aria-hidden="true" style={{ width: 14, height: 14, borderRadius: '50%', background: c.hex, flexShrink: 0, boxShadow: 'inset 0 0 0 1px rgba(128,128,128,0.35)' }} />
-                {t(c.label)}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, width: 'calc(var(--font-scale) * 8.2)', whiteSpace: 'nowrap' }}>
+                  <span aria-hidden="true" data-dot style={{ width: 14, height: 14, borderRadius: '50%', background: c.hex, flexShrink: 0, boxShadow: 'inset 0 0 0 1px rgba(128,128,128,0.35)', transform: settings?.accent_color === c.value ? 'scale(1.25)' : 'scale(1)', transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)' }} />
+                  {t(c.label)}
+                </span>
               </button>
             ))}
           </div>

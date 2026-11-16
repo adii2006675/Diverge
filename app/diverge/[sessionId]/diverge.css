@@ -203,7 +203,7 @@
 /* Waiting card: the parted lines draw left to right, then clear left to right, again and again. */
 .dv-think{flex:none;width:3.6em;height:2.25em;overflow:visible}
 .dv-think path{fill:none;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:100;animation:dvDraw 1.6s cubic-bezier(.4,0,.2,1) infinite}
-.dv-think .a{stroke:var(--acc)}
+.dv-think .a{stroke:var(--accent-strand,var(--acc))}
 .dv-think .b{stroke:var(--ink);animation-delay:.14s}
 @keyframes dvDraw{0%{stroke-dashoffset:100}45%{stroke-dashoffset:0}70%{stroke-dashoffset:0}100%{stroke-dashoffset:-100}}
 @media (prefers-reduced-motion: reduce){.dv-think path{animation:dvBlink 1.4s ease-in-out infinite;stroke-dashoffset:0}}

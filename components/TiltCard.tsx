@@ -124,7 +124,6 @@ export default function TiltCard({ children, radius = 16, maxTilt = 9 }: Props) 
     <div ref={outer} className="tilt-outer" onPointerEnter={onEnter} onPointerMove={onMove} onPointerLeave={onLeave} style={{ borderRadius: radius }}>
       <div ref={inner} className="tilt-card" style={{ borderRadius: radius }}>
         {children}
-        <div className="tilt-glare" aria-hidden="true" />
         <div className="tilt-edge" aria-hidden="true" />
         <div className="tilt-ring" aria-hidden="true" />
       </div>

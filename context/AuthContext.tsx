@@ -153,6 +153,8 @@ function applyThemeToDOM(theme: string, accentKey: string, fontSize: string) {
   root.style.setProperty('--surface', 'color-mix(in srgb, var(--text) 3%, var(--bg))')
   root.style.setProperty('--border-color', themeVars.borderColor)
   root.style.setProperty('--accent', accent)
+  // With the None colour the accent equals the text colour, so the logo and the thinking animation would be one flat colour; their accent strand takes the opposite tone instead.
+  root.style.setProperty('--accent-strand', accentKey === 'none' ? (theme === 'light' ? '#C9C9D3' : '#2B2B38') : accent)
   const ink = accentInk(accentKey === 'none' ? themeVars.text : accent)
   root.style.setProperty('--on-accent', ink.on)
   root.style.setProperty('--on-accent-dark', ink.onDark)

@@ -42,6 +42,10 @@ export default function AccountChange({ mode }: { mode: 'password' | 'email' }) 
   )
 
   const isEmail = mode === 'email'
+  // The button stays greyed out until the form could be accepted.
+  const ready = !!current && (isEmail
+    ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(next.trim()) && next.trim().toLowerCase() !== (user?.email || '').toLowerCase() && confirm.trim().toLowerCase() === next.trim().toLowerCase()
+    : isPasswordValid(next) && next !== current && confirm === next)
 
   async function submit() {
     setError('')
@@ -117,10 +121,10 @@ export default function AccountChange({ mode }: { mode: 'password' | 'email' }) 
                 <div role="alert" style={{ fontSize: 13, color: '#EF4444', padding: '8px 12px', borderRadius: 8, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>{error}</div>
               )}
 
-              <button type="submit" disabled={busy} style={primaryBtn(busy)}>
+              <button type="submit" disabled={busy || !ready} style={primaryBtn(busy || !ready)}>
                 {busy ? t('Checking…') : isEmail ? t('Change email') : t('Update password')}
               </button>
-              <button type="button" onClick={() => router.push('/profile')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.45)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', padding: 6 }}>{t('Cancel')}</button>
+              <button type="button" className="acct-link" style={{ marginTop: -4 }} onClick={() => router.push('/auth?forgot=1')}>{t('Forgot password?')}</button>
             </form>
           )}
         </div>
@@ -130,5 +134,5 @@ export default function AccountChange({ mode }: { mode: 'password' | 'email' }) 
 }
 
 function primaryBtn(busy: boolean): React.CSSProperties {
-  return { width: '100%', marginTop: 8, padding: '13px', borderRadius: 10, border: 'none', background: '#3B82F6', color: '#fff', fontSize: 15, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.7 : 1, fontFamily: 'inherit' }
+  return { width: '100%', marginTop: 8, padding: '13px', borderRadius: 10, border: 'none', background: '#3B82F6', color: '#fff', fontSize: 15, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.45 : 1, fontFamily: 'inherit', transition: 'opacity 0.16s' }
 }

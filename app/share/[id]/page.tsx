@@ -88,7 +88,7 @@ export default function SharedTimelinePage() {
                 <h1>{event ? at(event.title) : data.title}</h1>
                 <div className="dv-tags">
                   {event && <span className="dv-tag">{tn('Starts {n}', formatEventYear(event.year))}</span>}
-                  <span className="dv-tag">{tn(data.whatIfs.length === 1 ? '{n} what-if' : '{n} what-ifs', data.whatIfs.length)}</span>
+                  <span className="dv-tag">{tn(data.whatIfs.length === 1 ? '{n} question' : '{n} questions', data.whatIfs.length)}</span>
                   <span className="dv-tag up">{tn('{n}% diverged', data.divergence)}</span>
                   <span className="dv-tag">{tn('Now {n}', last.year)}</span>
                 </div>

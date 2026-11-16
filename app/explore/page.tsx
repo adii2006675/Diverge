@@ -116,7 +116,7 @@ const EventCardItem = memo(function EventCardItem({ event, idx, entered, languag
             </div>
           </div>
           <div className="ev-body" style={{ padding: '12px 14px 14px' }}>
-            <div className="ev-title" style={{ fontSize: 'var(--font-scale)', fontWeight: 700, marginBottom: 5, color: 'var(--text)' }}>{text.title}</div>
+            <div className="ev-title" title={text.title} style={{ fontSize: 'var(--font-scale)', fontWeight: 700, marginBottom: 5, color: 'var(--text)' }}>{text.title}</div>
             <div className="ev-desc" style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', lineHeight: 1.6, marginBottom: 0 }}>{text.shortDesc}</div>
           </div>
         </div>
@@ -189,7 +189,14 @@ export default function ExplorePage() {
   const filtersActive = selectedEras.length > 0 || yearMin > START_YEAR || yearMax < YEAR_MAX || needle !== '' || savedOnly
   function clearFilters() { setSelectedEras([]); setYearMin(START_YEAR); setYearMax(YEAR_MAX); setQuery(''); setSavedOnly(false) }
 
-  const filtered = ALL_EVENTS.filter(e => {
+  // A different order every visit. It is shuffled after the page loads, so the server and the browser agree on the first render.
+  const [pool, setPool] = useState(ALL_EVENTS)
+  useEffect(() => {
+    const a = [...ALL_EVENTS]
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]] }
+    setPool(a)
+  }, [])
+  const filtered = pool.filter(e => {
     const eraMatch = selectedEras.length === 0 || FILTER_GROUPS.some(g => selectedEras.includes(g.label) && g.eras.includes(e.era))
     const yearMatch = (filterMin <= START_YEAR || e.year >= filterMin) && e.year <= filterMax
     if (!eraMatch || !yearMatch) return false
@@ -299,8 +306,8 @@ export default function ExplorePage() {
                   color: isOn(era) ? 'var(--accent)' : 'var(--text-dim)',
                   fontSize: 'var(--font-scale)', fontWeight: 500, transition: 'all 0.18s',
                 }}
-                onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.fontSize = 'calc(var(--font-scale) * 1.08)'; el.style.color = isOn(era) ? 'var(--accent)' : 'var(--text)' }}
-                onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.fontSize = 'var(--font-scale)'; el.style.color = isOn(era) ? 'var(--accent)' : 'var(--text-dim)' }}
+                onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.transform = 'scale(1.08)'; el.style.color = isOn(era) ? 'var(--accent)' : 'var(--text)' }}
+                onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.transform = 'none'; el.style.color = isOn(era) ? 'var(--accent)' : 'var(--text-dim)' }}
               >
                 {t(era)}
               </button>

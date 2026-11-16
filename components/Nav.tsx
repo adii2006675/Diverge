@@ -54,10 +54,10 @@ export default function Nav({ active }: { active?: string }) {
           onClick={() => router.push('/')}
         >
           <svg className="dv-logo-mark" viewBox="0 0 64 40" width="40" height="25" aria-hidden="true">
-            <path className="dv-l1" pathLength={100} d="M4 23 H18 Q25 23 29 16 Q33 9 41 9 H60" fill="none" stroke="var(--accent)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+            <path className="dv-l1" pathLength={100} d="M4 23 H18 Q25 23 29 16 Q33 9 41 9 H60" fill="none" stroke="var(--accent-strand)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
             <path className="dv-l2" pathLength={100} d="M4 17 H18 Q25 17 29 24 Q33 31 41 31 H60" fill="none" stroke="var(--text)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
             <path className="dv-run" pathLength={100} d="M4 23 H18 Q25 23 29 16 Q33 9 41 9 H60" fill="none" stroke="#fff" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-            <path className="dv-run b" pathLength={100} d="M4 17 H18 Q25 17 29 24 Q33 31 41 31 H60" fill="none" stroke="var(--accent)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+            <path className="dv-run b" pathLength={100} d="M4 17 H18 Q25 17 29 24 Q33 31 41 31 H60" fill="none" stroke="var(--accent-strand)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <span className="dv-word" aria-hidden="true">
             {'DIVERGE'.split('').map((ch, i) => (

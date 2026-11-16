@@ -149,3 +149,12 @@ Images in this folder are shown on the event cards and the diverge page.
 | jordan-last-shot-1998 | jordan-last-shot-1998.jpg | Zach Catanzareti Photo | CC BY 2.0 | [Michael jordan admad rashad (51276390562) (cropped).jpg](https://commons.wikimedia.org/wiki/File:Michael_jordan_admad_rashad_%2851276390562%29_%28cropped%29.jpg) |
 | bolt-2008 | bolt-2008.jpg | Richard Giles | CC BY-SA 2.0 | [Usain Bolt Olympics Celebration.jpg](https://commons.wikimedia.org/wiki/File:Usain_Bolt_Olympics_Celebration.jpg) |
 | messi-world-cup-2022 | messi-world-cup-2022.jpg | Sebas | CC BY 3.0 | [Argentina 3-3 Francia - Copa Mundial 2022 - Argentina campeón (cropped).jpg](https://commons.wikimedia.org/wiki/File:Argentina_3-3_Francia_-_Copa_Mundial_2022_-_Argentina_campe%C3%B3n_%28cropped%29.jpg) |
+| biden-withdraws-2024 | biden-withdraws-2024.jpg | Adam Schultz | Public domain | [Joe Biden presidential portrait.jpg](https://commons.wikimedia.org/wiki/File:Joe_Biden_presidential_portrait.jpg) |
+| doge-2025 | doge-2025.png | Department of Government Efficiency | Public domain | [DOGE.gov.png](https://commons.wikimedia.org/wiki/File:DOGE.gov.png) |
+| bush-v-gore-2000 | bush-v-gore-2000.jpg | Photo by Mr. Kjetil Ree. | CC BY-SA 3.0 | [US Supreme Court.JPG](https://commons.wikimedia.org/wiki/File:US_Supreme_Court.JPG) |
+| tesla-ipo-2010 | tesla-ipo-2010.jpg | ajay_suresh | CC BY 2.0 | [Nasdaq MarketSite (51494550508).jpg](https://commons.wikimedia.org/wiki/File:Nasdaq_MarketSite_(51494550508).jpg) |
+| nvidia-deepseek-2025 | nvidia-deepseek-2025.jpg | Coolcaesar | CC BY-SA 4.0 | [NVIDIA Headquarters.jpg](https://commons.wikimedia.org/wiki/File:NVIDIA_Headquarters.jpg) |
+| oj-1995 | oj-1995.jpg | LAPD | Public domain | [Mug shot of O.J. Simpson.jpg](https://commons.wikimedia.org/wiki/File:Mug_shot_of_O.J._Simpson.jpg) |
+| nevermind-1991 | nevermind-1991.jpg | Alice Wheeler | Public domain | [Kurt Cobain on Love Buzz Big Cheese front cover (cropped).jpg](https://commons.wikimedia.org/wiki/File:Kurt_Cobain_on_Love_Buzz_Big_Cheese_front_cover_(cropped).jpg) |
+| itunes-2003 | itunes-2003.jpg | Evan-Amos | Public domain | [Ipod-classic-6th-gen.jpg](https://commons.wikimedia.org/wiki/File:Ipod-classic-6th-gen.jpg) |
+| tiger-masters-1997 | tiger-masters-1997.jpg | Boston Public Library | Public domain | [Augusta National Golf Club House, Augusta, Ga. (8343915624).jpg](https://commons.wikimedia.org/wiki/File:Augusta_National_Golf_Club_House,_Augusta,_Ga._(8343915624).jpg) |

@@ -1,5 +1,14 @@
 // Event images live in /public/events (one file per event id). Sources and licences: public/events/CREDITS.md
 const EVENT_IMAGES: Record<string, string> = {
+  'biden-withdraws-2024': '/events/biden-withdraws-2024.jpg',
+  'doge-2025': '/events/doge-2025.png',
+  'bush-v-gore-2000': '/events/bush-v-gore-2000.jpg',
+  'tesla-ipo-2010': '/events/tesla-ipo-2010.jpg',
+  'nvidia-deepseek-2025': '/events/nvidia-deepseek-2025.jpg',
+  'oj-1995': '/events/oj-1995.jpg',
+  'nevermind-1991': '/events/nevermind-1991.jpg',
+  'itunes-2003': '/events/itunes-2003.jpg',
+  'tiger-masters-1997': '/events/tiger-masters-1997.jpg',
   'jfk-1963': '/events/jfk-1963.jpg',
   'ww2-1939': '/events/ww2-1939.jpg',
   'berlin-wall-1989': '/events/berlin-wall-1989.jpg',

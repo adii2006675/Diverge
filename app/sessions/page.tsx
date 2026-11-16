@@ -107,21 +107,28 @@ export default function SessionsPage() {
     showToast(t('Renamed.'))
   }
 
-  async function handleDuplicate(session: Session) {
-    const { data, error } = await supabase
-      .from('sessions')
-      .insert({
-        user_id: user!.id,
-        event_id: session.event_id,
-        event_title: `${session.event_title} (copy)`,
-        what_ifs: session.what_ifs,
-        divergence_score: session.divergence_score,
-      })
-      .select()
-      .single()
-    if (data) { setSessions(prev => [data, ...prev]); showToast(t('Session duplicated.')) }
-    else { if (error) console.error(error); showToast(t('Could not duplicate this session.')) }
+  // Downloads this session as a PDF: the real history behind it, then every question and answer.
+  async function handleDownload(session: Session) {
     setOpenMenuId(null)
+    const entries = session.what_ifs.filter((w): w is WhatIfEntry => {
+      const o = w as { question?: unknown; response?: { paragraph?: unknown } } | null
+      return !!o && typeof o.question === 'string' && !!o.response && typeof o.response.paragraph === 'string'
+    })
+    if (entries.length === 0) { showToast(t('There is nothing to download in this session yet.')); return }
+    const ev = ALL_EVENTS.find(e => e.id === session.event_id)
+    try {
+      const { downloadChatPdf } = await import('@/lib/exportPdf')
+      await downloadChatPdf({
+        title: cleanTitle(session.event_title) || t('Alternate timeline'),
+        realTitle: ev ? at(ev.title) : '',
+        realSummary: ev ? at(ev.fullDesc) : '',
+        realFacts: ev ? ev.realFacts.map(f => at(f)) : [],
+        whatIfs: entries,
+      })
+    } catch (err) {
+      console.error(err)
+      showToast(t('Could not make the PDF. Please try again.'))
+    }
   }
 
   async function handleShare(session: Session) {
@@ -362,12 +369,12 @@ export default function SessionsPage() {
                             {t('Share')}
                           </button>
                           <button
-                            onClick={() => handleDuplicate(session)}
+                            onClick={() => handleDownload(session)}
                             style={{ display: 'block', width: '100%', padding: '8px 10px', borderRadius: 7, border: 'none', background: 'transparent', color: 'var(--text-dim)', fontSize: 13, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                             onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'var(--card-bg)'}
                             onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
                           >
-                            {t('Duplicate')}
+                            {t('Download')}
                           </button>
                           <button
                               onClick={() => { setDeleteTargetId(session.id); setOpenMenuId(null) }}
@@ -385,7 +392,7 @@ export default function SessionsPage() {
                   {isExpanded && (
                     <div style={{ position: 'relative', zIndex: 1, padding: '0 18px 16px', borderTop: '1px solid var(--border-color)', paddingTop: 14 }}>
                       <div style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 10 }}>
-                        {tn((session.what_ifs?.length || 0) === 1 ? '{n} what-if explored' : '{n} what-ifs explored', session.what_ifs?.length || 0)}
+                        {tn((session.what_ifs?.length || 0) === 1 ? '{n} question' : '{n} questions', session.what_ifs?.length || 0)}
                       </div>
                       {session.what_ifs?.slice(0, 5).map((w: any, i: number) => (
                         <div key={i} style={{ fontSize: 12, color: 'var(--text-dim)', padding: '5px 0', borderBottom: i < Math.min(session.what_ifs.length, 5) - 1 ? '1px solid var(--border-color)' : 'none' }}>
@@ -395,8 +402,8 @@ export default function SessionsPage() {
                       <button
                         onClick={e => { e.stopPropagation(); router.push(`/diverge/${session.event_id || 'custom'}?session=${session.id}`) }}
                         style={{ marginTop: 12, width: '100%', padding: '9px', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--accent) 30%, var(--card-bg))', background: 'transparent', color: 'var(--accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
-                        onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.12)'}
-                        onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
+                        onMouseEnter={e => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'color-mix(in srgb, var(--accent) 14%, transparent)'; b.style.color = 'var(--text)' }}
+                        onMouseLeave={e => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'transparent'; b.style.color = 'var(--accent)' }}
                       >
                         {t('Continue exploring')}
                       </button>

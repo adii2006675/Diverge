@@ -161,12 +161,18 @@ button, a, [role='button'], [role='switch'] { touch-action: manipulation; }
   pointer-events: none;
   z-index: 3;
   opacity: calc(var(--glow) * 0.9);
-  background: radial-gradient(90px circle at var(--mx) var(--my), rgba(255, 255, 255, 0.16), transparent 100%);
+  background: radial-gradient(36px circle at var(--mx) var(--my), rgba(255, 255, 255, 0.14), transparent 100%);
 }
 /* Static outline for the expanded card: same masked ring, always on. */
 .tilt-ring.static {
   opacity: 1;
-  background: var(--accent);
+  background: none;
+  padding: 0;
+  -webkit-mask: none;
+  mask: none;
+  /* A drawn inset edge follows the rounded corners exactly, so the corners are not cut or thin. */
+  box-shadow: inset 0 0 0 4px var(--accent);
+  z-index: 6;
 }
 @media (prefers-reduced-motion: reduce) {
   .tilt-card {
@@ -427,7 +433,7 @@ html.dv-thinking .dv-logo:not(:hover) .dv-run { opacity: 0; animation: none; }
   .ev-badge span { font-size: 8.5px !important; padding: 2px 5px !important; letter-spacing: 0.06em !important; }
   .ev-body { padding: 9px 10px 11px !important; }
   .ev-title { font-size: 12.5px !important; margin-bottom: 4px !important; line-height: 1.3; }
-  .ev-desc { font-size: 11px !important; line-height: 1.45 !important; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .ev-desc { font-size: 11px !important; line-height: 1.45 !important; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: calc(11px * 1.45 * 2); }
   .heart-btn { width: 34px; height: 34px; top: 5px; right: 6px; }
   .heart-btn svg { width: 16px; height: 16px; }
 }
@@ -440,3 +446,11 @@ html.dv-thinking .dv-logo:not(:hover) .dv-run { opacity: 0; animation: none; }
 /* Headlines wrap evenly; numbers keep a fixed width so they do not jiggle as they change. */
 h1, h2, h3 { text-wrap: balance; }
 .dv-gauge, .dv-gauge *, .dv-yr, time, [data-num] { font-variant-numeric: tabular-nums; }
+
+/* Quiet text buttons under the account forms: dim, and white on hover or focus */
+.acct-link { background: none; border: none; color: rgba(255,255,255,0.45); font-size: 13px; cursor: pointer; font-family: inherit; padding: 6px; transition: color .16s; }
+.acct-link:hover, .acct-link:focus-visible { color: #fff; }
+
+/* Every event card: a one-line title and a two-line description, so all the cards are the same height. */
+.ev-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev-desc { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: calc(var(--font-scale) * 1.6 * 2); }

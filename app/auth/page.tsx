@@ -26,6 +26,13 @@ export default function AuthPage() {
   const boxRefs = useRef<(HTMLInputElement | null)[]>([])
   const [cooldown, setCooldown] = useState(0)
 
+  // Arriving from a "Forgot password?" link elsewhere: open the reset step with the signed-in address filled in.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('forgot') !== '1') return
+    setReset('email')
+    supabase.auth.getUser().then(({ data }) => { if (data.user?.email) setEmail(data.user.email) })
+  }, [])
+
   useEffect(() => {
     if (cooldown <= 0) return
     const id = window.setTimeout(() => setCooldown(c => c - 1), 1000)

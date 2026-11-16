@@ -245,15 +245,13 @@ export default function AboutPage() {
         <motion.div
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, amount: 0.5, margin: '-15% 0px -15% 0px' }}
+          // The last block sits at the very bottom of the page, so it must reveal without needing to clear a margin.
+          viewport={{ once: true, amount: 0.2 }}
           variants={fadeUp}
           transition={{ ...SOFT }}
           style={{ borderTop: '1px solid var(--accent)', paddingTop: 40 }}
         >
-          <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 12, textAlign: 'center' }}>{at('Built by')}</h2>
-          <p style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.75, color: 'var(--text-dim)', marginBottom: 20 }}>
-            {at("Diverge was built by Adi Sharma, a CS student at the University of Delaware. It uses the Claude API from Anthropic for the AI answers, Next.js for the front end, and Supabase to store your sessions.")}
-          </p>
+          <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 12, textAlign: 'center' }}>{at('Built by Adi Sharma')}</h2>
 
           <div className="about-links" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
             <a href="https://github.com/adii2006675/Diverge" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-dim)', fontSize: 14, textDecoration: 'none', transition: 'all 0.2s' }} onMouseEnter={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.borderColor = '#9CA3AF'; el.style.transform = 'scale(1.06)'; const span = el.querySelector('span') as HTMLSpanElement; span.style.backgroundImage = 'linear-gradient(45deg, #ffffff, #6e7681, #24292e)'; span.style.webkitBackgroundClip = 'text'; span.style.backgroundClip = 'text'; span.style.color = 'transparent' }} onMouseLeave={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.borderColor = 'var(--border-color)'; el.style.transform = 'scale(1)'; const span = el.querySelector('span') as HTMLSpanElement; span.style.backgroundImage = 'none'; span.style.color = 'var(--text-dim)' }}><span style={{ transition: 'color 0.2s' }}>GitHub</span></a>

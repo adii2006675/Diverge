@@ -20,8 +20,8 @@ export const COMMON_ROWS: Record<string, Row> = {
   // Tags
   'Starts {n}': ['Empieza en {n}', 'Commence en {n}', 'Beginnt {n}', '{n}年から', 'Começa em {n}', '{n} से शुरू', '起于 {n}'],
   'Now {n}': ['Ahora {n}', 'Maintenant {n}', 'Jetzt {n}', '現在 {n}', 'Agora {n}', 'अब {n}', '现在 {n}'],
-  '{n} what-if': ['{n} hipótesis', '{n} hypothèse', '{n} Was-wäre-wenn', '「もしも」{n}件', '{n} hipótese', '{n} "क्या होता अगर"', '{n} 个假设'],
-  '{n} what-ifs': ['{n} hipótesis', '{n} hypothèses', '{n} Was-wäre-wenn', '「もしも」{n}件', '{n} hipóteses', '{n} "क्या होता अगर"', '{n} 个假设'],
+  '{n} question': ['{n} pregunta', '{n} question', '{n} Frage', '{n}件の質問', '{n} pergunta', '{n} प्रश्न', '{n} 个问题'],
+  '{n} questions': ['{n} preguntas', '{n} questions', '{n} Fragen', '{n}件の質問', '{n} perguntas', '{n} प्रश्न', '{n} 个问题'],
   'Question': ['Pregunta', 'Question', 'Frage', '質問', 'Pergunta', 'प्रश्न', '问题'],
   'Sources:': ['Fuentes:', 'Sources :', 'Quellen:', '出典:', 'Fontes:', 'स्रोत:', '来源：'],
   'source': ['fuente', 'source', 'Quelle', '出典', 'fonte', 'स्रोत', '来源'],
