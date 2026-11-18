@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
 import SettingsPanel from '@/components/SettingsPanel'
+import StreakBadge from '@/components/StreakBadge'
 import { useT } from '@/lib/useT'
 
 export default function ProfilePage() {
@@ -100,8 +101,7 @@ export default function ProfilePage() {
       <Nav active="profile" />
 
       <div className="page-wrap" style={{ position: 'relative', zIndex: 1, maxWidth: 640, margin: '0 auto', padding: '140px 24px 60px' }}>
-        <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 8, letterSpacing: '-0.02em' }}>{t('Profile')}</h1>
-        <p style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 40 }}>{t('Changes save automatically to your account.')}</p>
+        <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 40, letterSpacing: '-0.02em' }}>{t('Profile')}</h1>
 
         {/* Avatar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 32, padding: '10px 20px', borderRadius: 16, border: '1px solid var(--border-color)', background: 'var(--card-bg)' }}>
@@ -180,6 +180,7 @@ export default function ProfilePage() {
             )}
             {nameError && <div role="alert" style={{ fontSize: 12, color: '#EF4444', marginTop: 4 }}>{nameError}</div>}
           </div>
+          <StreakBadge userId={user.id} />
         </div>
 
         <SettingsPanel />

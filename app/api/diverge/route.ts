@@ -155,9 +155,10 @@ function outputSchema(wantSuggestions = true) {
       },
       year: str,
       uncertaintyLevel: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] },
+      title: str,
       ...(wantSuggestions ? { suggestions: strs } : {}),
     },
-    required: ['paragraph', 'keyFacts', 'factTypes', 'factExplanations', 'worldMood', 'impact', 'year', 'uncertaintyLevel', ...(wantSuggestions ? ['suggestions'] : [])],
+    required: ['paragraph', 'keyFacts', 'factTypes', 'factExplanations', 'worldMood', 'impact', 'year', 'uncertaintyLevel', 'title', ...(wantSuggestions ? ['suggestions'] : [])],
     additionalProperties: false,
   }
 }
@@ -203,7 +204,7 @@ RESPONSE SETTINGS (follow exactly):
 ${DEPTH_INSTRUCTION[i.depth]}
 ${TONE_INSTRUCTION[i.tone]}
 ${PLAUSIBILITY_INSTRUCTION[i.plausibility]}
-${i.language === 'English' ? '' : `LANGUAGE: Write every text field (paragraph, keyFacts, factExplanations, suggestions) in ${i.language}. Keep the JSON keys, the enum values (documented/inference/speculation, worldMood, uncertaintyLevel) and the year in their original English/digit form. Keep proper names in their usual ${i.language} spelling.
+${i.language === 'English' ? '' : `LANGUAGE: Write every text field (paragraph, keyFacts, factExplanations, suggestions, title) in ${i.language}. Keep the JSON keys, the enum values (documented/inference/speculation, worldMood, uncertaintyLevel) and the year in their original English/digit form. Keep proper names in their usual ${i.language} spelling.
 `}LENGTH: ${i.length.toUpperCase()}.
 
 STARTING HISTORICAL EVENT: ${i.startingEvent}
@@ -226,6 +227,7 @@ FIELD RULES:
 - factExplanations: exactly ${spec.facts} items, each ${spec.explanation}, citing real mechanisms or precedents.
 - worldMood, uncertaintyLevel: pick the best fit. uncertaintyLevel is how confident you are (HIGH = very confident).
 - impact: four whole numbers from 0 to 10 rating how big THIS one change is on its own (not a running total; the app turns your ratings into the divergence score and adds them to the earlier answers). scale = how large a change to the course of events (2 a local incident, 5 a national turning point, 8 a world-changing shift, 10 a civilization-level break). people = how many lives it touches (1 hundreds, 3 hundreds of thousands, 5 tens of millions, 8 hundreds of millions, 10 billions). lasting = how long the effects last (1 months, 3 a few years, 5 a generation, 8 centuries, 10 permanent). breadth = how many areas of life change (1 a single area such as sports, 3 two or three, 6 most of politics, economy and culture, 9 nearly everything). Judge each one separately and use the whole range, so the four numbers are usually different. If you refuse the question, all four are 0.
+- title: a short plain title for this what-if, 3 to 6 words, naming the topic (not starting with "What if", no quotes, no final punctuation).
 - ${yearRule}${wantSuggestions ? `
 - suggestions: exactly ${spec.suggestions} short "What if..." follow-ups about THIS alternate timeline, each under 20 words and not a restatement of the question.` : ''}`
 }
@@ -253,6 +255,7 @@ function finish(data: Answer, depth: AIDepth, spec: { facts: number; suggestions
   data.factExplanations = (data.factExplanations || []).slice(0, n).map(plain)
   data.factTypes = (data.factTypes || []).slice(0, n)
   while (data.factTypes.length < n) data.factTypes.push('inference')
+  data.title = String(data.title ?? '').replace(/\s*[—–]\s*/g, ', ').replace(/["“”]/g, '').replace(/^what if[\s:,]*/i, '').replace(/[.!?\s]+$/, '').trim().slice(0, 60)
   data.suggestions = (Array.isArray(data.suggestions) ? data.suggestions : []).filter((q: unknown) => typeof q === 'string' && q.trim()).slice(0, spec.suggestions).map(plain)
   data.narration = ''
   data.reliabilityNotes = ''
@@ -299,6 +302,11 @@ export async function POST(req: NextRequest) {
   if (isGateError(caller)) return NextResponse.json({ error: caller.message, code: caller.code }, { status: caller.status })
 
   const enc = new TextEncoder()
+  // If the person cancels in the browser, stop spending money on the answer and give back the free question.
+  let aborted = false
+  let activeStream: { abort: () => void } | null = null
+  const onAbort = () => { aborted = true; try { activeStream?.abort() } catch { /* already finished */ } }
+  if (req.signal.aborted) onAbort(); else req.signal.addEventListener('abort', onAbort)
   const stream = new ReadableStream({
     async start(controller) {
       const send = (o: unknown) => { try { controller.enqueue(enc.encode(line(o))) } catch { /* client went away */ } }
@@ -310,6 +318,7 @@ export async function POST(req: NextRequest) {
           getReference(realFacts.length > 0 ? startingEvent : question),
           researchTopic(caller.client, { startingEvent, question, realFacts, today }),
         ])
+        if (aborted) throw new Error('cancelled')
         const prompt = buildPrompt({ startingEvent, previousWhatIfs, currentWorldState, question, realFacts, length, depth, tone, plausibility, wantSuggestions, previousYear, ref, research, language, today })
 
         const params: Record<string, any> = {
@@ -323,6 +332,7 @@ export async function POST(req: NextRequest) {
         if (SUPPORTS_TEMPERATURE) params.temperature = 0.2
 
         const ms = caller.client.messages.stream(params as any)
+        activeStream = ms
         let text = ''
         ms.on('text', (d: string) => { text += d; send({ t: 'delta', text: d }) })
         const final = await ms.finalMessage()
@@ -357,6 +367,7 @@ export async function POST(req: NextRequest) {
           } catch { /* verification is best effort */ }
         }
       } catch (err: any) {
+        if (aborted) { if (charged) await refundFreeQuestion(caller); return }
         const status = err?.status
         const code = status === 401 ? 'invalid_api_key' : status === 404 || status === 403 ? 'model_unavailable' : status === 429 ? 'provider_rate_limited' : 'generation_failed'
         const message = status === 401
@@ -370,6 +381,7 @@ export async function POST(req: NextRequest) {
         if (charged) await refundFreeQuestion(caller)
         send({ t: 'error', code, message })
       } finally {
+        req.signal.removeEventListener('abort', onAbort)
         try { controller.close() } catch { /* already closed */ }
       }
     },

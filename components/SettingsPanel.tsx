@@ -1,5 +1,6 @@
 'use client'
 import { useAskNext, useFeature } from '@/lib/askNext'
+import { useHaptics, buzz } from '@/lib/haptics'
 import { useAuth } from '@/context/AuthContext'
 import { useT } from '@/lib/useT'
 import { LANGUAGES, NATIVE_NAMES } from '@/lib/i18n'
@@ -9,11 +10,11 @@ const ACCENT_COLORS = [
   { value: 'none', label: 'None', hex: 'var(--text)' },
   { value: 'red', label: 'Red', hex: '#F43F5E' },
   { value: 'blue', label: 'Blue', hex: '#3B82F6' },
-  { value: 'green', label: 'Green', hex: '#10B981' },
-  { value: 'teal', label: 'Brown', hex: '#B07D4F' },
+  { value: 'teal', label: 'Yellow', hex: '#FACC15' },
   { value: 'orange', label: 'Orange', hex: '#F59E0B' },
-  { value: 'purple', label: 'Purple', hex: '#8B5CF6' },
   { value: 'pink', label: 'Pink', hex: '#EC4899' },
+  { value: 'purple', label: 'Purple', hex: '#8B5CF6' },
+  { value: 'green', label: 'Green', hex: '#10B981' },
 ]
 const FONT_SIZES = [
   { value: 'small', label: 'Small' },
@@ -89,7 +90,7 @@ export default function SettingsPanel() {
             {ACCENT_COLORS.map(c => (
               <button
                 key={c.value}
-                onClick={e => { if (settings?.accent_color !== c.value) colourBurst(e, c.hex); updateSettings({ accent_color: c.value }) }}
+                onClick={e => { if (settings?.accent_color !== c.value) { colourBurst(e, c.hex); buzz() }; updateSettings({ accent_color: c.value }) }}
                 style={{
                   // Dot and name sit together, centred as a block as wide as the longest name, so the dots line up in each column.
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, textAlign: 'left',
@@ -167,6 +168,7 @@ export function DisplayOptions() {
   const [askNextOn, setAskNextOn] = useAskNext()
   const [whatChangedOn, setWhatChangedOn] = useFeature('whatChanged')
   const [realHistoryOn, setRealHistoryOn] = useFeature('realHistory')
+  const [hapticsOn, setHapticsOn] = useHaptics()
   const { t } = useT()
   return (
     <Section title="Display Options">
@@ -195,6 +197,12 @@ export function DisplayOptions() {
           value={realHistoryOn}
           onChange={() => setRealHistoryOn(!realHistoryOn)}
         />
+        <Toggle
+          label={t('Vibrate on tap')}
+          desc={t('A short buzz when you send a question or pin a session. Phones only, and not every phone supports it.')}
+          value={hapticsOn}
+          onChange={() => setHapticsOn(!hapticsOn)}
+        />
       </div>
     </Section>
   )
@@ -217,8 +225,6 @@ function Toggle({ label, desc, value, onChange }: { label: string; desc: string;
     <div
       onClick={onChange}
       style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '12px 16px', borderRadius: 12, border: '1px solid var(--border-color)', background: 'var(--card-bg)', cursor: 'pointer', transition: 'all 0.18s' }}
-      onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--accent)'}
-      onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border-color)'}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 'var(--font-scale)', fontWeight: 500, color: 'var(--text)', marginBottom: 2 }}>{label}</div>

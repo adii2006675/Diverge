@@ -33,8 +33,8 @@ export type StreamEvent =
   | { t: 'error'; code: string; message: string }
 
 /** Reads the route's newline-delimited JSON stream, calling onEvent for each line. Throws AiError for gate/HTTP errors. */
-export async function streamAnswer(body: unknown, onEvent: (e: StreamEvent) => void): Promise<void> {
-  const res = await fetch('/api/diverge', { method: 'POST', headers: await aiHeaders(), body: JSON.stringify(body) })
+export async function streamAnswer(body: unknown, onEvent: (e: StreamEvent) => void, signal?: AbortSignal): Promise<void> {
+  const res = await fetch('/api/diverge', { method: 'POST', headers: await aiHeaders(), body: JSON.stringify(body), signal })
   if (!res.ok || !res.body) {
     const j = await res.json().catch(() => null)
     throw new AiError(j?.error || j?.message || 'The answer could not be generated.', j?.code || 'error')

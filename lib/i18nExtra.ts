@@ -1,0 +1,18 @@
+// Translations for the streak, pins and vibration setting. Order: Spanish, French, German, Japanese, Portuguese, Hindi, Chinese.
+type Row = [string, string, string, string, string, string, string]
+export const EXTRA_ROWS: Record<string, Row> = {
+  'Yellow': ['Amarillo', 'Jaune', 'Gelb', '黄色', 'Amarelo', 'पीला', '黄色'],
+  'Stop and take the question back': ['Detener y recuperar la pregunta', 'Arrêter et reprendre la question', 'Stoppen und Frage zurückholen', '停止して質問を戻す', 'Parar e recuperar a pergunta', 'रोकें और प्रश्न वापस लें', '停止并取回问题'],
+  'Cancelled. Your question is back in the box.': ['Cancelado. Tu pregunta ha vuelto al cuadro.', 'Annulé. Votre question est revenue dans la zone.', 'Abgebrochen. Deine Frage steht wieder im Feld.', 'キャンセルしました。質問は入力欄に戻しました。', 'Cancelado. Sua pergunta voltou para a caixa.', 'रद्द किया गया। आपका प्रश्न बॉक्स में वापस है।', '已取消，你的问题已放回输入框。'],
+  'API key': ['Clave de API', 'Clé API', 'API-Schlüssel', 'APIキー', 'Chave de API', 'API कुंजी', 'API 密钥'],
+  'You asked a question today. Keep it going tomorrow.': ['Hoy hiciste una pregunta. Sigue mañana.', 'Vous avez posé une question aujourd’hui. Continuez demain.', 'Du hast heute eine Frage gestellt. Mach morgen weiter.', '今日は質問しました。明日も続けましょう。', 'Você fez uma pergunta hoje. Continue amanhã.', 'आज आपने प्रश्न पूछा। कल भी जारी रखें।', '你今天已经提问了，明天继续保持。'],
+  'Ask a question today to keep your streak.': ['Haz una pregunta hoy para mantener tu racha.', 'Posez une question aujourd’hui pour garder votre série.', 'Stelle heute eine Frage, um deine Serie zu halten.', '連続記録を続けるには、今日質問してください。', 'Faça uma pergunta hoje para manter sua sequência.', 'अपनी लगातार स्ट्रीक बनाए रखने के लिए आज प्रश्न पूछें।', '今天提一个问题来保持连续记录。'],
+  'Ask a question today to start a streak.': ['Haz una pregunta hoy para empezar una racha.', 'Posez une question aujourd’hui pour lancer une série.', 'Stelle heute eine Frage, um eine Serie zu starten.', '今日質問して連続記録を始めましょう。', 'Faça uma pergunta hoje para começar uma sequência.', 'स्ट्रीक शुरू करने के लिए आज प्रश्न पूछें।', '今天提一个问题，开始连续记录。'],
+  'day streak': ['días seguidos', 'jours de suite', 'Tage in Folge', '日連続', 'dias seguidos', 'दिन की स्ट्रीक', '天连续'],
+  'Pin': ['Fijar', 'Épingler', 'Anheften', 'ピン留め', 'Fixar', 'पिन करें', '置顶'],
+  'Unpin': ['Quitar fijación', 'Désépingler', 'Lösen', 'ピン留めを外す', 'Desafixar', 'पिन हटाएँ', '取消置顶'],
+  'Pinned': ['Fijada', 'Épinglée', 'Angeheftet', 'ピン留め中', 'Fixada', 'पिन किया हुआ', '已置顶'],
+  'Click the name to rename': ['Haz clic en el nombre para cambiarlo', 'Cliquez sur le nom pour le renommer', 'Klicke auf den Namen, um ihn zu ändern', '名前をクリックして変更', 'Clique no nome para renomear', 'नाम बदलने के लिए नाम पर क्लिक करें', '点击名称即可重命名'],
+  'Vibrate on tap': ['Vibrar al tocar', 'Vibrer au toucher', 'Beim Tippen vibrieren', 'タップ時に振動', 'Vibrar ao tocar', 'टैप पर कंपन', '点按时振动'],
+  'A short buzz when you send a question or pin a session. Phones only, and not every phone supports it.': ['Una vibración corta al enviar una pregunta o fijar una sesión. Solo en móviles, y no todos lo admiten.', 'Une courte vibration quand vous envoyez une question ou épinglez une session. Téléphones uniquement, et tous ne le gèrent pas.', 'Ein kurzes Vibrieren beim Senden einer Frage oder Anheften einer Sitzung. Nur auf Handys, und nicht jedes unterstützt es.', '質問の送信やセッションのピン留め時に短く振動します。スマホのみで、非対応の機種もあります。', 'Uma vibração curta ao enviar uma pergunta ou fixar uma sessão. Só em celulares, e nem todos têm suporte.', 'प्रश्न भेजने या सत्र पिन करने पर छोटा कंपन। केवल फ़ोन पर, और हर फ़ोन इसे सपोर्ट नहीं करता।', '发送问题或置顶会话时短暂振动。仅限手机，且并非所有手机都支持。'],
+}

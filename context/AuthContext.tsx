@@ -55,7 +55,7 @@ const ACCENT_COLORS: Record<string, string> = {
   green: '#10B981',
   purple: '#8B5CF6',
   pink: '#EC4899',
-  teal: '#B07D4F', // the stored value is still 'teal' (safe for any database constraint); it now shows as Brown
+  teal: '#FACC15', // the stored value is still 'teal' (safe for any database constraint); it shows as Yellow
 }
 
 const FONT_SCALES: Record<string, string> = {
@@ -135,7 +135,7 @@ function accentInk(hex: string) {
   if (!m) return { on: '#fff', onDark: '#1b1305' }
   const [r, g, b] = [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16) / 255).map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
   const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
-  return { on: lum > 0.8 ? '#0A0A0A' : '#fff', onDark: lum < 0.08 ? '#fff' : '#1b1305' }
+  return { on: lum > 0.55 ? '#0A0A0A' : '#fff', onDark: lum < 0.08 ? '#fff' : '#1b1305' }
 }
 
 function applyThemeToDOM(theme: string, accentKey: string, fontSize: string) {

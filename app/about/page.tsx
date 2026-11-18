@@ -1,42 +1,30 @@
 'use client'
 import { useRouter } from 'next/navigation'
+import { useId, useState } from 'react'
 import Nav from '@/components/Nav'
 import { useAutoT } from '@/lib/autoTranslate'
 import { useT } from '@/lib/useT'
-import { useId, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { EASE_OUT } from '@/lib/motion'
 
 const SOFT = { type: 'spring', stiffness: 130, damping: 22, mass: 0.9 } as const
 
-type Point = { lead: string; text: string }
+type Point = { lead?: string; text: string }
 
 const HOW: Point[] = [
-  { lead: "Strict rules first.", text: "Every question starts with a long set of instructions, about 1,000 words. They tell the AI to act like a historian, stick to history, never invent numbers, dates or quotes, and say when it is guessing." },
-  { lead: "Real facts go in with your question.", text: "Each event comes with real facts that I wrote in ahead of time. Then a quick research step searches the web for credible sources, like government sites, universities, museums and established news outlets, and the AI gets those notes along with a Wikipedia excerpt. Blogs, forums and content farms are filtered out, and the sources it used are listed under each answer." },
-  { lead: "A set way of thinking.", text: "The rules make it work in steps: what changes right away (0 to 2 years), the ripple effects (2 to 10 years), the long term (10 to 50 years), what would have happened anyway, and where it is unsure." },
-  { lead: "Every answer has the same structure.", text: "You always get the year, a divergence score, the world mood, a confidence level and a list of key facts, so answers are easy to compare. A normal chat just gives you a wall of text." },
-  { lead: "A second AI checks the first one.", text: "After an answer shows up, a smaller AI looks over the facts labeled documented and flags the ones it can't confirm as unconfirmed." },
-  { lead: "Your timeline stays consistent.", text: "Your earlier questions are locked in so a new answer can't contradict them, and the year can only move forward." },
-  { lead: "It stays on topic and on guard.", text: "Questions that aren't about history get refused. Your question is treated as a question and not as orders, which blocks most tricks. There is also a test script with 17 checks for facts, refusals, tricks and false premises." },
-  { lead: "You can tune it.", text: "Settings let you pick how long the answer is, how simple or detailed, the tone, and whether the guesses are realistic or bolder. There is also a library of real events to start from, so you are never staring at a blank box." },
+  { lead: "Strict rules first.", text: "Every question starts with a long set of strict instructions, about 1,100 words, that tell the AI to act like a historian, stick to history, never invent numbers, dates or quotes, and say when it is guessing." },
+  { lead: "Real facts and web research.", text: "Each event comes with real facts, and a research step searches the web for credible sources, like government sites, universities, museums and established news outlets. Blogs, forums and content farms are filtered out, and the sources it used are listed under each answer." },
+  { lead: "A set way of thinking.", text: "The rules make the AI work in steps: what changes right away (0 to 2 years), the ripple effects (2 to 10 years), the long term (10 to 50 years), what would have happened anyway, and where it is unsure." },
+  { lead: "A second AI checks the first.", text: "Every answer has the same structure, and a second AI checks the first one. It looks over the facts labeled documented and flags the ones it can't confirm as unconfirmed." },
+  { lead: "Your timeline stays consistent.", text: "Your timeline stays consistent because earlier questions are locked in, so a new answer can't contradict them, and the year can only move forward." },
+  { lead: "You can tune it.", text: "The AI settings let you tweak how an answer is generated: how long it is, how simple or detailed, the tone, and whether the guesses are realistic or bolder. There is also a library of real events to start from, so you are never staring at a blank box." },
 ]
 
 const NUMBERS: Point[] = [
-  { lead: "Model:", text: "Claude Sonnet 4.6, made by Anthropic, writes the answers and the final summary. Claude Haiku 4.5 does the web research (up to 3 searches per question) and the fact check." },
-  { lead: "Randomness:", text: "The temperature is set to 0.2, so answers stay steady instead of wild." },
-  { lead: "Tokens in:", text: "Roughly 4,500 to 5,500 tokens go in with every question. That covers the rules (about 1,750), the instructions for your settings (about 800), the event facts, web research notes and Wikipedia text (about 1,800) and your earlier questions. The research step has its own usage on top of that." },
-  { lead: "Tokens out:", text: "Up to 2,000 for Short answers, 3,500 for Medium and 7,000 for Long. The fact check uses at most 600." },
-  { lead: "Speed and cost:", text: "The long rules are set up to be cached, so follow-up questions can reuse them. These counts are estimates based on the size of my prompts." },
-]
-
-const WHY: Point[] = [
-  { lead: "It predicts, it doesn't know.", text: "The AI writes the words that seem most likely to come next. It can sound completely sure and still be wrong, and it can mix up names, dates and numbers." },
-  { lead: "There is no answer key.", text: "Nobody knows what would really have happened, and even expert historians would disagree about these what ifs." },
-  { lead: "The checker has blind spots too.", text: "The second AI is smaller, only looks at facts labeled documented, and works from the research notes and a short Wikipedia excerpt that do not always match your question. It can miss mistakes, and the first AI can label a guess as a fact." },
-  { lead: "The web is not all trustworthy.", text: "I filter out sites that look unreliable, but a search can still pick up a page that is out of date or wrong, and even a respected outlet makes mistakes. Check the sources listed under an answer before you rely on it." },
-  { lead: "Mistakes pile up.", text: "Every answer builds on the last one, so a small error early on can grow the longer you keep going." },
-  { lead: "Its knowledge has limits.", text: "It may not know about very recent events, and what it learned from the internet can be biased or incomplete." },
+  { lead: "Model:", text: "Claude Sonnet 4.6, made by Anthropic, writes the answers. Claude Haiku 4.5 does the web research and the fact check." },
+  { lead: "Tokens in:", text: "Roughly 4,500 to 5,500 tokens go in with every question. That consists of the rules (~1,750), the instructions for your settings (~800), the event facts and web research notes (~1,800) and your earlier questions. The research step has its own usage on top of that." },
+  { lead: "Tokens out:", text: "Up to ~2,000 for Short answers, ~3,500 for Medium and ~7,000 for Long. The fact check uses at most ~600." },
+  { lead: "Speed:", text: "A Short answer usually takes 15 to 25 seconds, a Medium answer 30 to 40 seconds, and a Long answer around 50 to 60 seconds." },
 ]
 
 // A plain list. It sits inside a dropdown, which does the reveal.
@@ -45,9 +33,9 @@ function PointList({ items }: { items: Point[] }) {
   return (
     <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
       {items.map(it => (
-        <li key={it.lead} style={{ position: 'relative', paddingLeft: 20, fontSize: 'calc(var(--font-scale) * 1.2)', lineHeight: 1.7, color: 'var(--text-dim)' }}>
+        <li key={(it.lead || '') + it.text} style={{ position: 'relative', paddingLeft: 20, fontSize: 'calc(var(--font-scale) * 1.2)', lineHeight: 1.7, color: 'var(--text-dim)' }}>
           <span aria-hidden="true" style={{ position: 'absolute', left: 0, top: '0.72em', width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)' }} />
-          <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{at(it.lead)}</strong> {at(it.text)}
+          {it.lead && <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{at(it.lead)} </strong>}{at(it.text)}
         </li>
       ))}
     </ul>
@@ -125,7 +113,7 @@ export default function AboutPage() {
           transition={{ ...SOFT, delay: 0.05 }}
           style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.85, color: 'var(--text-dim)', marginBottom: 24 }}
         >
-          {at("Diverge is a site where you pick a moment in history and ask what would have happened if it went a different way. You get an answer right away, and you can see how it compares to what really happened.")}
+          {at("Diverge is a site where you pick any moment in history and ask what would have happened if it went a different way. You get an answer right away, and you can see how it compares to what really happened. It uses real history, like who was allied with whom, how strong each nation was, and how the economy worked, to see what would change.")}
         </motion.p>
 
         <motion.p
@@ -134,40 +122,29 @@ export default function AboutPage() {
           viewport={{ once: true, amount: 0.4 }}
           variants={fadeUp}
           transition={{ ...SOFT, delay: 0.1 }}
-          style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.85, color: 'var(--text-dim)', marginBottom: 24 }}
-        >
-          {at("The answers come from Claude, an AI made by Anthropic. It uses real history, like who was allied with who, how strong each army was, and how the economy worked, to figure out what would change. It reasons through cause and effect the way a historian would, and it leans on documented history.")}
-        </motion.p>
-
-        <motion.p
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.4 }}
-          variants={fadeUp}
-          transition={{ ...SOFT, delay: 0.15 }}
           style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.85, color: 'var(--text-dim)', marginBottom: 40 }}
         >
-          {at("You can keep going, too. Each answer builds on the one before it, so your what ifs stack up into one alternate world that gets further from ours with every question. When you're done, a summary shows how different your world turned out.")}
+          {at("The AI reasons through cause and effect the same way a historian would, and each answer builds upon the one before it, so your questions stack up into one alternate world that gets further from ours with every question.")}
         </motion.p>
 
-        <div style={{ borderTop: '1px solid var(--accent)', paddingTop: 40, marginBottom: 40 }}>
+        <div style={{ borderTop: '1px solid var(--accent)', paddingTop: 18, marginBottom: 40 }}>
           <motion.h2
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, amount: 0.5, margin: '-15% 0px -15% 0px' }}
             variants={fadeUp}
             transition={{ ...SOFT }}
-            style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 16, textAlign: 'center' }}
+            style={{ fontSize: 'calc(var(--font-scale) * 1.6)', fontWeight: 700, marginBottom: 16, textAlign: 'center' }}
           >
             {at('How it works')}
           </motion.h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {[
-              { step: '01', title: 'Pick a moment', desc: "Pick any event from history, or just type in your own starting point if you already know exactly what you want to ask about." },
-              { step: '02', title: 'Ask what if', desc: "Type the change you want to make. The AI thinks through what would really happen next, using what we know about that time." },
-              { step: '03', title: 'Watch it diverge', desc: "Your answers show up on the left and real history stays on the right, so you can easily compare the two as you keep asking." },
-              { step: '04', title: 'Keep going', desc: "Ask follow-up what ifs. Each one builds on the last one, so your alternate world keeps growing and drifting further away." },
-              { step: '05', title: 'Get your summary', desc: "When you finish, you get a side by side comparison of your world and ours, covering things like population, tech and power." },
+              { step: "01", title: "Pick a moment", desc: "Pick any event from history, or type in your own starting point if you want to ask something different." },
+              { step: "02", title: "Ask what if", desc: "Type the change you want to make. The AI will think through what would really happen next, using what we know about that time." },
+              { step: "03", title: "Watch it diverge", desc: "Your answers show up on the left and the real history stays on the right, so you can easily compare the two as you keep diverging." },
+              { step: "04", title: "Keep going", desc: "Continue asking questions. Each one builds on the last, so your alternate world keeps growing and drifting further away." },
+              { step: "05", title: "Get your results", desc: "Once you have finished, your chat is automatically saved in your Sessions tab, and you can share the chat link or download it as a PDF." },
             ].map((item, i) => (
               <motion.div
                 key={item.step}
@@ -224,21 +201,18 @@ export default function AboutPage() {
           viewport={{ once: true, amount: 0.02 }}
           variants={fadeLight}
           transition={{ ...SOFT }}
-          style={{ borderTop: '1px solid var(--accent)', paddingTop: 40, marginBottom: 40 }}
+          style={{ borderTop: '1px solid var(--accent)', paddingTop: 18, marginBottom: 40 }}
         >
-          <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 12, textAlign: 'center' }}>{at('Accuracy disclaimer')}</h2>
-          <p style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.75, color: 'var(--text-dim)' }}>
-            {at("Diverge writes alternate history, so there is no answer key. Nobody can check what would really have happened. What I can do is make the AI be honest about what is real and what is a guess, so I built in a bunch of safeguards. Here is what they are and why it still is not perfect. Tap a heading to open it.")}
+          <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.6)', fontWeight: 700, marginBottom: 12, textAlign: 'center' }}>{at('Accuracy disclaimer')}</h2>
+          <p style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.75, color: 'var(--text-dim)', marginBottom: 20 }}>
+            {at("Diverge writes its own alternate history, and its knowledge has limits. No one really knows for sure what would have happened. It may not know about very recent events, and what it learned from the internet can be biased or incomplete.")}
           </p>
-          <div style={{ marginTop: 28 }}>
-            <Dropdown title={at('How an answer gets made')}>
-              <PointList items={HOW} />
-            </Dropdown>
+          <div style={{ marginTop: 0 }}>
+            <Dropdown title={at('How an answer gets made')}><PointList items={HOW} /></Dropdown>
             <Dropdown title={at('The numbers')}><PointList items={NUMBERS} /></Dropdown>
-            <Dropdown title={at('Why it can still be wrong')}><PointList items={WHY} /></Dropdown>
           </div>
           <p style={{ fontSize: 'calc(var(--font-scale) * 1.33)', lineHeight: 1.75, color: 'var(--text-dim)', marginTop: 28 }}>
-            {at("So use Diverge to explore and get curious, not as a source for homework or for facts you plan to repeat. If something really matters, check it with a real source.")}
+            {at("So use Diverge if you’re curious to explore, not as a source for homework or for facts you plan to repeat. If something really matters, check it with a reliable source.")}
           </p>
         </motion.div>
 
@@ -249,9 +223,9 @@ export default function AboutPage() {
           viewport={{ once: true, amount: 0.2 }}
           variants={fadeUp}
           transition={{ ...SOFT }}
-          style={{ borderTop: '1px solid var(--accent)', paddingTop: 40 }}
+          style={{ borderTop: '1px solid var(--accent)', paddingTop: 18 }}
         >
-          <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.83)', fontWeight: 700, marginBottom: 12, textAlign: 'center' }}>{at('Built by Adi Sharma')}</h2>
+          <h2 style={{ fontSize: 'calc(var(--font-scale) * 1.6)', fontWeight: 700, marginBottom: 12, textAlign: 'center' }}>{at('Built by Adi Sharma')}</h2>
 
           <div className="about-links" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
             <a href="https://github.com/adii2006675/Diverge" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-dim)', fontSize: 14, textDecoration: 'none', transition: 'all 0.2s' }} onMouseEnter={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.borderColor = '#9CA3AF'; el.style.transform = 'scale(1.06)'; const span = el.querySelector('span') as HTMLSpanElement; span.style.backgroundImage = 'linear-gradient(45deg, #ffffff, #6e7681, #24292e)'; span.style.webkitBackgroundClip = 'text'; span.style.backgroundClip = 'text'; span.style.color = 'transparent' }} onMouseLeave={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.borderColor = 'var(--border-color)'; el.style.transform = 'scale(1)'; const span = el.querySelector('span') as HTMLSpanElement; span.style.backgroundImage = 'none'; span.style.color = 'var(--text-dim)' }}><span style={{ transition: 'color 0.2s' }}>GitHub</span></a>

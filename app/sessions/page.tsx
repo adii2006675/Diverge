@@ -12,6 +12,9 @@ import { useToast } from '@/components/useToast'
 import { useT } from '@/lib/useT'
 import { useAutoT } from '@/lib/autoTranslate'
 import { createShare, revokeShare, shareUrl } from '@/lib/share'
+import { isWikipedia } from '@/lib/sourceHost'
+import { usePins } from '@/lib/pins'
+import { buzz } from '@/lib/haptics'
 import type { WhatIfEntry } from '@/types'
 
 type Session = {
@@ -65,7 +68,10 @@ export default function SessionsPage() {
   const [sortMode, setSortMode] = useState<SortMode>('newest')
   const { toast, showToast } = useToast()
   const { t, tn, locale } = useT()
+  // Custom questions have no event photo, so their card shows the picture of the Wikipedia article the answer was grounded in.
+  const [wikiImages, setWikiImages] = useState<Record<string, string>>({})
   const { at } = useAutoT()
+  const pins = usePins()
   // One link per session until its answers change, so tapping Share twice does not make two links.
   const shared = useRef<Record<string, { signature: string; id: string }>>({})
 
@@ -211,10 +217,28 @@ export default function SessionsPage() {
         result = result.sort((a, b) => (a.divergence_score || 0) - (b.divergence_score || 0))
         break
     }
-    return result
-  }, [sessions, searchQuery, sortMode])
+    // Pinned sessions stay on top, in the order of the chosen sort.
+    return [...result.filter(s => pins.has(s.id)), ...result.filter(s => !pins.has(s.id))]
+  }, [sessions, searchQuery, sortMode, pins.ids])
 
   const deleteTarget = sessions.find(s => s.id === deleteTargetId)
+
+  // Which sessions already asked for a picture, so a reload of the list never cancels or repeats a request.
+  const wikiAsked = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    for (const s of sessions) {
+      if (ALL_EVENTS.some(e => e.id === s.event_id) || wikiAsked.current.has(s.id)) continue
+      const src = (s.what_ifs || []).flatMap((w: any) => w?.response?.sources || []).find((x: any) => x?.url && isWikipedia(x.url))
+      if (!src) continue
+      const title = String(src.url).split('/wiki/')[1]
+      if (!title) continue
+      wikiAsked.current.add(s.id)
+      fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${title}`)
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => { const img = d?.thumbnail?.source || d?.originalimage?.source; if (img) setWikiImages(m => ({ ...m, [s.id]: img })) })
+        .catch(() => { wikiAsked.current.delete(s.id) })
+    }
+  }, [sessions])
 
   if (loading) return (
     <main style={{ minHeight: 'var(--vh-fit, 100vh)', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -299,14 +323,19 @@ export default function SessionsPage() {
                   <CardBorderTrace radius={14} />
                   <div className="ses-row" style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: '44px 1fr auto auto auto', gap: 14, alignItems: 'center', padding: '14px 18px' }}>
                     <div className="ses-thumb" style={{ width: 44, height: 44, borderRadius: 10, overflow: 'hidden', position: 'relative', background: 'color-mix(in srgb, var(--accent) 8%, var(--card-bg))' }}>
-                      <EventImage
-                        key={session.event_id}
-                        id={session.event_id}
-                        title={cleanTitle(session.event_title)}
-                        year={ALL_EVENTS.find(e => e.id === session.event_id)?.year}
-                        compact
-                        loading="lazy"
-                      />
+                      {wikiImages[session.id] ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={wikiImages[session.id]} alt="" loading="lazy" style={/\.(png|svg)/i.test(wikiImages[session.id]) ? { width: '100%', height: '100%', objectFit: 'contain', background: '#f2f2f5', padding: 3 } : { width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <EventImage
+                          key={session.event_id}
+                          id={session.event_id}
+                          title={cleanTitle(session.event_title)}
+                          year={ALL_EVENTS.find(e => e.id === session.event_id)?.year}
+                          compact
+                          loading="lazy"
+                        />
+                      )}
                     </div>
                     {isRenaming ? (
                       <input
@@ -320,8 +349,16 @@ export default function SessionsPage() {
                         style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', background: 'transparent', border: '1px solid var(--accent)', borderRadius: 6, padding: '4px 8px', outline: 'none', fontFamily: 'inherit', width: '100%' }}
                       />
                     ) : (
-                      <div className="ses-title" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {at(cleanTitle(session.event_title)) || t('Untitled Session')}
+                      <div
+                        className="ses-title ses-rename"
+                        title={t('Click the name to rename')}
+                        onClick={e => { e.stopPropagation(); setRenamingId(session.id); setRenameValue(cleanTitle(session.event_title)) }}
+                        style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'text', display: 'flex', alignItems: 'center', gap: 8, width: 'fit-content', maxWidth: '100%', justifySelf: 'start' }}
+                      >
+                        {pins.has(session.id) && (
+                          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" aria-label={t('Pinned')} style={{ flex: 'none', color: 'var(--accent)' }}><path d="M9 3h6l-1 6 3 3v2H7v-2l3-3-1-6Z" /><path d="M12 14v7" fill="none" /></svg>
+                        )}
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{at(cleanTitle(session.event_title)) || t('Untitled Session')}</span>
                       </div>
                     )}
                     <div className="ses-meta" style={{ display: 'contents' }}>
@@ -353,12 +390,12 @@ export default function SessionsPage() {
                           style={{ position: 'absolute', left: '100%', marginLeft: 25, top: -16, background: 'var(--surface)', border: '1px solid var(--border-color)', borderRadius: 10, padding: 6, minWidth: 140, zIndex: 50 }}
                         >
                           <button
-                            onClick={() => { setRenamingId(session.id); setRenameValue(cleanTitle(session.event_title)); setOpenMenuId(null) }}
+                            onClick={() => { pins.toggle(session.id); buzz(); setOpenMenuId(null) }}
                             style={{ display: 'block', width: '100%', padding: '8px 10px', borderRadius: 7, border: 'none', background: 'transparent', color: 'var(--text-dim)', fontSize: 13, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                             onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'var(--card-bg)'}
                             onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
                           >
-                            {t('Rename')}
+                            {pins.has(session.id) ? t('Unpin') : t('Pin')}
                           </button>
                           <button
                             onClick={() => handleShare(session)}
@@ -390,7 +427,7 @@ export default function SessionsPage() {
                   </div>
 
                   {isExpanded && (
-                    <div style={{ position: 'relative', zIndex: 1, padding: '0 18px 16px', borderTop: '1px solid var(--border-color)', paddingTop: 14 }}>
+                    <div style={{ position: 'relative', zIndex: 1, padding: '0 18px 8px', borderTop: '1px solid var(--border-color)', paddingTop: 12 }}>
                       <div style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 10 }}>
                         {tn((session.what_ifs?.length || 0) === 1 ? '{n} question' : '{n} questions', session.what_ifs?.length || 0)}
                       </div>
@@ -401,9 +438,9 @@ export default function SessionsPage() {
                       ))}
                       <button
                         onClick={e => { e.stopPropagation(); router.push(`/diverge/${session.event_id || 'custom'}?session=${session.id}`) }}
-                        style={{ marginTop: 12, width: '100%', padding: '9px', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--accent) 30%, var(--card-bg))', background: 'transparent', color: 'var(--accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
-                        onMouseEnter={e => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'color-mix(in srgb, var(--accent) 14%, transparent)'; b.style.color = 'var(--text)' }}
-                        onMouseLeave={e => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'transparent'; b.style.color = 'var(--accent)' }}
+                        style={{ marginTop: 4, width: '100%', padding: '4px', borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--accent)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text)' }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--accent)' }}
                       >
                         {t('Continue exploring')}
                       </button>

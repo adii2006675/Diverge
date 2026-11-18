@@ -7,6 +7,7 @@ import { SESSIONS_ROWS } from '@/lib/i18nSessions'
 import { COMMON_ROWS } from '@/lib/i18nCommon'
 import { CREDITS_ROWS } from '@/lib/i18nCredits'
 import { CHAT_ROWS } from '@/lib/i18nChat'
+import { EXTRA_ROWS } from '@/lib/i18nExtra'
 
 export const LANGUAGES = ['English', 'Spanish', 'French', 'German', 'Japanese', 'Portuguese', 'Hindi', 'Chinese'] as const
 export type Language = (typeof LANGUAGES)[number]
@@ -174,7 +175,7 @@ const RAW: Record<string, Row> = {
 const DICT: Record<Language, Record<string, string>> = {
   English: {}, Spanish: {}, French: {}, German: {}, Japanese: {}, Portuguese: {}, Hindi: {}, Chinese: {},
 }
-for (const [en, row] of Object.entries({ ...RAW, ...AUTH_ROWS, ...SESSIONS_ROWS, ...COMMON_ROWS, ...CREDITS_ROWS, ...CHAT_ROWS })) ORDER.forEach((lang, i) => { DICT[lang][en] = row[i] })
+for (const [en, row] of Object.entries({ ...RAW, ...AUTH_ROWS, ...SESSIONS_ROWS, ...COMMON_ROWS, ...CREDITS_ROWS, ...CHAT_ROWS, ...EXTRA_ROWS })) ORDER.forEach((lang, i) => { DICT[lang][en] = row[i] })
 
 export function normalizeLanguage(value: unknown): Language {
   return (LANGUAGES as readonly string[]).includes(value as string) ? (value as Language) : 'English'

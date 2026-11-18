@@ -1,6 +1,7 @@
 'use client'
 import { useAskNext, useFeature } from '@/lib/askNext'
 import { useT } from '@/lib/useT'
+import { buzz } from '@/lib/haptics'
 import { useAutoT } from '@/lib/autoTranslate'
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
@@ -264,9 +265,14 @@ export default function DivergePage() {
     }
   }, [authLoading, user])
 
+  // Lets the person back out of a question they sent by mistake: the request is cancelled and the question goes back in the box.
+  const abortRef = useRef<AbortController | null>(null)
+  function cancelAsk() { abortRef.current?.abort() }
+
   async function handleAsk(override?: string) {
     const question = (override ?? currentInput).trim()
     if (!question || loading) return
+    buzz()
     dismissToast()
     setLoading(true)
     setAskError(null)
@@ -284,6 +290,8 @@ export default function DivergePage() {
 
       let data: any = null
       let streamErr: { code: string; message: string } | null = null
+      const ac = new AbortController()
+      abortRef.current = ac
       await streamAnswer({
         startingEvent, previousWhatIfs, currentWorldState, newQuestion: question, realFacts,
         length: normalizeLength(settings?.ai_response_style),
@@ -303,7 +311,7 @@ export default function DivergePage() {
           // The second check runs after the answer is shown; mark the facts it could not confirm.
           setWhatIfs(list => list.map((w, i) => (i === list.length - 1 ? { ...w, response: { ...w.response, unverified: ev.unverified } } : w)))
         }
-      })
+      }, ac.signal)
       if (streamErr) throw new AiError((streamErr as { message: string }).message, (streamErr as { code: string }).code)
       if (!data || typeof data.paragraph !== 'string' || !Array.isArray(data.keyFacts)) {
         throw new Error('The answer came back in an unexpected format.')
@@ -325,19 +333,23 @@ export default function DivergePage() {
       setActiveTimelineIdx(newWhatIfs.length - 1)
       setScrollTarget(newWhatIfs.length - 1)
       setFreshIdx(newWhatIfs.length - 1)
+      buzz(18)
 
       if (user) {
         try {
           const sessionData = {
             user_id: user.id,
             event_id: sessionId,
-            event_title: startingEvent,
+            // A custom question gets a short AI title the first time it is saved; later saves keep whatever the name is now.
+            event_title: !event && !currentSessionId && data.title ? data.title : startingEvent,
             what_ifs: newWhatIfs.map(w => ({ question: w.question, response: w.response, timestamp: w.timestamp })),
             divergence_score: data.divergenceScore || 0,
             updated_at: new Date().toISOString(),
           }
           if (currentSessionId) {
-            await supabase.from('sessions').update(sessionData).eq('id', currentSessionId)
+            const { event_title: keepName, ...rest } = sessionData
+            void keepName
+            await supabase.from('sessions').update(event ? sessionData : rest).eq('id', currentSessionId)
           } else {
             const { data: saved } = await supabase.from('sessions').insert(sessionData).select().single()
             if (saved) setCurrentSessionId(saved.id)
@@ -348,6 +360,14 @@ export default function DivergePage() {
         }
       }
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        setCurrentInput(question)
+        setPendingQuestion(null)
+        setStreamText('')
+        setLoading(false)
+        showToast(t('Cancelled. Your question is back in the box.'))
+        return
+      }
       console.error(err)
       if (err instanceof AiError && ['sign_in_required', 'free_limit_reached', 'invalid_api_key', 'usage_unavailable'].includes(err.code)) {
         setGate({ code: err.code, message: err.message, question })
@@ -364,6 +384,16 @@ export default function DivergePage() {
     }
     setPendingQuestion(null)
     setLoading(false)
+  }
+
+  // A short flourish on the Share and Download icons when they are clicked. Not for keyboard use, and not with reduced motion.
+  const [pop, setPop] = useState<'share' | 'download' | null>(null)
+  // After a mouse click the button gives up focus, so no ring is left on it. Keyboard users keep their focus ring.
+  const mouseBlur = (e: React.MouseEvent) => { if (e.detail > 0) (e.currentTarget as HTMLElement).blur() }
+  function popIcon(kind: 'share' | 'download', e: React.MouseEvent) {
+    if (e.detail === 0 || reduceMotion) return
+    setPop(kind)
+    window.setTimeout(() => setPop(p => (p === kind ? null : p)), 900)
   }
 
   // Downloads the real history and every question and answer as a PDF. The Ask next questions are not included.
@@ -677,7 +707,7 @@ export default function DivergePage() {
           <div className="dv-ev-th">
             {!event && customInfo?.image ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={customInfo.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={customInfo.image} alt="" style={/\.(png|svg)/i.test(customInfo.image) ? { width: '100%', height: '100%', objectFit: 'contain', background: '#f2f2f5', padding: 3 } : { width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
               <EventImage id={event?.id} title={event?.title || 'Custom'} year={event?.year} compact />
             )}
@@ -691,25 +721,17 @@ export default function DivergePage() {
           </div>
         </div>
         <div className="dv-sp" />
-        <button className="dv-btn" type="button" onClick={() => setShowAISettings(true)}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
-          <span className="dv-lbl">{t('AI settings')}</span>
+        <button className="dv-btn dv-round dv-ai" type="button" onClick={e => { mouseBlur(e); setShowAISettings(true) }} aria-label={t('AI settings')} title={t('AI settings')}>
+          <span className="dv-ai-a" aria-hidden="true">AI</span>
+          <svg className="dv-ai-g" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
         </button>
         {whatIfs.length > 0 && (
-          <button className="dv-btn" type="button" onClick={handleShare} disabled={sharing} title={t('Copy a public link to this timeline')}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
-            <span className="dv-lbl">{sharing ? t('Sharing…') : t('Share')}</span>
+          <button className={`dv-btn dv-round dv-share-ico${pop === 'share' ? ' pop' : ''}`} type="button" onClick={e => { mouseBlur(e); popIcon('share', e); handleShare() }} disabled={sharing} aria-label={t('Share')} title={t('Copy a public link to this timeline')}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle className="sn sn1" cx="18" cy="5" r="3" /><circle className="sn sn2" cx="6" cy="12" r="3" /><circle className="sn sn3" cx="18" cy="19" r="3" /><path className="sl" d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
           </button>
         )}
         {whatIfs.length > 0 && (
-          <button
-            className="dv-btn pri dv-dl"
-            type="button"
-            onClick={handleDownloadPdf}
-            disabled={downloading}
-            aria-label={t('Download this timeline as a PDF')}
-            title={t('Download as PDF')}
-          >
+          <button className={`dv-btn dv-round dv-dl-ico${pop === 'download' || downloading ? ' pop' : ''}`} type="button" onClick={e => { mouseBlur(e); popIcon('download', e); handleDownloadPdf() }} disabled={downloading} aria-label={t('Download this timeline as a PDF')} title={t('Download as PDF')}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11" /><path d="M7 11l5 5 5-5" /><path d="M5 20h14" /></svg>
           </button>
         )}
@@ -869,6 +891,9 @@ export default function DivergePage() {
                         <b>{t(WAIT_STAGES[waitStage])}…</b>
                         <span className="dv-wait-sub">{tm('{n}s · usually {m} seconds', elapsed, WAIT_USUAL[normalizeLength(settings?.ai_response_style)])}</span>
                       </div>
+                      <button type="button" className="dv-stop" onClick={cancelAsk} aria-label={t('Stop and take the question back')} title={t('Stop and take the question back')}>
+                        <svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                      </button>
                     </div>
                     <div className="dv-steps" aria-hidden="true">
                       {WAIT_STAGES.map((label, i) => {
@@ -1067,7 +1092,6 @@ export default function DivergePage() {
           {whatChangedOn && whatIfs.length > 0 && (
             <div className="dv-card">
               <h3>{t('What changed')}</h3>
-              <p className="dv-sub">{t('How this timeline differs from real history, one line per answer. Tap one to jump to it.')}</p>
               <div className="dv-chg">
                 {whatIfs.map((w, i) => (
                   <button key={i} type="button" className={`dv-chg-b${i === activeTimelineIdx ? ' on' : ''}`} onClick={() => { setWorldOpen(false); selectAnswer(i) }}>
