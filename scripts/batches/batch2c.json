@@ -1,0 +1,1389 @@
+[
+ {
+  "id": "un-founded-1945",
+  "year": 1945,
+  "era": "Politics",
+  "title": "The United Nations Is Founded",
+  "shortDesc": "Fifty nations sign a charter to prevent another world war.",
+  "fullDesc": "The United Nations Charter took effect on October 24, 1945 after being signed in San Francisco. The organisation aimed to keep peace, protect human rights and encourage cooperation among nations.",
+  "realFacts": [
+   "It began with 51 member states",
+   "The Security Council has five permanent members with veto power",
+   "It is headquartered in New York",
+   "It now has 193 members"
+  ],
+  "wiki": [
+   "United Nations",
+   "United Nations Headquarters",
+   "San Francisco Conference"
+  ]
+ },
+ {
+  "id": "marshall-plan-1948",
+  "year": 1948,
+  "era": "Cold War",
+  "title": "The Marshall Plan",
+  "shortDesc": "The US pays to rebuild war-torn Western Europe.",
+  "fullDesc": "Starting in 1948 the Marshall Plan gave about 13 billion dollars in aid to rebuild Western Europe after World War II. It helped economies recover and strengthened ties against Soviet influence.",
+  "realFacts": [
+   "Sixteen countries took part",
+   "The Soviets forced Eastern Europe to refuse it",
+   "It is named for Secretary of State George Marshall",
+   "Marshall won the Nobel Peace Prize in 1953"
+  ],
+  "wiki": [
+   "Marshall Plan",
+   "George Marshall",
+   "Truman Doctrine"
+  ]
+ },
+ {
+  "id": "prc-founded-1949",
+  "year": 1949,
+  "era": "Cold War",
+  "title": "The People's Republic of China Is Founded",
+  "shortDesc": "Mao proclaims a communist state in Beijing.",
+  "fullDesc": "On October 1, 1949 Mao Zedong proclaimed the People's Republic of China in Tiananmen Square after the Communists won the civil war. The defeated Nationalists fled to Taiwan.",
+  "realFacts": [
+   "The Nationalists were led by Chiang Kai-shek",
+   "The Great Leap Forward in 1958 led to a famine",
+   "China's economy opened up from 1978",
+   "Taiwan is still governed separately"
+  ],
+  "wiki": [
+   "Proclamation of the People's Republic of China",
+   "Mao Zedong",
+   "Tiananmen"
+  ]
+ },
+ {
+  "id": "nato-1949",
+  "year": 1949,
+  "era": "Cold War",
+  "title": "NATO Is Formed",
+  "shortDesc": "Western nations sign a mutual defence pact.",
+  "fullDesc": "The North Atlantic Treaty was signed in Washington in April 1949 by twelve countries. Its core promise is that an attack on one member is an attack on all.",
+  "realFacts": [
+   "The Soviet bloc formed the Warsaw Pact in 1955",
+   "Article 5 was invoked once, after 9/11",
+   "NATO has grown to 32 members",
+   "Finland joined in 2023 and Sweden in 2024"
+  ],
+  "wiki": [
+   "NATO",
+   "North Atlantic Treaty",
+   "NATO headquarters"
+  ]
+ },
+ {
+  "id": "everest-1953",
+  "year": 1953,
+  "era": "Sports",
+  "title": "Hillary and Tenzing Reach the Top of Everest",
+  "shortDesc": "Two men stand on the highest point on Earth.",
+  "fullDesc": "On May 29, 1953 Edmund Hillary of New Zealand and Tenzing Norgay, a Sherpa, reached the summit of Mount Everest, part of a British expedition led by John Hunt. News reached London on the day of Queen Elizabeth's coronation.",
+  "realFacts": [
+   "At 8,849 metres it is the highest mountain above sea level",
+   "They spent about 15 minutes on the summit",
+   "Many have died on the mountain since",
+   "Over 10,000 summits have been recorded"
+  ],
+  "wiki": [
+   "Mount Everest",
+   "Edmund Hillary",
+   "Tenzing Norgay"
+  ]
+ },
+ {
+  "id": "sputnik-1957",
+  "year": 1957,
+  "era": "Cold War",
+  "title": "Sputnik Launches the Space Age",
+  "shortDesc": "The Soviet Union puts the first satellite into orbit.",
+  "fullDesc": "On October 4, 1957 the Soviet Union launched Sputnik 1, the first artificial satellite. The shock of it spurred the US to create NASA in 1958 and sparked the Space Race.",
+  "realFacts": [
+   "It was about the size of a beach ball",
+   "It beeped for about three weeks",
+   "Laika the dog flew on Sputnik 2 a month later",
+   "The US responded with big investment in science education"
+  ],
+  "wiki": [
+   "Sputnik 1",
+   "Space Race",
+   "Sergei Korolev"
+  ]
+ },
+ {
+  "id": "gagarin-1961",
+  "year": 1961,
+  "era": "Cold War",
+  "title": "Yuri Gagarin Is the First Human in Space",
+  "shortDesc": "A Soviet pilot orbits the Earth in 108 minutes.",
+  "fullDesc": "On April 12, 1961 Yuri Gagarin orbited the Earth once aboard Vostok 1 and became the first person in space. The flight lasted 108 minutes.",
+  "realFacts": [
+   "He was 27 years old",
+   "He landed by parachute after ejecting",
+   "Alan Shepard became the first American in space a month later",
+   "Gagarin died in a plane crash in 1968"
+  ],
+  "wiki": [
+   "Yuri Gagarin",
+   "Vostok 1",
+   "Vostok programme"
+  ]
+ },
+ {
+  "id": "berlin-wall-built-1961",
+  "year": 1961,
+  "era": "Cold War",
+  "title": "The Berlin Wall Goes Up",
+  "shortDesc": "East Germany seals off its half of the city overnight.",
+  "fullDesc": "On August 13, 1961 East Germany began building a wall to stop its citizens from fleeing to West Berlin. It divided the city for 28 years and became the symbol of the Cold War.",
+  "realFacts": [
+   "Barbed wire went up first and concrete followed",
+   "At least 140 people died trying to cross",
+   "Kennedy said Ich bin ein Berliner in 1963",
+   "It fell on November 9, 1989"
+  ],
+  "wiki": [
+   "Berlin Wall",
+   "Checkpoint Charlie",
+   "East Germany"
+  ]
+ },
+ {
+  "id": "silent-spring-1962",
+  "year": 1962,
+  "era": "Science",
+  "title": "Silent Spring Launches the Environmental Movement",
+  "shortDesc": "Rachel Carson warns about pesticides and nature.",
+  "fullDesc": "In 1962 Rachel Carson published Silent Spring, which warned of the dangers of pesticides like DDT to birds and the environment. It helped start the modern environmental movement and led to the creation of the EPA in 1970.",
+  "realFacts": [
+   "The chemical industry attacked the book",
+   "DDT was banned in the US in 1972",
+   "Carson died of cancer in 1964",
+   "The first Earth Day was in 1970"
+  ],
+  "wiki": [
+   "Silent Spring",
+   "Rachel Carson",
+   "DDT"
+  ]
+ },
+ {
+  "id": "ali-liston-1964",
+  "year": 1964,
+  "era": "Sports",
+  "title": "Muhammad Ali Beats Sonny Liston",
+  "shortDesc": "A young Cassius Clay shocks the boxing world.",
+  "fullDesc": "On February 25, 1964 Cassius Clay, a 7-to-1 underdog, beat heavyweight champion Sonny Liston in Miami. He soon announced his conversion to Islam and changed his name to Muhammad Ali.",
+  "realFacts": [
+   "He shouted I am the greatest after the win",
+   "He refused the Vietnam draft in 1967 and was stripped of his title",
+   "He regained the title in 1974",
+   "He lit the Olympic cauldron in 1996"
+  ],
+  "wiki": [
+   "Muhammad Ali",
+   "Sonny Liston",
+   "Ali–Liston fights"
+  ]
+ },
+ {
+  "id": "gulf-of-tonkin-1964",
+  "year": 1964,
+  "era": "Cold War",
+  "title": "The Gulf of Tonkin Incident Escalates Vietnam",
+  "shortDesc": "A reported attack leads Congress to back a wider war.",
+  "fullDesc": "In August 1964 US ships reported being attacked by North Vietnamese boats in the Gulf of Tonkin. Congress passed a resolution giving the president wide power to wage war, and US involvement in Vietnam grew sharply.",
+  "realFacts": [
+   "The second attack probably never happened",
+   "More than 58,000 Americans died in the war",
+   "About 2 million Vietnamese civilians died",
+   "The US withdrew in 1973"
+  ],
+  "wiki": [
+   "Gulf of Tonkin incident",
+   "Vietnam War",
+   "Lyndon B. Johnson"
+  ]
+ },
+ {
+  "id": "cultural-revolution-1966",
+  "year": 1966,
+  "era": "Cold War",
+  "title": "China's Cultural Revolution Begins",
+  "shortDesc": "Mao calls on youth to purge his rivals and old culture.",
+  "fullDesc": "In 1966 Mao Zedong launched the Cultural Revolution to purge rivals and revive revolutionary spirit. Young Red Guards attacked teachers, officials and cultural treasures. It left China in chaos until Mao's death in 1976.",
+  "realFacts": [
+   "Estimates of the dead run from hundreds of thousands to millions",
+   "Universities closed for years",
+   "Many officials were sent to labour in the countryside",
+   "The Little Red Book was printed in the billions"
+  ],
+  "wiki": [
+   "Cultural Revolution",
+   "Red Guards (China)",
+   "Little Red Book"
+  ]
+ },
+ {
+  "id": "mlk-assassination-1968",
+  "year": 1968,
+  "era": "Civil Rights",
+  "title": "Martin Luther King Jr. Is Assassinated",
+  "shortDesc": "The civil rights leader is shot in Memphis.",
+  "fullDesc": "On April 4, 1968 Martin Luther King Jr. was shot on a motel balcony in Memphis, Tennessee, where he had gone to support striking sanitation workers. Riots broke out in over 100 US cities.",
+  "realFacts": [
+   "James Earl Ray was convicted of the killing",
+   "He was 39 years old",
+   "The Fair Housing Act passed days later",
+   "MLK Day became a federal holiday in 1986"
+  ],
+  "wiki": [
+   "Assassination of Martin Luther King Jr.",
+   "Martin Luther King Jr.",
+   "Lorraine Motel"
+  ]
+ },
+ {
+  "id": "prague-spring-1968",
+  "year": 1968,
+  "era": "Cold War",
+  "title": "The Prague Spring Is Crushed",
+  "shortDesc": "Soviet tanks end Czechoslovakia's experiment with reform.",
+  "fullDesc": "In 1968 Czechoslovak leader Alexander Dubček tried to loosen censorship and create socialism with a human face. In August Warsaw Pact troops invaded and ended the reforms.",
+  "realFacts": [
+   "Around 200,000 troops entered",
+   "Dubček was removed in 1969",
+   "Czechoslovakia split peacefully in 1993",
+   "The Velvet Revolution came in 1989"
+  ],
+  "wiki": [
+   "Prague Spring",
+   "Alexander Dubček",
+   "Warsaw Pact invasion of Czechoslovakia"
+  ]
+ },
+ {
+  "id": "1968-olympics-protest-1968",
+  "year": 1968,
+  "era": "Civil Rights",
+  "title": "The Black Power Salute at the Mexico City Olympics",
+  "shortDesc": "Two American sprinters raise their fists on the podium.",
+  "fullDesc": "On October 16, 1968 Tommie Smith and John Carlos raised gloved fists on the Olympic podium in Mexico City to protest racism in the US. They were expelled from the Games, but the moment became an icon of civil rights protest.",
+  "realFacts": [
+   "Silver medallist Peter Norman wore a human rights badge in support",
+   "Both were criticised heavily at the time",
+   "A statue honours them at San Jose State",
+   "Norman was ostracised in Australia and was later honoured"
+  ],
+  "wiki": [
+   "1968 Olympics Black Power salute",
+   "Tommie Smith",
+   "John Carlos"
+  ]
+ },
+ {
+  "id": "internet-arpanet-1969",
+  "year": 1969,
+  "era": "Tech",
+  "title": "ARPANET Sends Its First Message",
+  "shortDesc": "Two computers talk to each other, the root of the internet.",
+  "fullDesc": "On October 29, 1969 the first message was sent over ARPANET, from UCLA to Stanford. It was meant to be the word login, but the system crashed after two letters.",
+  "realFacts": [
+   "The first message was lo",
+   "ARPANET was funded by the US Defense Department",
+   "Email appeared in 1971",
+   "TCP/IP became the standard in 1983"
+  ],
+  "wiki": [
+   "ARPANET",
+   "UCLA",
+   "Leonard Kleinrock"
+  ]
+ },
+ {
+  "id": "earth-day-1970",
+  "year": 1970,
+  "era": "Politics",
+  "title": "The First Earth Day",
+  "shortDesc": "Twenty million Americans take to the streets for the environment.",
+  "fullDesc": "The first Earth Day, on April 22, 1970, drew about 20 million Americans to rallies for a cleaner environment. It helped lead to the Clean Air Act, the Clean Water Act and the EPA.",
+  "realFacts": [
+   "Senator Gaylord Nelson organised it",
+   "It is now observed in about 190 countries",
+   "A river in Ohio had caught fire in 1969",
+   "Over a billion people take part today"
+  ],
+  "wiki": [
+   "Earth Day",
+   "Gaylord Nelson",
+   "Environmental Protection Agency"
+  ]
+ },
+ {
+  "id": "bangladesh-1971",
+  "year": 1971,
+  "era": "Modern",
+  "title": "Bangladesh Wins Independence",
+  "shortDesc": "East Pakistan breaks away after a bloody war.",
+  "fullDesc": "In 1971 East Pakistan declared independence as Bangladesh and fought a nine-month war against Pakistan, aided by India in December. The war involved mass atrocities and displaced millions of refugees.",
+  "realFacts": [
+   "Estimates of deaths range from hundreds of thousands to 3 million",
+   "Sheikh Mujibur Rahman led the independence movement",
+   "Pakistan surrendered on December 16",
+   "It is now one of the most densely populated countries"
+  ],
+  "wiki": [
+   "Bangladesh Liberation War",
+   "Sheikh Mujibur Rahman",
+   "Dhaka"
+  ]
+ },
+ {
+  "id": "munich-1972",
+  "year": 1972,
+  "era": "Sports",
+  "title": "The Munich Olympics Massacre",
+  "shortDesc": "Terrorists take Israeli athletes hostage at the Games.",
+  "fullDesc": "On September 5, 1972 members of the Palestinian group Black September took Israeli athletes hostage in the Olympic Village in Munich. Eleven Israelis and a German police officer died after a failed rescue.",
+  "realFacts": [
+   "German police were poorly prepared",
+   "The Games continued after a pause",
+   "Israel launched Operation Wrath of God in response",
+   "Germany created special counterterrorism units afterwards"
+  ],
+  "wiki": [
+   "Munich massacre",
+   "1972 Summer Olympics",
+   "Black September (organization)"
+  ]
+ },
+ {
+  "id": "roe-v-wade-1973",
+  "year": 1973,
+  "era": "Civil Rights",
+  "title": "Roe v. Wade",
+  "shortDesc": "The Supreme Court recognises a right to abortion.",
+  "fullDesc": "On January 22, 1973 the US Supreme Court ruled in Roe v. Wade that the Constitution protects a woman's right to choose an abortion. It was overturned by Dobbs v. Jackson in 2022.",
+  "realFacts": [
+   "The ruling was 7 to 2",
+   "Norma McCorvey was Jane Roe",
+   "It remained one of the most contentious issues in US politics",
+   "The Dobbs ruling returned the issue to the states"
+  ],
+  "wiki": [
+   "Roe v. Wade",
+   "Norma McCorvey",
+   "Supreme Court of the United States"
+  ]
+ },
+ {
+  "id": "oil-embargo-1973",
+  "year": 1973,
+  "era": "Finance",
+  "title": "The 1973 Oil Embargo",
+  "shortDesc": "Arab nations cut oil exports and prices quadruple.",
+  "fullDesc": "In October 1973 Arab oil producers declared an embargo on countries supporting Israel in the Yom Kippur War. Oil prices quadrupled, causing long gas lines and an economic shock in the West.",
+  "realFacts": [
+   "Prices rose from 3 to 12 dollars a barrel",
+   "Drivers lined up at gas stations in the US",
+   "Speed limits were lowered to save fuel",
+   "It spurred interest in fuel-efficient cars and energy policy"
+  ],
+  "wiki": [
+   "1973 oil crisis",
+   "OPEC",
+   "Yom Kippur War"
+  ]
+ },
+ {
+  "id": "ali-foreman-1974",
+  "year": 1974,
+  "era": "Sports",
+  "title": "The Rumble in the Jungle",
+  "shortDesc": "Muhammad Ali beats George Foreman in Zaire with rope-a-dope.",
+  "fullDesc": "On October 30, 1974 in Kinshasa, Zaire, 32-year-old Muhammad Ali beat undefeated heavyweight champion George Foreman. He leaned on the ropes and let Foreman tire before knocking him out in the eighth round.",
+  "realFacts": [
+   "The fight was promoted by Don King",
+   "It was delayed by Foreman's cut",
+   "Ali won back the title he had been stripped of",
+   "It was the subject of the film When We Were Kings"
+  ],
+  "wiki": [
+   "The Rumble in the Jungle",
+   "George Foreman",
+   "Kinshasa"
+  ]
+ },
+ {
+  "id": "vietnam-fall-saigon-1975",
+  "year": 1975,
+  "era": "Cold War",
+  "title": "The Fall of Saigon",
+  "shortDesc": "North Vietnamese tanks roll into the southern capital and the war ends.",
+  "fullDesc": "On April 30, 1975 North Vietnamese forces captured Saigon, ending the Vietnam War. The last Americans were evacuated by helicopter from the embassy roof, and Vietnam was unified under communist rule.",
+  "realFacts": [
+   "Hundreds of thousands fled as boat people",
+   "Saigon was renamed Ho Chi Minh City",
+   "The US had withdrawn combat troops in 1973",
+   "Normal diplomatic relations resumed in 1995"
+  ],
+  "wiki": [
+   "Fall of Saigon",
+   "Ho Chi Minh City",
+   "Reunification of Vietnam"
+  ]
+ },
+ {
+  "id": "apple-ii-1977",
+  "year": 1977,
+  "era": "Tech",
+  "title": "The Apple II Brings Computers Home",
+  "shortDesc": "One of the first mass-produced personal computers goes on sale.",
+  "fullDesc": "In 1977 Apple released the Apple II, designed by Steve Wozniak and sold by Steve Jobs. With colour graphics and a keyboard it became one of the first hit personal computers, selling for years.",
+  "realFacts": [
+   "It cost 1,298 dollars at launch",
+   "VisiCalc, the first spreadsheet, made it a business tool",
+   "It was sold until 1993",
+   "Millions were sold"
+  ],
+  "wiki": [
+   "Apple II",
+   "Steve Wozniak",
+   "VisiCalc"
+  ]
+ },
+ {
+  "id": "louise-brown-1978",
+  "year": 1978,
+  "era": "Science",
+  "title": "The First Test-Tube Baby Is Born",
+  "shortDesc": "Louise Brown is born through in vitro fertilisation.",
+  "fullDesc": "On July 25, 1978 Louise Brown was born in England, the first child conceived by in vitro fertilisation. Robert Edwards, who developed IVF, won the Nobel Prize in 2010.",
+  "realFacts": [
+   "Patrick Steptoe and Robert Edwards led the work",
+   "Millions of babies have been born through IVF since",
+   "Early press called it a test-tube baby",
+   "She later had her own child naturally"
+  ],
+  "wiki": [
+   "Louise Brown (born 1978)",
+   "In vitro fertilisation",
+   "Robert G. Edwards"
+  ]
+ },
+ {
+  "id": "iranian-revolution-1979",
+  "year": 1979,
+  "era": "Modern",
+  "title": "The Iranian Revolution",
+  "shortDesc": "The Shah falls and Ayatollah Khomeini founds an Islamic republic.",
+  "fullDesc": "In 1979 mass protests forced the Shah of Iran to leave, and Ayatollah Ruhollah Khomeini returned from exile to found an Islamic republic. The US embassy was seized in November, and 52 Americans were held for 444 days.",
+  "realFacts": [
+   "Khomeini was supreme leader until his death in 1989",
+   "The Iran-Iraq war began in 1980",
+   "Relations with the US have been tense ever since",
+   "The hostages were freed in January 1981"
+  ],
+  "wiki": [
+   "Iranian Revolution",
+   "Ruhollah Khomeini",
+   "Iran hostage crisis"
+  ]
+ },
+ {
+  "id": "walkman-1979",
+  "year": 1979,
+  "era": "Music",
+  "title": "Sony Launches the Walkman",
+  "shortDesc": "Music becomes portable and personal.",
+  "fullDesc": "In July 1979 Sony released the Walkman, a portable cassette player with headphones. It changed how people listened to music and sold over 200 million units across its versions.",
+  "realFacts": [
+   "Co-founder Masaru Ibuka wanted to hear opera on flights",
+   "The first model cost around 150 dollars",
+   "Cassettes were later replaced by CDs and MP3s",
+   "It paved the way for the iPod"
+  ],
+  "wiki": [
+   "Walkman",
+   "Sony",
+   "Compact Cassette"
+  ]
+ },
+ {
+  "id": "lennon-1980",
+  "year": 1980,
+  "era": "Music",
+  "title": "John Lennon Is Shot",
+  "shortDesc": "The former Beatle is killed outside his New York home.",
+  "fullDesc": "On December 8, 1980 John Lennon was shot outside the Dakota apartment building in New York by Mark David Chapman. Fans gathered in grief around the world.",
+  "realFacts": [
+   "He was 40 years old",
+   "He had just released the album Double Fantasy",
+   "Strawberry Fields in Central Park honours him",
+   "Chapman is still in prison"
+  ],
+  "wiki": [
+   "John Lennon",
+   "Dakota (building)",
+   "Strawberry Fields (Central Park)"
+  ]
+ },
+ {
+  "id": "ibm-pc-1981",
+  "year": 1981,
+  "era": "Tech",
+  "title": "The IBM PC Is Released",
+  "shortDesc": "A computer from the biggest name in business makes PCs a standard.",
+  "fullDesc": "In August 1981 IBM released the IBM Personal Computer, running Microsoft's MS-DOS. Its open design let others make compatible machines, creating the PC industry and making Microsoft a giant.",
+  "realFacts": [
+   "It cost about 1,565 dollars",
+   "Compaq cloned it in 1982",
+   "Microsoft kept the right to license DOS to others",
+   "The PC platform still dominates desktops"
+  ],
+  "wiki": [
+   "IBM Personal Computer",
+   "IBM",
+   "MS-DOS"
+  ]
+ },
+ {
+  "id": "first-aids-1981",
+  "year": 1981,
+  "era": "Science",
+  "title": "The First AIDS Cases Are Reported",
+  "shortDesc": "A mysterious illness appears and a global epidemic begins.",
+  "fullDesc": "In June 1981 the US Centers for Disease Control reported unusual illnesses in a handful of young men in Los Angeles, the first notice of what became the AIDS epidemic. HIV was identified in 1983, and treatment began to work in the mid 1990s.",
+  "realFacts": [
+   "Over 40 million have died from AIDS-related causes",
+   "Treatment turned it into a manageable condition for many",
+   "Activists such as ACT UP pushed for research",
+   "HIV is still a major problem in parts of Africa"
+  ],
+  "wiki": [
+   "HIV/AIDS",
+   "Centers for Disease Control and Prevention",
+   "ACT UP"
+  ]
+ },
+ {
+  "id": "maradona-hand-of-god-1986",
+  "year": 1986,
+  "era": "Sports",
+  "title": "Maradona's Hand of God",
+  "shortDesc": "Diego Maradona scores two famous goals against England in one match.",
+  "fullDesc": "In the 1986 World Cup quarter-final against England, Diego Maradona scored the Hand of God goal with his fist and then a solo run called Goal of the Century. Argentina won 2 to 1 and later won the cup.",
+  "realFacts": [
+   "The match was four years after the Falklands War",
+   "He said it was a bit of Maradona's head and a bit of God's hand",
+   "Argentina beat West Germany in the final",
+   "He died in 2020"
+  ],
+  "wiki": [
+   "Diego Maradona",
+   "Argentina v England (1986 FIFA World Cup)",
+   "Estadio Azteca"
+  ]
+ },
+ {
+  "id": "compact-disc-1982",
+  "year": 1982,
+  "era": "Music",
+  "title": "The Compact Disc Goes on Sale",
+  "shortDesc": "Digital music arrives in shops.",
+  "fullDesc": "The first commercial compact disc went on sale in Japan in October 1982. Developed by Sony and Philips, it held about 74 minutes of music, and the format dominated music sales until the 2000s.",
+  "realFacts": [
+   "The first CD was Billy Joel's 52nd Street",
+   "The length was reportedly set so Beethoven's Ninth would fit",
+   "CD sales peaked around 2000",
+   "Vinyl has since had a revival"
+  ],
+  "wiki": [
+   "Compact disc",
+   "Philips",
+   "Sony"
+  ]
+ },
+ {
+  "id": "ethiopia-famine-1984",
+  "year": 1984,
+  "era": "Disasters",
+  "title": "The Ethiopian Famine and Band Aid",
+  "shortDesc": "Images of starvation move the world and inspire a charity record.",
+  "fullDesc": "In 1984 and 1985 a famine in Ethiopia killed around a million people. A BBC report shocked viewers, and musicians led by Bob Geldof recorded Do They Know It's Christmas, followed by the Live Aid concerts in 1985.",
+  "realFacts": [
+   "Band Aid raised millions for relief",
+   "Live Aid reached an audience of nearly 2 billion",
+   "Politics and war worsened the famine",
+   "USA for Africa recorded We Are the World"
+  ],
+  "wiki": [
+   "1983–1985 famine in Ethiopia",
+   "Band Aid (band)",
+   "Bob Geldof"
+  ]
+ },
+ {
+  "id": "reagan-gorbachev-1986",
+  "year": 1986,
+  "era": "Cold War",
+  "title": "The Reykjavik Summit",
+  "shortDesc": "Reagan and Gorbachev almost agree to abolish nuclear weapons.",
+  "fullDesc": "In October 1986 US President Ronald Reagan and Soviet leader Mikhail Gorbachev met in Reykjavik, Iceland, and came close to a deal to eliminate nuclear weapons. It failed over Reagan's missile defence plans, but it set the stage for the 1987 INF treaty.",
+  "realFacts": [
+   "The INF Treaty eliminated a class of missiles",
+   "Reagan called the Soviet Union an evil empire in 1983",
+   "Gorbachev won the Nobel Peace Prize in 1990",
+   "The summit lasted two days"
+  ],
+  "wiki": [
+   "Reykjavík Summit",
+   "Ronald Reagan",
+   "Mikhail Gorbachev"
+  ]
+ },
+ {
+  "id": "intifada-1987",
+  "year": 1987,
+  "era": "Modern",
+  "title": "The First Intifada Begins",
+  "shortDesc": "Palestinians rise up against Israeli occupation.",
+  "fullDesc": "In December 1987 a Palestinian uprising, called the Intifada, began in Gaza and the West Bank. It lasted until the early 1990s and led to the Oslo peace process.",
+  "realFacts": [
+   "Stone throwing and strikes were common",
+   "More than a thousand Palestinians died",
+   "The Oslo Accords were signed in 1993",
+   "A second intifada began in 2000"
+  ],
+  "wiki": [
+   "First Intifada",
+   "Oslo Accords",
+   "Gaza Strip"
+  ]
+ },
+ {
+  "id": "exxon-valdez-1989",
+  "year": 1989,
+  "era": "Disasters",
+  "title": "The Exxon Valdez Oil Spill",
+  "shortDesc": "A tanker spills millions of litres of oil in Alaska.",
+  "fullDesc": "On March 24, 1989 the oil tanker Exxon Valdez ran aground in Prince William Sound, Alaska, spilling about 41 million litres of crude oil. It devastated wildlife and remains one of the largest spills.",
+  "realFacts": [
+   "Hundreds of thousands of seabirds died",
+   "It cost Exxon billions in cleanup and fines",
+   "The Oil Pollution Act of 1990 followed",
+   "Some oil is still present in the sand"
+  ],
+  "wiki": [
+   "Exxon Valdez oil spill",
+   "Prince William Sound",
+   "Oil spill"
+  ]
+ },
+ {
+  "id": "tiananmen-1989",
+  "year": 1989,
+  "era": "Modern",
+  "title": "The Tiananmen Square Protests",
+  "shortDesc": "Students call for reform in Beijing and the army moves in.",
+  "fullDesc": "In the spring of 1989 students and workers filled Beijing's Tiananmen Square calling for political reform. On the night of June 3 to 4 the army cleared the square with force, killing hundreds or more. The image of Tank Man became famous.",
+  "realFacts": [
+   "The government still censors the topic in China",
+   "The death toll remains disputed",
+   "The Tank Man's identity is unknown",
+   "Protesters built a Goddess of Democracy statue"
+  ],
+  "wiki": [
+   "1989 Tiananmen Square protests and massacre",
+   "Tank Man",
+   "Tiananmen Square"
+  ]
+ },
+ {
+  "id": "german-reunification-1990",
+  "year": 1990,
+  "era": "Cold War",
+  "title": "Germany Reunifies",
+  "shortDesc": "East and West Germany become one nation again.",
+  "fullDesc": "On October 3, 1990 East and West Germany were reunited, less than a year after the Berlin Wall fell. Helmut Kohl was the first chancellor of the united country.",
+  "realFacts": [
+   "October 3 is now the national holiday",
+   "Rebuilding the east cost trillions of euros",
+   "The first all-German elections were held in December 1990",
+   "Berlin became the capital again"
+  ],
+  "wiki": [
+   "German reunification",
+   "Helmut Kohl",
+   "Brandenburg Gate"
+  ]
+ },
+ {
+  "id": "world-wide-web-1993",
+  "year": 1993,
+  "era": "Tech",
+  "title": "The Web Is Made Free for Everyone",
+  "shortDesc": "CERN releases the World Wide Web into the public domain.",
+  "fullDesc": "In April 1993 CERN announced that the World Wide Web technology, invented by Tim Berners-Lee, would be free for anyone to use. The Mosaic browser that year helped bring the web to ordinary people.",
+  "realFacts": [
+   "Berners-Lee wrote his first proposal in 1989",
+   "He never patented it",
+   "The first website was at CERN",
+   "Mosaic led to Netscape"
+  ],
+  "wiki": [
+   "World Wide Web",
+   "Tim Berners-Lee",
+   "CERN"
+  ]
+ },
+ {
+  "id": "oslo-accords-1993",
+  "year": 1993,
+  "era": "Politics",
+  "title": "The Oslo Accords Handshake",
+  "shortDesc": "Rabin and Arafat shake hands on the White House lawn.",
+  "fullDesc": "On September 13, 1993 Israeli Prime Minister Yitzhak Rabin and PLO chairman Yasser Arafat shook hands at the White House after signing the Oslo Accords. The agreement aimed at Palestinian self-government and peace.",
+  "realFacts": [
+   "They shared the 1994 Nobel Peace Prize with Shimon Peres",
+   "Rabin was assassinated in 1995",
+   "The talks were held in secret in Norway",
+   "The peace process later stalled"
+  ],
+  "wiki": [
+   "Oslo Accords",
+   "Yitzhak Rabin",
+   "Yasser Arafat"
+  ]
+ },
+ {
+  "id": "channel-tunnel-1994",
+  "year": 1994,
+  "era": "Industrial",
+  "title": "The Channel Tunnel Opens",
+  "shortDesc": "A railway links Britain and France under the sea.",
+  "fullDesc": "The Channel Tunnel opened in May 1994, linking England and France by a 50 km railway under the English Channel. The trip takes about 35 minutes, and it is one of the longest undersea tunnels in the world.",
+  "realFacts": [
+   "Tunnellers met in the middle in 1990",
+   "It cost far more than planned",
+   "Eurostar trains use it",
+   "Millions of passengers pass through each year"
+  ],
+  "wiki": [
+   "Channel Tunnel",
+   "Eurostar",
+   "Folkestone"
+  ]
+ },
+ {
+  "id": "oklahoma-city-1995",
+  "year": 1995,
+  "era": "Modern",
+  "title": "The Oklahoma City Bombing",
+  "shortDesc": "A truck bomb destroys a federal building.",
+  "fullDesc": "On April 19, 1995 a truck bomb destroyed the Alfred P. Murrah Federal Building in Oklahoma City, killing 168 people, including 19 children. Timothy McVeigh was executed for it in 2001.",
+  "realFacts": [
+   "It was the deadliest domestic terrorist attack in US history until then",
+   "McVeigh was a former soldier",
+   "A memorial stands on the site",
+   "It led to new anti-terrorism laws"
+  ],
+  "wiki": [
+   "Oklahoma City bombing",
+   "Timothy McVeigh",
+   "Oklahoma City National Memorial & Museum"
+  ]
+ },
+ {
+  "id": "dolly-1996",
+  "year": 1996,
+  "era": "Science",
+  "title": "Dolly the Sheep Is Cloned",
+  "shortDesc": "The first mammal cloned from an adult cell is born in Scotland.",
+  "fullDesc": "On July 5, 1996 Dolly the sheep was born at the Roslin Institute in Scotland, the first mammal cloned from an adult cell. She lived until 2003.",
+  "realFacts": [
+   "Her birth was announced in February 1997",
+   "She was named after Dolly Parton",
+   "She had six lambs",
+   "Her body is displayed in Edinburgh"
+  ],
+  "wiki": [
+   "Dolly (sheep)",
+   "Roslin Institute",
+   "Cloning"
+  ]
+ },
+ {
+  "id": "hong-kong-handover-1997",
+  "year": 1997,
+  "era": "Politics",
+  "title": "Hong Kong Is Handed Back to China",
+  "shortDesc": "Britain ends 156 years of rule over the territory.",
+  "fullDesc": "On July 1, 1997 Britain returned Hong Kong to China under the principle of one country, two systems. The handover ended 156 years of British colonial rule.",
+  "realFacts": [
+   "Governor Chris Patten sailed away on the royal yacht",
+   "The agreement promised autonomy for 50 years",
+   "A national security law was imposed in 2020",
+   "Large protests took place in 2019"
+  ],
+  "wiki": [
+   "Handover of Hong Kong",
+   "Hong Kong",
+   "Chris Patten"
+  ]
+ },
+ {
+  "id": "good-friday-1998",
+  "year": 1998,
+  "era": "Politics",
+  "title": "The Good Friday Agreement",
+  "shortDesc": "Northern Ireland moves toward peace after decades of conflict.",
+  "fullDesc": "On April 10, 1998 the Good Friday Agreement was signed, largely ending the Troubles in Northern Ireland, a conflict that had killed over 3,500 people since the late 1960s.",
+  "realFacts": [
+   "The deal was backed in referendums north and south",
+   "John Hume and David Trimble won the Nobel Peace Prize",
+   "Power sharing has been suspended several times",
+   "Violence has fallen dramatically"
+  ],
+  "wiki": [
+   "Good Friday Agreement",
+   "The Troubles",
+   "Belfast"
+  ]
+ },
+ {
+  "id": "columbine-1999",
+  "year": 1999,
+  "era": "Modern",
+  "title": "The Columbine High School Shooting",
+  "shortDesc": "A school attack in Colorado changes the American debate on guns.",
+  "fullDesc": "On April 20, 1999 two students killed 12 classmates and a teacher at Columbine High School in Colorado before taking their own lives. It began a long public debate on school safety and gun laws in the US.",
+  "realFacts": [
+   "It was the deadliest US school shooting at the time",
+   "Schools adopted lockdown drills widely",
+   "It was followed by many other attacks",
+   "A memorial opened in 2007"
+  ],
+  "wiki": [
+   "Columbine High School massacre",
+   "Columbine High School",
+   "Littleton, Colorado"
+  ]
+ },
+ {
+  "id": "wikipedia-2001",
+  "year": 2001,
+  "era": "Tech",
+  "title": "Wikipedia Is Launched",
+  "shortDesc": "A free encyclopedia anyone can edit goes online.",
+  "fullDesc": "Wikipedia launched on January 15, 2001, founded by Jimmy Wales and Larry Sanger. Written and edited by volunteers, it grew into one of the most visited websites in the world with millions of articles in hundreds of languages.",
+  "realFacts": [
+   "The English edition passed 7 million articles",
+   "It runs on donations",
+   "Nupedia was its predecessor",
+   "It is overseen by the Wikimedia Foundation"
+  ],
+  "wiki": [
+   "Wikipedia",
+   "Jimmy Wales",
+   "Wikimedia Foundation"
+  ]
+ },
+ {
+  "id": "ipod-2001",
+  "year": 2001,
+  "era": "Music",
+  "title": "The iPod Puts 1,000 Songs in Your Pocket",
+  "shortDesc": "Apple's music player changes how people listen.",
+  "fullDesc": "Apple released the iPod in October 2001, a pocket-size player with a 5 GB hard drive that held about 1,000 songs. Along with iTunes it remade the music business and set the stage for the iPhone.",
+  "realFacts": [
+   "Steve Jobs unveiled it on October 23",
+   "Over 450 million iPods were sold",
+   "The click wheel was its signature feature",
+   "Apple discontinued the last iPod in 2022"
+  ],
+  "wiki": [
+   "IPod",
+   "Steve Jobs",
+   "Click wheel"
+  ]
+ },
+ {
+  "id": "afghanistan-war-2001",
+  "year": 2001,
+  "era": "Wars",
+  "title": "The US Invades Afghanistan",
+  "shortDesc": "The longest war in American history begins after 9/11.",
+  "fullDesc": "In October 2001 the US and allies invaded Afghanistan to topple the Taliban and hunt al-Qaeda after the September 11 attacks. The war lasted 20 years, ending with a chaotic withdrawal in August 2021 and a Taliban return to power.",
+  "realFacts": [
+   "More than 2,400 US troops died",
+   "Tens of thousands of Afghan civilians died",
+   "Osama bin Laden was killed in Pakistan in 2011",
+   "The Taliban took Kabul in August 2021"
+  ],
+  "wiki": [
+   "War in Afghanistan (2001–2021)",
+   "Taliban",
+   "Fall of Kabul (2021)"
+  ]
+ },
+ {
+  "id": "boxing-day-tsunami-2004",
+  "year": 2004,
+  "era": "Disasters",
+  "title": "The Indian Ocean Tsunami",
+  "shortDesc": "A huge undersea earthquake sends waves across the ocean.",
+  "fullDesc": "On December 26, 2004 a magnitude 9.1 earthquake off Sumatra triggered a tsunami that killed about 230,000 people in 14 countries, from Indonesia to Africa. It led to a global tsunami warning system.",
+  "realFacts": [
+   "Aceh in Indonesia was hit hardest",
+   "Waves were up to 30 metres high",
+   "There was no warning system in the Indian Ocean",
+   "Aid of billions flowed in from around the world"
+  ],
+  "wiki": [
+   "2004 Indian Ocean earthquake and tsunami",
+   "Banda Aceh",
+   "Tsunami warning system"
+  ]
+ },
+ {
+  "id": "katrina-2005",
+  "year": 2005,
+  "era": "Disasters",
+  "title": "Hurricane Katrina Floods New Orleans",
+  "shortDesc": "A storm and failed levees devastate the Gulf Coast.",
+  "fullDesc": "Hurricane Katrina struck the US Gulf Coast on August 29, 2005. Levees in New Orleans failed, flooding about 80 percent of the city. Around 1,800 people died, and the slow federal response drew heavy criticism.",
+  "realFacts": [
+   "Damage was estimated at 125 billion dollars",
+   "Over a million people were displaced",
+   "The Superdome sheltered thousands",
+   "New Orleans lost a large share of its population"
+  ],
+  "wiki": [
+   "Hurricane Katrina",
+   "New Orleans",
+   "Louisiana Superdome"
+  ]
+ },
+ {
+  "id": "pluto-2006",
+  "year": 2006,
+  "era": "Science",
+  "title": "Pluto Is Reclassified as a Dwarf Planet",
+  "shortDesc": "Astronomers vote that Pluto is no longer the ninth planet.",
+  "fullDesc": "On August 24, 2006 the International Astronomical Union voted to define a planet in a way that excluded Pluto, which became a dwarf planet. The decision followed the discovery of similar objects such as Eris.",
+  "realFacts": [
+   "Pluto was discovered in 1930 by Clyde Tombaugh",
+   "New Horizons flew by it in 2015",
+   "Its heart-shaped glacier was a surprise",
+   "Some astronomers still object to the decision"
+  ],
+  "wiki": [
+   "Pluto",
+   "Dwarf planet",
+   "New Horizons"
+  ]
+ },
+ {
+  "id": "uber-2009",
+  "year": 2009,
+  "era": "Business",
+  "title": "Uber Launches",
+  "shortDesc": "A ride-hailing app begins to change how people get around.",
+  "fullDesc": "Uber was founded in 2009 and began service in San Francisco in 2010, letting riders summon a car from a phone. It grew into a global company worth tens of billions of dollars and set off a gig economy and legal fights with taxi drivers.",
+  "realFacts": [
+   "It began as UberCab",
+   "It went public in 2019",
+   "Travis Kalanick resigned as CEO in 2017",
+   "Lyft became its main US rival"
+  ],
+  "wiki": [
+   "Uber",
+   "Travis Kalanick",
+   "Ride-hailing"
+  ]
+ },
+ {
+  "id": "haiti-quake-2010",
+  "year": 2010,
+  "era": "Disasters",
+  "title": "The Haiti Earthquake",
+  "shortDesc": "A magnitude 7 quake devastates Port-au-Prince.",
+  "fullDesc": "On January 12, 2010 a magnitude 7.0 earthquake struck near Port-au-Prince, Haiti. Estimates of the dead range from about 100,000 to over 300,000, and over a million people were left homeless.",
+  "realFacts": [
+   "The presidential palace collapsed",
+   "A cholera outbreak later followed",
+   "International aid was huge but recovery was slow",
+   "It was one of the deadliest quakes in modern times"
+  ],
+  "wiki": [
+   "2010 Haiti earthquake",
+   "Port-au-Prince",
+   "Haiti"
+  ]
+ },
+ {
+  "id": "bin-laden-2011",
+  "year": 2011,
+  "era": "Wars",
+  "title": "Osama bin Laden Is Killed",
+  "shortDesc": "US Navy SEALs raid a compound in Pakistan.",
+  "fullDesc": "On May 2, 2011 US Navy SEALs killed Osama bin Laden, mastermind of the 9/11 attacks, in a raid on his compound in Abbottabad, Pakistan. President Obama announced it that night.",
+  "realFacts": [
+   "He had been hiding for nearly a decade",
+   "The operation was code-named Neptune Spear",
+   "A helicopter was lost in the raid",
+   "His body was buried at sea"
+  ],
+  "wiki": [
+   "Death of Osama bin Laden",
+   "Osama bin Laden",
+   "Abbottabad"
+  ]
+ },
+ {
+  "id": "ipad-2010",
+  "year": 2010,
+  "era": "Tech",
+  "title": "Apple Introduces the iPad",
+  "shortDesc": "A new kind of tablet takes off.",
+  "fullDesc": "Steve Jobs unveiled the iPad in January 2010. Many doubted it at first, but it sold millions and created the modern tablet market.",
+  "realFacts": [
+   "It sold 300,000 on the first day",
+   "It sold 15 million in the first year",
+   "Jobs called it magical and revolutionary",
+   "Apps made it popular"
+  ],
+  "wiki": [
+   "IPad",
+   "Steve Jobs",
+   "Tablet computer"
+  ]
+ },
+ {
+  "id": "gangnam-style-2012",
+  "year": 2012,
+  "era": "Music",
+  "title": "Gangnam Style Passes a Billion Views",
+  "shortDesc": "A K-pop song and its horse dance go viral worldwide.",
+  "fullDesc": "PSY's Gangnam Style, released in July 2012, became the first YouTube video to pass one billion views in December 2012. It brought K-pop to a global audience.",
+  "realFacts": [
+   "It was so popular YouTube's view counter overflowed in 2014",
+   "It spent weeks at number two on the US charts",
+   "PSY performed at the UN Secretary General's event",
+   "BTS and Blackpink later followed"
+  ],
+  "wiki": [
+   "Gangnam Style",
+   "Psy",
+   "K-pop"
+  ]
+ },
+ {
+  "id": "snowden-2013",
+  "year": 2013,
+  "era": "Politics",
+  "title": "Edward Snowden Reveals Mass Surveillance",
+  "shortDesc": "A contractor leaks files showing the NSA's reach.",
+  "fullDesc": "In June 2013 Edward Snowden, a former NSA contractor, leaked documents showing large-scale surveillance of phone and internet data. He fled to Hong Kong and then Russia, where he remains. It sparked a worldwide debate on privacy.",
+  "realFacts": [
+   "The Guardian and Washington Post published the stories",
+   "The US charged him under the Espionage Act",
+   "Congress passed reforms in 2015",
+   "He received Russian citizenship in 2022"
+  ],
+  "wiki": [
+   "Edward Snowden",
+   "National Security Agency",
+   "Global surveillance disclosures (2013–present)"
+  ]
+ },
+ {
+  "id": "ebola-2014",
+  "year": 2014,
+  "era": "Disasters",
+  "title": "The West Africa Ebola Epidemic",
+  "shortDesc": "The largest Ebola outbreak ever kills over 11,000 people.",
+  "fullDesc": "From 2014 to 2016 Ebola spread through Guinea, Liberia and Sierra Leone, killing more than 11,000. It was the largest outbreak of the disease on record and led to new vaccines.",
+  "realFacts": [
+   "Cases reached the US and Europe in small numbers",
+   "An effective vaccine was approved in 2019",
+   "Health workers were hit especially hard",
+   "The WHO was criticised for a slow response"
+  ],
+  "wiki": [
+   "Western African Ebola epidemic",
+   "Ebola",
+   "Monrovia"
+  ]
+ },
+ {
+  "id": "paris-agreement-2015",
+  "year": 2015,
+  "era": "Politics",
+  "title": "The Paris Climate Agreement",
+  "shortDesc": "Nearly every country pledges to limit global warming.",
+  "fullDesc": "In December 2015 195 nations adopted the Paris Agreement, pledging to keep global warming well below 2 degrees Celsius above pre-industrial levels. It took effect in 2016.",
+  "realFacts": [
+   "The US withdrew in 2020, rejoined in 2021, and withdrew again in 2025",
+   "Countries set their own targets",
+   "The world has warmed about 1.2 degrees already",
+   "The goal of 1.5 degrees is widely seen as hard to meet"
+  ],
+  "wiki": [
+   "Paris Agreement",
+   "2015 United Nations Climate Change Conference",
+   "Global warming"
+  ]
+ },
+ {
+  "id": "refugee-crisis-2015",
+  "year": 2015,
+  "era": "Modern",
+  "title": "The European Migrant Crisis",
+  "shortDesc": "Over a million people reach Europe, many fleeing war in Syria.",
+  "fullDesc": "In 2015 more than a million migrants and refugees crossed into Europe, many fleeing war in Syria, Iraq and Afghanistan. The crisis strained the EU and changed politics across the continent.",
+  "realFacts": [
+   "Germany took in about 890,000 people that year",
+   "Many risked the sea crossing from Turkey and Libya",
+   "The photo of Alan Kurdi shocked the world",
+   "Anti-immigrant parties gained support"
+  ],
+  "wiki": [
+   "European migrant crisis",
+   "Angela Merkel",
+   "Alan Kurdi"
+  ]
+ },
+ {
+  "id": "rio-olympics-2016",
+  "year": 2016,
+  "era": "Sports",
+  "title": "Simone Biles Dominates the Rio Olympics",
+  "shortDesc": "A gymnast wins four golds and sets a new standard.",
+  "fullDesc": "At the 2016 Rio Olympics, American gymnast Simone Biles won four gold medals and one bronze. She became the most decorated gymnast in world championship history and later returned for Paris 2024.",
+  "realFacts": [
+   "She has more than 30 combined Olympic and world medals",
+   "Several skills are named after her",
+   "She withdrew from events in Tokyo 2020 to protect her mental health",
+   "She won three golds in Paris 2024"
+  ],
+  "wiki": [
+   "Simone Biles",
+   "2016 Summer Olympics",
+   "Artistic gymnastics"
+  ]
+ },
+ {
+  "id": "metoo-2017",
+  "year": 2017,
+  "era": "Civil Rights",
+  "title": "The #MeToo Movement Goes Viral",
+  "shortDesc": "Women speak out about harassment and abuse around the world.",
+  "fullDesc": "In October 2017 reports about film producer Harvey Weinstein led millions to share their stories of sexual harassment under the hashtag #MeToo, a phrase first used by Tarana Burke in 2006. It brought down powerful figures in many fields.",
+  "realFacts": [
+   "Weinstein was convicted in 2020",
+   "Laws and workplace policies changed",
+   "Actress Alyssa Milano helped spread the hashtag",
+   "Time named the Silence Breakers Person of the Year"
+  ],
+  "wiki": [
+   "Me Too movement",
+   "Tarana Burke",
+   "Harvey Weinstein"
+  ]
+ },
+ {
+  "id": "royal-wedding-2018",
+  "year": 2018,
+  "era": "Celebrities",
+  "title": "Prince Harry and Meghan Markle Wed",
+  "shortDesc": "A royal wedding at Windsor Castle is watched around the world.",
+  "fullDesc": "On May 19, 2018 Prince Harry married American actress Meghan Markle at St George's Chapel, Windsor Castle. Millions watched, but the couple stepped back from royal duties in 2020.",
+  "realFacts": [
+   "They became Duke and Duchess of Sussex",
+   "They moved to California",
+   "The Oprah interview in 2021 shook the monarchy",
+   "Their son Archie was born in 2019"
+  ],
+  "wiki": [
+   "Wedding of Prince Harry and Meghan Markle",
+   "Meghan, Duchess of Sussex",
+   "St George's Chapel, Windsor Castle"
+  ]
+ },
+ {
+  "id": "notre-dame-fire-2019",
+  "year": 2019,
+  "era": "Disasters",
+  "title": "Notre-Dame de Paris Burns",
+  "shortDesc": "A fire destroys the roof and spire of the famous cathedral.",
+  "fullDesc": "On April 15, 2019 a fire broke out in Notre-Dame cathedral in Paris, destroying the spire and much of the roof. Donations of hundreds of millions of euros poured in, and the cathedral reopened in December 2024.",
+  "realFacts": [
+   "Firefighters saved the main towers",
+   "The medieval wooden roof was called the forest",
+   "Rebuilding took about five years",
+   "The cause is believed to be accidental"
+  ],
+  "wiki": [
+   "Notre-Dame de Paris fire",
+   "Notre-Dame de Paris",
+   "Paris"
+  ]
+ },
+ {
+  "id": "greta-thunberg-2018",
+  "year": 2018,
+  "era": "Politics",
+  "title": "Greta Thunberg Starts a School Strike for Climate",
+  "shortDesc": "A teenager sitting outside the Swedish parliament inspires millions.",
+  "fullDesc": "In August 2018 15-year-old Greta Thunberg began skipping school to sit outside the Swedish parliament demanding action on climate change. Her Fridays for Future protests spread to millions of students worldwide.",
+  "realFacts": [
+   "She sailed across the Atlantic in 2019 to avoid flying",
+   "She spoke at the UN in 2019",
+   "Time named her Person of the Year in 2019",
+   "She has Asperger's and calls it her superpower"
+  ],
+  "wiki": [
+   "Greta Thunberg",
+   "School strike for climate",
+   "Riksdag building"
+  ]
+ },
+ {
+  "id": "first-black-hole-2019",
+  "year": 2019,
+  "era": "Science",
+  "title": "The First Picture of a Black Hole",
+  "shortDesc": "Astronomers capture the glowing ring around a black hole.",
+  "fullDesc": "On April 10, 2019 the Event Horizon Telescope team released the first image of a black hole, in the galaxy M87, 55 million light years away. It confirmed key predictions of Einstein's theory.",
+  "realFacts": [
+   "The black hole has about 6.5 billion times the mass of the Sun",
+   "It took a global network of eight radio telescopes",
+   "Katie Bouman helped develop the imaging method",
+   "A picture of the Milky Way's black hole followed in 2022"
+  ],
+  "wiki": [
+   "Messier 87",
+   "Event Horizon Telescope",
+   "Black hole"
+  ]
+ },
+ {
+  "id": "covid-vaccine-2020",
+  "year": 2020,
+  "era": "Science",
+  "title": "The First COVID-19 Vaccines Are Approved",
+  "shortDesc": "mRNA shots arrive less than a year after the virus was identified.",
+  "fullDesc": "In December 2020 the first COVID-19 vaccines, from Pfizer-BioNTech and Moderna, were authorised after record-fast development. Based on mRNA technology, they were credited with saving millions of lives.",
+  "realFacts": [
+   "Margaret Keenan in the UK was the first to get the Pfizer shot",
+   "Katalin Karikó and Drew Weissman won the 2023 Nobel Prize",
+   "Over 13 billion doses have been given",
+   "Operation Warp Speed funded development in the US"
+  ],
+  "wiki": [
+   "COVID-19 vaccine",
+   "Pfizer–BioNTech COVID-19 vaccine",
+   "Katalin Karikó"
+  ]
+ },
+ {
+  "id": "afghanistan-withdrawal-2021",
+  "year": 2021,
+  "era": "Wars",
+  "title": "The Taliban Retake Kabul",
+  "shortDesc": "The Afghan government collapses as the US withdraws.",
+  "fullDesc": "On August 15, 2021 the Taliban entered Kabul as the Afghan government collapsed, days before the planned end of the US withdrawal. A chaotic airlift evacuated over 120,000 people.",
+  "realFacts": [
+   "A suicide bombing killed 13 US troops and many Afghans on August 26",
+   "The Afghan army collapsed within weeks",
+   "The Taliban restricted women's education",
+   "Western nations froze Afghan funds"
+  ],
+  "wiki": [
+   "Fall of Kabul (2021)",
+   "Taliban",
+   "Hamid Karzai International Airport"
+  ]
+ },
+ {
+  "id": "tokyo-olympics-2021",
+  "year": 2021,
+  "era": "Sports",
+  "title": "The Tokyo Olympics Are Held Without Spectators",
+  "shortDesc": "The Games are delayed a year by COVID and played in empty stadiums.",
+  "fullDesc": "The Tokyo Olympics, postponed from 2020 because of COVID-19, were held from July to August 2021, mostly without spectators. They were the first Games ever delayed in peacetime.",
+  "realFacts": [
+   "Skateboarding and surfing made their debut",
+   "Simone Biles stepped back from several events",
+   "The US topped the medal table narrowly over China",
+   "The cost was well above the original budget"
+  ],
+  "wiki": [
+   "2020 Summer Olympics",
+   "Japan National Stadium",
+   "Tokyo"
+  ]
+ },
+ {
+  "id": "gaza-war-2023",
+  "year": 2023,
+  "era": "Wars",
+  "title": "Gaza War Begins After October 7 Attack",
+  "shortDesc": "A Hamas attack on Israel starts a devastating war.",
+  "fullDesc": "On October 7, 2023 Hamas fighters attacked Israel, killing about 1,200 people and taking about 250 hostages. Israel responded with a major military campaign in Gaza that caused widespread destruction and a humanitarian crisis.",
+  "realFacts": [
+   "It was the deadliest day for Jews since the Holocaust",
+   "Tens of thousands of Palestinians have died",
+   "A ceasefire in 2025 allowed some hostages to be freed",
+   "The conflict spread to Lebanon and Iran"
+  ],
+  "wiki": [
+   "October 7 attacks",
+   "Gaza war",
+   "Gaza Strip"
+  ]
+ },
+ {
+  "id": "turkey-quake-2023",
+  "year": 2023,
+  "era": "Disasters",
+  "title": "The Turkey-Syria Earthquakes",
+  "shortDesc": "Two powerful quakes kill more than 50,000 people.",
+  "fullDesc": "On February 6, 2023 two earthquakes of magnitude 7.8 and 7.5 struck southern Turkey and northern Syria, killing more than 50,000 people. Thousands of buildings collapsed, and many that failed had ignored building codes.",
+  "realFacts": [
+   "Millions were left homeless",
+   "It was among the deadliest quakes in the 21st century",
+   "Rescuers from dozens of countries helped",
+   "Turkey later arrested builders over unsafe construction"
+  ],
+  "wiki": [
+   "2023 Turkey–Syria earthquakes",
+   "Kahramanmaraş",
+   "Antakya"
+  ]
+ },
+ {
+  "id": "paris-olympics-2024",
+  "year": 2024,
+  "era": "Sports",
+  "title": "The Paris Olympics Opening on the Seine",
+  "shortDesc": "The Games open with a boat parade through the city.",
+  "fullDesc": "The 2024 Paris Olympics opened on July 26 with athletes sailing down the Seine rather than in a stadium. The Games featured star performances by Léon Marchand and Simone Biles and ended with Los Angeles taking up the next Games.",
+  "realFacts": [
+   "Marchand won four golds in swimming",
+   "The US and China tied on golds at 40",
+   "Breaking made its Olympic debut",
+   "Los Angeles hosts in 2028"
+  ],
+  "wiki": [
+   "2024 Summer Olympics",
+   "Léon Marchand",
+   "Seine"
+  ]
+ }
+]

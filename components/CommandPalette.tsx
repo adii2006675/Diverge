@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
-import { ALL_EVENTS, formatEventYear } from '@/lib/events'
+import type { HistoricalEvent } from '@/lib/events'
 import { eventText, useEventText } from '@/lib/localizeEvent'
 import { useT } from '@/lib/useT'
 import { SPRING } from '@/lib/motion'
@@ -27,6 +27,12 @@ export default function CommandPalette() {
   const { eventText: et, version } = useEventText()
   const reduce = useReducedMotion()
   const [open, setOpen] = useState(false)
+  // The event list is large, so it is loaded the first time the palette opens instead of with every page.
+  const [allEvents, setAllEvents] = useState<HistoricalEvent[]>([])
+  useEffect(() => {
+    if (!open || allEvents.length > 0) return
+    import('@/lib/events').then(m => setAllEvents(m.ALL_EVENTS))
+  }, [open, allEvents.length])
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
   const [sessions, setSessions] = useState<SessionRow[]>([])
@@ -73,11 +79,11 @@ export default function CommandPalette() {
     const sess = sessions.filter(s => match(s.event_title || '')).slice(0, q ? 6 : 4)
       .map(s => ({ id: `s-${s.id}`, group: 'Your sessions' as const, label: s.event_title || 'Untitled session', hint: '', path: `/diverge/${s.event_id || 'custom'}?session=${s.id}` }))
     const events = q
-      ? ALL_EVENTS.filter(e => { const l = eventText(language, e); return match(e.title, l.title, e.era, String(e.year)) }).slice(0, 8)
-          .map(e => ({ id: `e-${e.id}`, group: 'Events' as const, label: et(e).title, hint: formatEventYear(e.year), path: `/diverge/${e.id}` }))
+      ? allEvents.filter(e => { const l = eventText(language, e); return match(e.title, l.title, e.era, String(e.year)) }).slice(0, 8)
+          .map(e => ({ id: `e-${e.id}`, group: 'Events' as const, label: et(e).title, hint: e.year < 0 ? `${Math.abs(e.year)} BC` : String(e.year), path: `/diverge/${e.id}` }))
       : []
     return [...pages, ...sess, ...events]
-  }, [query, sessions, language, t, et, version])
+  }, [query, sessions, language, t, et, version, allEvents])
 
   useEffect(() => {
     document.getElementById(`cp-opt-${active}`)?.scrollIntoView({ block: 'nearest' })

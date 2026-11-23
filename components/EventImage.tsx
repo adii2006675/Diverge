@@ -1,7 +1,7 @@
 'use client'
 /* eslint-disable @next/next/no-img-element */
 import { useState } from 'react'
-import { getEventImage, getEventImagePosition } from '@/lib/eventImages'
+import { getEventImage, getEventThumb, getEventImagePosition } from '@/lib/eventImages'
 
 type Props = {
   /** Event id. Omit for a custom starting point (no image exists). */
@@ -15,6 +15,8 @@ type Props = {
   /** Fallback shows only the year (or "?" for a custom start) instead of the full title. For thumbnails. */
   compact?: boolean
   loading?: 'lazy' | 'eager'
+  /** Use the small version of the picture (cards and thumbnails). */
+  small?: boolean
 }
 
 function formatYear(year?: number) {
@@ -26,8 +28,12 @@ function formatYear(year?: number) {
  * Fills its parent (which must be position: relative with a set height). Shows the event's photo,
  * or a typographic title card if the event has no photo or the file fails to load.
  */
-export default function EventImage({ id, title, year, imgStyle, caption, compact, loading = 'eager' }: Props) {
-  const src = id ? getEventImage(id) : null
+export default function EventImage({ id, title, year, imgStyle, caption, compact, loading = 'eager', small }: Props) {
+  const full = id ? getEventImage(id) : null
+  const first = id ? (small ? getEventThumb(id) : full) : null
+  // If the small picture is missing, fall back to the full one before giving up.
+  const [useFull, setUseFull] = useState(false)
+  const src = useFull ? full : first
   const [failed, setFailed] = useState(false)
 
   if (!src || failed) {
@@ -54,7 +60,7 @@ export default function EventImage({ id, title, year, imgStyle, caption, compact
         alt={title}
         loading={loading}
         decoding="async"
-        onError={() => setFailed(true)}
+        onError={() => { if (!useFull && full && src !== full) setUseFull(true); else setFailed(true) }}
         style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: getEventImagePosition(id!), ...imgStyle }}
       />
       {caption && (

@@ -457,3 +457,14 @@ h1, h2, h3 { text-wrap: balance; }
 
 /* Session names are click-to-rename: show a dotted underline on hover so it is discoverable */
 .ses-rename:hover > span { text-decoration: underline dotted; text-underline-offset: 3px; }
+
+/* Delete my account: turns red on hover */
+.acct-danger { transition: border-color .16s, background-color .16s; }
+.acct-danger:hover:not(:disabled), .acct-danger:focus-visible { border-color: #EF4444 !important; background: rgba(239, 68, 68, 0.1) !important; }
+
+/* While the saved session is being restored on a refresh: show the person's avatar placeholder instead of Sign In (see the script in the layout). */
+.nav-ghost { display: none; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border-color); background: var(--user-avatar, color-mix(in srgb, var(--accent) 20%, transparent)) center / cover; color: var(--text); font-size: 14px; font-weight: 700; align-items: center; justify-content: center; }
+.nav-ghost::after { content: var(--user-initial, ""); }
+html.has-session .app-nav-signin { display: none; }
+html.has-session .nav-ghost { display: flex; }
+@media (max-width: 820px) { .nav-ghost { width: 32px; height: 32px; } }

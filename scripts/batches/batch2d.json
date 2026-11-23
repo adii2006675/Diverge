@@ -1,0 +1,1237 @@
+[
+ {
+  "id": "windows-95-1995",
+  "year": 1995,
+  "era": "Tech",
+  "title": "Windows 95 Launches",
+  "shortDesc": "The Start button arrives and PCs go mainstream.",
+  "fullDesc": "Microsoft launched Windows 95 in August 1995 with a huge marketing campaign. It introduced the Start menu and taskbar and brought the internet to many home computers.",
+  "realFacts": [
+   "Microsoft paid millions to use the Rolling Stones' Start Me Up",
+   "It sold 7 million copies in five weeks",
+   "Internet Explorer shipped in an add-on pack",
+   "It ran on far less memory than today's phones"
+  ],
+  "wiki": [
+   "Windows 95",
+   "Bill Gates",
+   "Microsoft"
+  ]
+ },
+ {
+  "id": "ebay-1995",
+  "year": 1995,
+  "era": "Business",
+  "title": "eBay Opens for Business",
+  "shortDesc": "An online auction site turns the internet into a marketplace.",
+  "fullDesc": "Pierre Omidyar launched AuctionWeb in September 1995, which became eBay. The first item sold was a broken laser pointer, and the site grew into a global marketplace.",
+  "realFacts": [
+   "It went public in 1998",
+   "It bought PayPal in 2002",
+   "The laser pointer sold for 14 dollars",
+   "Buyers and sellers rate each other"
+  ],
+  "wiki": [
+   "EBay",
+   "Pierre Omidyar",
+   "Online auction"
+  ]
+ },
+ {
+  "id": "netscape-ipo-1995",
+  "year": 1995,
+  "era": "Finance",
+  "title": "Netscape's IPO Starts the Dot-Com Boom",
+  "shortDesc": "A browser company doubles in value on its first day.",
+  "fullDesc": "Netscape went public in August 1995 and its share price more than doubled on the first day, when the company had no profits. It marked the start of the dot-com boom.",
+  "realFacts": [
+   "Its browser had about 90 percent of the market at one point",
+   "Microsoft's Internet Explorer later overtook it",
+   "AOL bought Netscape in 1998",
+   "Marc Andreessen co-wrote Mosaic"
+  ],
+  "wiki": [
+   "Netscape",
+   "Marc Andreessen",
+   "Netscape Navigator"
+  ]
+ },
+ {
+  "id": "iphone-app-store-2008",
+  "year": 2008,
+  "era": "Tech",
+  "title": "The App Store Opens",
+  "shortDesc": "Apple lets anyone sell software for the iPhone.",
+  "fullDesc": "Apple opened the App Store in July 2008 with about 500 apps. It created a new software economy, and billions of apps have been downloaded since.",
+  "realFacts": [
+   "Apple takes up to 30 percent of sales",
+   "Android's store followed later in 2008",
+   "Games drive most spending",
+   "It has faced antitrust cases"
+  ],
+  "wiki": [
+   "App Store (Apple)",
+   "IPhone",
+   "Steve Jobs"
+  ]
+ },
+ {
+  "id": "android-2008",
+  "year": 2008,
+  "era": "Tech",
+  "title": "The First Android Phone",
+  "shortDesc": "Google's free operating system takes on the iPhone.",
+  "fullDesc": "The HTC Dream, the first Android phone, went on sale in October 2008. Android became the world's most widely used mobile operating system.",
+  "realFacts": [
+   "Google bought Android Inc. in 2005",
+   "It is open source",
+   "It runs on about 70 percent of phones",
+   "Samsung is its biggest maker"
+  ],
+  "wiki": [
+   "Android (operating system)",
+   "HTC Dream",
+   "Andy Rubin"
+  ]
+ },
+ {
+  "id": "airbnb-2008",
+  "year": 2008,
+  "era": "Business",
+  "title": "Airbnb Is Founded",
+  "shortDesc": "Three air mattresses turn into a global lodging business.",
+  "fullDesc": "In 2008 Brian Chesky and Joe Gebbia started renting out air mattresses in their San Francisco apartment, which grew into Airbnb. It changed travel and raised debates about housing.",
+  "realFacts": [
+   "It went public in December 2020",
+   "It has millions of listings in 190 countries",
+   "Cities have limited short-term rentals",
+   "The founders sold cereal boxes to fund it early on"
+  ],
+  "wiki": [
+   "Airbnb",
+   "Brian Chesky",
+   "Short-term rental"
+  ]
+ },
+ {
+  "id": "whatsapp-facebook-2014",
+  "year": 2014,
+  "era": "Social Media",
+  "title": "Facebook Buys WhatsApp for $19 Billion",
+  "shortDesc": "A messaging app with 55 employees sells for a record sum.",
+  "fullDesc": "In February 2014 Facebook agreed to buy WhatsApp for about 19 billion dollars. The app, which had only 55 employees, had 450 million users and now has over two billion.",
+  "realFacts": [
+   "Founders Jan Koum and Brian Acton had worked at Yahoo",
+   "Acton later left and criticised Facebook",
+   "It added end-to-end encryption in 2016",
+   "It is the most used messaging app in many countries"
+  ],
+  "wiki": [
+   "WhatsApp",
+   "Jan Koum",
+   "Brian Acton"
+  ]
+ },
+ {
+  "id": "alexa-2014",
+  "year": 2014,
+  "era": "Tech",
+  "title": "Amazon Launches Alexa and the Echo",
+  "shortDesc": "Smart speakers bring voice assistants into living rooms.",
+  "fullDesc": "Amazon introduced the Echo smart speaker with Alexa in November 2014. Voice assistants soon spread into homes, with Google Home and Apple's HomePod following.",
+  "realFacts": [
+   "Alexa is named after the Library of Alexandria in part",
+   "Siri had launched on the iPhone in 2011",
+   "Hundreds of millions of Alexa devices have been sold",
+   "Privacy concerns followed"
+  ],
+  "wiki": [
+   "Amazon Echo",
+   "Amazon Alexa",
+   "Smart speaker"
+  ]
+ },
+ {
+  "id": "apple-watch-2015",
+  "year": 2015,
+  "era": "Tech",
+  "title": "The Apple Watch Is Released",
+  "shortDesc": "Apple's first new product category after Steve Jobs.",
+  "fullDesc": "Apple released the Apple Watch in April 2015. It grew into the best-selling watch in the world and a major health device, with features such as heart monitoring.",
+  "realFacts": [
+   "It was Tim Cook's first major new product",
+   "It can detect irregular heart rhythms",
+   "Swiss watch exports were overtaken in value",
+   "It needs an iPhone to set up"
+  ],
+  "wiki": [
+   "Apple Watch",
+   "Tim Cook",
+   "Smartwatch"
+  ]
+ },
+ {
+  "id": "twitch-2011",
+  "year": 2011,
+  "era": "Social Media",
+  "title": "Twitch Launches Game Streaming",
+  "shortDesc": "Watching other people play video games becomes a mass hobby.",
+  "fullDesc": "Twitch launched in 2011 as a spin-off of Justin.tv, focused on live video game streaming. Amazon bought it in 2014 for about 970 million dollars, and it became the home of streamers and esports.",
+  "realFacts": [
+   "Over 100 million people watch each month",
+   "Esports finals fill arenas",
+   "Streamers earn from subscriptions",
+   "It has more than 7 million streamers"
+  ],
+  "wiki": [
+   "Twitch (service)",
+   "Justin Kan",
+   "Esports"
+  ]
+ },
+ {
+  "id": "oculus-2012",
+  "year": 2012,
+  "era": "Tech",
+  "title": "Oculus Rift Revives Virtual Reality",
+  "shortDesc": "A Kickstarter headset restarts the VR race.",
+  "fullDesc": "In 2012 Palmer Luckey's Oculus Rift raised 2.4 million dollars on Kickstarter, and Facebook bought the company for 2 billion dollars in 2014. It reignited interest in virtual reality.",
+  "realFacts": [
+   "Luckey was 19 when he started",
+   "Meta now sells the Quest",
+   "Sony and Valve have their own headsets",
+   "Apple's Vision Pro arrived in 2024"
+  ],
+  "wiki": [
+   "Oculus Rift",
+   "Palmer Luckey",
+   "Virtual reality"
+  ]
+ },
+ {
+  "id": "tesla-autopilot-2015",
+  "year": 2015,
+  "era": "Cars",
+  "title": "Tesla Autopilot Arrives",
+  "shortDesc": "A software update gives cars a hands-on driver assist.",
+  "fullDesc": "In October 2015 Tesla pushed an update that gave its cars Autopilot, a partial self-driving assist. It sparked debate over safety and what drivers should be allowed to trust.",
+  "realFacts": [
+   "Regulators have investigated crashes",
+   "Full Self-Driving is still supervised",
+   "Drivers must keep their hands on the wheel",
+   "Tesla updates cars over the air"
+  ],
+  "wiki": [
+   "Tesla Autopilot",
+   "Tesla, Inc.",
+   "Self-driving car"
+  ]
+ },
+ {
+  "id": "ev-nissan-leaf-2010",
+  "year": 2010,
+  "era": "Cars",
+  "title": "The Nissan Leaf Goes on Sale",
+  "shortDesc": "The first mass-market electric car reaches showrooms.",
+  "fullDesc": "The Nissan Leaf went on sale in December 2010 and became the world's best-selling electric car for years. It showed that an ordinary electric car could be practical.",
+  "realFacts": [
+   "It had a range of about 100 miles at first",
+   "Over 650,000 have been sold",
+   "It can power a house in an emergency",
+   "Tesla's Model 3 later overtook it"
+  ],
+  "wiki": [
+   "Nissan Leaf",
+   "Electric car",
+   "Nissan"
+  ]
+ },
+ {
+  "id": "vw-golf-1974",
+  "year": 1974,
+  "era": "Cars",
+  "title": "The Volkswagen Golf Replaces the Beetle",
+  "shortDesc": "A compact hatchback sets the template for family cars.",
+  "fullDesc": "Volkswagen launched the Golf in 1974 as the successor to the Beetle. Its front-engine hatchback layout became the standard for small cars, and over 35 million have been sold.",
+  "realFacts": [
+   "Giorgetto Giugiaro designed it",
+   "The GTI of 1976 created the hot hatch",
+   "It is one of the best-selling cars ever",
+   "It is now in its eighth generation"
+  ],
+  "wiki": [
+   "Volkswagen Golf",
+   "Volkswagen Golf Mk1",
+   "Giorgetto Giugiaro"
+  ]
+ },
+ {
+  "id": "mini-1959",
+  "year": 1959,
+  "era": "Cars",
+  "title": "The Mini Is Launched",
+  "shortDesc": "A tiny British car becomes a style icon.",
+  "fullDesc": "The Mini was launched in 1959 by the British Motor Corporation, designed by Alec Issigonis. It put the engine sideways to free up room inside and became a symbol of 1960s London.",
+  "realFacts": [
+   "It won the Monte Carlo Rally in 1964, 1965 and 1967",
+   "Over 5 million were built by 2000",
+   "The Italian Job made it famous in film",
+   "BMW relaunched Mini in 2001"
+  ],
+  "wiki": [
+   "Mini (marque)",
+   "Alec Issigonis",
+   "Morris Mini-Minor"
+  ]
+ },
+ {
+  "id": "ferrari-f40-1987",
+  "year": 1987,
+  "era": "Cars",
+  "title": "The Ferrari F40 Debuts",
+  "shortDesc": "Enzo Ferrari's last personal project becomes a legend.",
+  "fullDesc": "The Ferrari F40 was launched in 1987 for the company's 40th anniversary. It was the last car Enzo Ferrari approved personally and the first road car to exceed 200 mph.",
+  "realFacts": [
+   "Its top speed was about 324 km/h",
+   "Only 1,311 were built",
+   "It was bare and loud with no radio",
+   "Prices now reach millions"
+  ],
+  "wiki": [
+   "Ferrari F40",
+   "Enzo Ferrari",
+   "Ferrari"
+  ]
+ },
+ {
+  "id": "burger-king-whopper-1957",
+  "year": 1957,
+  "era": "Food",
+  "title": "The Whopper Is Born",
+  "shortDesc": "Burger King introduces its signature burger.",
+  "fullDesc": "Burger King introduced the Whopper in 1957 as a bigger burger for people who wanted more than McDonald's offered. It became the chain's best-known product.",
+  "realFacts": [
+   "It cost 37 cents at launch",
+   "Burger King began in Florida in 1953",
+   "It is flame-grilled",
+   "It spawned the Have It Your Way slogan"
+  ],
+  "wiki": [
+   "Whopper",
+   "Burger King",
+   "Hamburger"
+  ]
+ },
+ {
+  "id": "kfc-1952",
+  "year": 1952,
+  "era": "Food",
+  "title": "Colonel Sanders Franchises Kentucky Fried Chicken",
+  "shortDesc": "A roadside cook builds a chicken empire.",
+  "fullDesc": "In 1952 Harland Sanders signed up the first franchise for Kentucky Fried Chicken in Utah. He was in his 60s and travelled the country by car to sell his recipe. The chain is now global.",
+  "realFacts": [
+   "The recipe has 11 herbs and spices",
+   "He was a colonel by honorary title",
+   "KFC sells in over 140 countries",
+   "Chinese New Year buckets are a big seller in China"
+  ],
+  "wiki": [
+   "KFC",
+   "Colonel Sanders",
+   "Fried chicken"
+  ]
+ },
+ {
+  "id": "pizza-hut-1958",
+  "year": 1958,
+  "era": "Food",
+  "title": "Pizza Hut Opens in Kansas",
+  "shortDesc": "Two brothers open a pizza restaurant that becomes a global chain.",
+  "fullDesc": "In 1958 brothers Dan and Frank Carney opened the first Pizza Hut in Wichita, Kansas, with a loan of 600 dollars. It became the world's largest pizza chain.",
+  "realFacts": [
+   "The building's roof shape became the logo",
+   "Pizza spread in the US after World War II",
+   "It has more than 19,000 restaurants",
+   "Delivery made pizza a staple"
+  ],
+  "wiki": [
+   "Pizza Hut",
+   "Pizza",
+   "Wichita, Kansas"
+  ]
+ },
+ {
+  "id": "sushi-conveyor-1958",
+  "year": 1958,
+  "era": "Food",
+  "title": "The Conveyor Belt Sushi Restaurant Opens",
+  "shortDesc": "A Japanese inventor puts sushi on a belt.",
+  "fullDesc": "In 1958 Yoshiaki Shiraishi opened the first conveyor belt sushi restaurant in Osaka, inspired by a beer bottling line. It made sushi cheap and casual and spread worldwide.",
+  "realFacts": [
+   "He called it Mawaru Genroku Sushi",
+   "Plates are priced by colour",
+   "Sushi was once a street food",
+   "Kaiten sushi is now found around the world"
+  ],
+  "wiki": [
+   "Conveyor belt sushi",
+   "Sushi",
+   "Osaka"
+  ]
+ },
+ {
+  "id": "coca-cola-new-1985",
+  "year": 1985,
+  "era": "Food",
+  "title": "New Coke Is a Famous Flop",
+  "shortDesc": "Coca-Cola changes its recipe and customers revolt.",
+  "fullDesc": "In April 1985 Coca-Cola replaced its classic formula with New Coke. Customers protested so loudly that the company brought back the original within 79 days.",
+  "realFacts": [
+   "Pepsi's taste-test wins prompted the change",
+   "Sales of Coca-Cola Classic rose afterwards",
+   "It is a standard marketing case study",
+   "New Coke appeared in Stranger Things in 2019"
+  ],
+  "wiki": [
+   "New Coke",
+   "Coca-Cola",
+   "Pepsi Challenge"
+  ]
+ },
+ {
+  "id": "starbucks-frappuccino-1995",
+  "year": 1995,
+  "era": "Food",
+  "title": "Starbucks Frappuccino Launches",
+  "shortDesc": "Coffee becomes a sweet blended drink.",
+  "fullDesc": "Starbucks launched the Frappuccino in 1995 after buying the idea from a Boston coffee shop. The sweet blended drink became a bestseller and a symbol of the coffee chain's reach.",
+  "realFacts": [
+   "Starbucks has over 38,000 stores",
+   "Howard Schultz drove the expansion",
+   "The name blends frappe and cappuccino",
+   "Fans created the secret menu"
+  ],
+  "wiki": [
+   "Frappuccino",
+   "Starbucks",
+   "Howard Schultz"
+  ]
+ },
+ {
+  "id": "beyond-meat-2019",
+  "year": 2019,
+  "era": "Food",
+  "title": "Beyond Meat Goes Public",
+  "shortDesc": "A plant-based burger company soars on Wall Street.",
+  "fullDesc": "Beyond Meat went public in May 2019 and its stock rose by about 163 percent on the first day. It made plant-based meat a mainstream product, though sales later cooled.",
+  "realFacts": [
+   "The Beyond Burger used pea protein",
+   "McDonald's tested a plant-based burger",
+   "Competitor Impossible Foods stayed private",
+   "Sales slumped after the early boom"
+  ],
+  "wiki": [
+   "Beyond Meat",
+   "Plant-based meat",
+   "Ethan Brown"
+  ]
+ },
+ {
+  "id": "messi-91-goals-2012",
+  "year": 2012,
+  "era": "Sports",
+  "title": "Messi Scores 91 Goals in a Year",
+  "shortDesc": "Lionel Messi smashes the calendar-year scoring record.",
+  "fullDesc": "In 2012 Lionel Messi scored 91 goals for Barcelona and Argentina, breaking Gerd Müller's record of 85 set in 1972. It stands as the most goals in a calendar year.",
+  "realFacts": [
+   "He scored 79 for Barcelona",
+   "He won the Ballon d'Or four times in a row from 2009",
+   "Müller's record stood for 40 years",
+   "Messi finally won the World Cup in 2022"
+  ],
+  "wiki": [
+   "Lionel Messi",
+   "Gerd Müller",
+   "FC Barcelona"
+  ]
+ },
+ {
+  "id": "portugal-euro-2016",
+  "year": 2016,
+  "era": "Sports",
+  "title": "Portugal Win Euro 2016",
+  "shortDesc": "Cristiano Ronaldo's team wins its first major title.",
+  "fullDesc": "Portugal beat host France 1-0 in the Euro 2016 final in Paris after extra time. Cristiano Ronaldo went off injured in the first half, and Eder scored the winner.",
+  "realFacts": [
+   "It was Portugal's first major trophy",
+   "Ronaldo cheered his team from the touchline",
+   "Portugal won none of its group games in 90 minutes",
+   "Ronaldo is the all-time top international goalscorer"
+  ],
+  "wiki": [
+   "UEFA Euro 2016",
+   "Cristiano Ronaldo",
+   "Stade de France"
+  ]
+ },
+ {
+  "id": "serena-williams-2017",
+  "year": 2017,
+  "era": "Sports",
+  "title": "Serena Williams Wins a 23rd Grand Slam",
+  "shortDesc": "She wins the Australian Open while pregnant.",
+  "fullDesc": "In January 2017 Serena Williams beat her sister Venus in the Australian Open final for her 23rd Grand Slam singles title, the most in the Open era. She was about two months pregnant.",
+  "realFacts": [
+   "She finished with 23 Grand Slam singles titles",
+   "Margaret Court holds the all-time record of 24",
+   "She retired in 2022",
+   "Venus and Serena won 14 Grand Slam doubles titles together"
+  ],
+  "wiki": [
+   "Serena Williams",
+   "2017 Australian Open",
+   "Venus Williams"
+  ]
+ },
+ {
+  "id": "federer-wimbledon-2008",
+  "year": 2008,
+  "era": "Sports",
+  "title": "The Nadal-Federer Wimbledon Final",
+  "shortDesc": "Often called the greatest tennis match ever played.",
+  "fullDesc": "On July 6, 2008 Rafael Nadal beat Roger Federer 9-7 in the fifth set at Wimbledon in near darkness. Many consider it the greatest tennis match ever played.",
+  "realFacts": [
+   "The match lasted almost five hours",
+   "It ended Federer's streak of five Wimbledon titles",
+   "A rain delay interrupted play",
+   "They remain close friends"
+  ],
+  "wiki": [
+   "2008 Wimbledon Championships – Men's singles final",
+   "Rafael Nadal",
+   "Roger Federer"
+  ]
+ },
+ {
+  "id": "tom-brady-2021",
+  "year": 2021,
+  "era": "Sports",
+  "title": "Tom Brady Wins a Seventh Super Bowl",
+  "shortDesc": "At 43 he wins the title in his first season in Tampa.",
+  "fullDesc": "In February 2021 Tom Brady led the Tampa Bay Buccaneers to victory in Super Bowl LV, his seventh title. He retired in 2023 with more Super Bowl wins than any franchise.",
+  "realFacts": [
+   "He won six with the New England Patriots",
+   "He was a sixth-round draft pick",
+   "He was named MVP of the game five times",
+   "He played 23 seasons"
+  ],
+  "wiki": [
+   "Tom Brady",
+   "Super Bowl LV",
+   "Tampa Bay Buccaneers"
+  ]
+ },
+ {
+  "id": "lebron-record-2023",
+  "year": 2023,
+  "era": "Sports",
+  "title": "LeBron James Becomes the NBA's All-Time Leading Scorer",
+  "shortDesc": "He passes Kareem Abdul-Jabbar's 38,387-point record.",
+  "fullDesc": "On February 7, 2023 LeBron James passed Kareem Abdul-Jabbar's record of 38,387 points to become the NBA's all-time leading scorer. Kareem's record had stood for 39 years.",
+  "realFacts": [
+   "He turned pro straight out of high school",
+   "He won titles with Miami, Cleveland and Los Angeles",
+   "He played with his son Bronny in 2024",
+   "He passed 40,000 points in 2024"
+  ],
+  "wiki": [
+   "LeBron James",
+   "Kareem Abdul-Jabbar",
+   "Crypto.com Arena"
+  ]
+ },
+ {
+  "id": "usain-bolt-2009",
+  "year": 2009,
+  "era": "Sports",
+  "title": "Usain Bolt Runs 9.58",
+  "shortDesc": "The world record in the 100 metres that still stands.",
+  "fullDesc": "On August 16, 2009 Usain Bolt ran 9.58 seconds for the 100 m at the World Championships in Berlin, the fastest ever. He also holds the 200 m record of 19.19.",
+  "realFacts": [
+   "He topped out near 44 km/h",
+   "He won eight Olympic golds",
+   "He retired in 2017",
+   "Nobody has run the 100 m within 0.1 s of it"
+  ],
+  "wiki": [
+   "Usain Bolt",
+   "2009 World Championships in Athletics",
+   "Olympiastadion (Berlin)"
+  ]
+ },
+ {
+  "id": "wayne-gretzky-1999",
+  "year": 1999,
+  "era": "Sports",
+  "title": "Wayne Gretzky Retires",
+  "shortDesc": "The Great One leaves hockey holding dozens of records.",
+  "fullDesc": "Wayne Gretzky retired in April 1999 after 20 NHL seasons, holding or sharing 61 records. His 894 goals and 2,857 points are still the most in NHL history, and his number 99 was retired league-wide.",
+  "realFacts": [
+   "He had 92 goals in the 1981-82 season",
+   "He won four Stanley Cups with Edmonton",
+   "His 1988 trade to Los Angeles stunned Canada",
+   "He is called The Great One"
+  ],
+  "wiki": [
+   "Wayne Gretzky",
+   "National Hockey League",
+   "Edmonton Oilers"
+  ]
+ },
+ {
+  "id": "women-world-cup-1999",
+  "year": 1999,
+  "era": "Sports",
+  "title": "The 1999 Women's World Cup Final",
+  "shortDesc": "A packed Rose Bowl watches the US win on penalties.",
+  "fullDesc": "On July 10, 1999 the United States beat China on penalties in the Women's World Cup final before 90,000 fans at the Rose Bowl, the largest crowd for a women's sporting event at the time. Brandi Chastain's celebration became iconic.",
+  "realFacts": [
+   "Chastain scored the winning penalty and took off her shirt",
+   "The match was won 5-4 on penalties",
+   "It spurred women's soccer in the US",
+   "The US has won four World Cups"
+  ],
+  "wiki": [
+   "1999 FIFA Women's World Cup",
+   "Brandi Chastain",
+   "Rose Bowl (stadium)"
+  ]
+ },
+ {
+  "id": "pele-1958",
+  "year": 1958,
+  "era": "Sports",
+  "title": "Pelé Wins the World Cup at 17",
+  "shortDesc": "A teenager lights up the tournament in Sweden.",
+  "fullDesc": "In 1958 the 17-year-old Pelé scored twice in the World Cup final as Brazil beat Sweden 5-2. He became the youngest player to win the tournament and went on to win three World Cups.",
+  "realFacts": [
+   "He scored six goals in the tournament",
+   "He won again in 1962 and 1970",
+   "He scored more than 1,200 goals in his career",
+   "Brazil has won five World Cups"
+  ],
+  "wiki": [
+   "Pelé",
+   "1958 FIFA World Cup",
+   "Brazil national football team"
+  ]
+ },
+ {
+  "id": "ruth-714-1935",
+  "year": 1935,
+  "era": "Sports",
+  "title": "Babe Ruth Retires with 714 Home Runs",
+  "shortDesc": "Baseball's first great slugger leaves a record that lasts for decades.",
+  "fullDesc": "Babe Ruth retired in 1935 with 714 career home runs, a record that stood until Hank Aaron passed it in 1974. He transformed baseball from a game of bunts to a game of power.",
+  "realFacts": [
+   "He began as a star pitcher with the Red Sox",
+   "The Curse of the Bambino followed his sale to the Yankees",
+   "He hit 60 home runs in 1927",
+   "Barry Bonds later reached 762"
+  ],
+  "wiki": [
+   "Babe Ruth",
+   "Hank Aaron",
+   "New York Yankees"
+  ]
+ },
+ {
+  "id": "hank-aaron-715-1974",
+  "year": 1974,
+  "era": "Sports",
+  "title": "Hank Aaron Hits Home Run 715",
+  "shortDesc": "He passes Babe Ruth despite racist threats.",
+  "fullDesc": "On April 8, 1974 Hank Aaron hit his 715th home run, passing Babe Ruth's record. He had received death threats and hate mail while chasing it.",
+  "realFacts": [
+   "He finished with 755 home runs",
+   "He played in the Negro leagues first",
+   "He was elected to the Hall of Fame in 1982",
+   "He drove in more runs than anyone in history"
+  ],
+  "wiki": [
+   "Hank Aaron",
+   "Atlanta Braves",
+   "Babe Ruth"
+  ]
+ },
+ {
+  "id": "michael-schumacher-2004",
+  "year": 2004,
+  "era": "Sports",
+  "title": "Michael Schumacher Wins a Seventh F1 Title",
+  "shortDesc": "He sets records that stand for 16 years.",
+  "fullDesc": "In 2004 Michael Schumacher won his seventh Formula One world championship, with Ferrari. He won 13 races that season and his record of seven titles was matched by Lewis Hamilton in 2020.",
+  "realFacts": [
+   "He won five titles in a row from 2000",
+   "A skiing accident in 2013 ended his public life",
+   "His son Mick also raced in F1",
+   "Hamilton has equalled the seven titles"
+  ],
+  "wiki": [
+   "Michael Schumacher",
+   "Scuderia Ferrari",
+   "2004 Formula One World Championship"
+  ]
+ },
+ {
+  "id": "senna-1994",
+  "year": 1994,
+  "era": "Sports",
+  "title": "Ayrton Senna Dies at Imola",
+  "shortDesc": "The death of a racing legend changes Formula One safety.",
+  "fullDesc": "On May 1, 1994 three-time world champion Ayrton Senna crashed and died at the San Marino Grand Prix at Imola, a day after Roland Ratzenberger's death. Formula One introduced major safety reforms afterwards.",
+  "realFacts": [
+   "A national day of mourning was held in Brazil",
+   "He won 41 races",
+   "The HANS device later became mandatory",
+   "No driver died in a race until 2014's Jules Bianchi crash"
+  ],
+  "wiki": [
+   "Ayrton Senna",
+   "1994 San Marino Grand Prix",
+   "Autodromo Enzo e Dino Ferrari"
+  ]
+ },
+ {
+  "id": "ali-vs-frazier-1971",
+  "year": 1971,
+  "era": "Sports",
+  "title": "The Fight of the Century",
+  "shortDesc": "Ali and Frazier meet at Madison Square Garden.",
+  "fullDesc": "On March 8, 1971 undefeated heavyweight Joe Frazier beat Muhammad Ali on points at Madison Square Garden. Both men were unbeaten, and the fight was watched around the world.",
+  "realFacts": [
+   "Each was paid 2.5 million dollars",
+   "Frazier knocked Ali down in the 15th round",
+   "They fought two more times",
+   "Their third fight, the Thrilla in Manila, was in 1975"
+  ],
+  "wiki": [
+   "Fight of the Century",
+   "Joe Frazier",
+   "Madison Square Garden"
+  ]
+ },
+ {
+  "id": "tyson-1986",
+  "year": 1986,
+  "era": "Sports",
+  "title": "Mike Tyson Becomes the Youngest Heavyweight Champion",
+  "shortDesc": "At 20 he knocks out Trevor Berbick.",
+  "fullDesc": "On November 22, 1986 Mike Tyson knocked out Trevor Berbick in the second round to become, at 20, the youngest heavyweight champion in history. He went on to unify the titles.",
+  "realFacts": [
+   "He was trained by Cus D'Amato",
+   "He lost to Buster Douglas in 1990",
+   "He was convicted in 1992 and served three years",
+   "He bit Evander Holyfield's ear in 1997"
+  ],
+  "wiki": [
+   "Mike Tyson",
+   "Trevor Berbick",
+   "Cus D'Amato"
+  ]
+ },
+ {
+  "id": "deep-learning-hinton-2006",
+  "year": 2006,
+  "era": "AI",
+  "title": "Hinton's Deep Belief Networks Revive Neural Networks",
+  "shortDesc": "A key paper helps reignite deep learning.",
+  "fullDesc": "In 2006 Geoffrey Hinton and colleagues published a paper showing how to train deep neural networks layer by layer. It helped revive an idea that had been out of favour for years and set the stage for modern AI.",
+  "realFacts": [
+   "Hinton won the 2018 Turing Award with Bengio and LeCun",
+   "He won the Nobel Prize in Physics in 2024",
+   "He left Google in 2023 to speak about AI risks",
+   "AlexNet in 2012 proved the approach"
+  ],
+  "wiki": [
+   "Geoffrey Hinton",
+   "Deep learning",
+   "Yoshua Bengio"
+  ]
+ },
+ {
+  "id": "transformer-2017",
+  "year": 2017,
+  "era": "AI",
+  "title": "Attention Is All You Need",
+  "shortDesc": "A Google paper introduces the transformer behind modern AI.",
+  "fullDesc": "In June 2017 Google researchers published Attention Is All You Need, introducing the transformer architecture. It is the foundation of ChatGPT, Claude and other large language models.",
+  "realFacts": [
+   "It had eight authors",
+   "Most later left Google to start companies",
+   "Transformers process words in parallel",
+   "The T in GPT stands for transformer"
+  ],
+  "wiki": [
+   "Attention Is All You Need",
+   "Transformer (deep learning architecture)",
+   "Google Brain"
+  ]
+ },
+ {
+  "id": "openai-founded-2015",
+  "year": 2015,
+  "era": "AI",
+  "title": "OpenAI Is Founded",
+  "shortDesc": "A nonprofit lab begins the push toward artificial general intelligence.",
+  "fullDesc": "OpenAI was founded in December 2015 by Sam Altman, Elon Musk and others as a nonprofit AI research lab. It later created GPT and ChatGPT, and became a company with a capped-profit structure.",
+  "realFacts": [
+   "Musk left the board in 2018",
+   "Microsoft invested billions",
+   "Altman was fired and rehired in November 2023",
+   "Its valuation passed 500 billion dollars in 2025"
+  ],
+  "wiki": [
+   "OpenAI",
+   "Sam Altman",
+   "Ilya Sutskever"
+  ]
+ },
+ {
+  "id": "midjourney-2022",
+  "year": 2022,
+  "era": "AI",
+  "title": "AI Art Wins a State Fair Prize",
+  "shortDesc": "A Midjourney image takes first place in a Colorado art contest.",
+  "fullDesc": "In August 2022 Jason Allen won a Colorado State Fair art prize with an AI-generated image made with Midjourney. The result set off a heated debate about AI and creativity.",
+  "realFacts": [
+   "The piece was called Théâtre D'opéra Spatial",
+   "Judges did not know it was AI generated",
+   "The US Copyright Office declined full copyright",
+   "Artists have sued image generators"
+  ],
+  "wiki": [
+   "Midjourney",
+   "Théâtre D'opéra Spatial",
+   "Text-to-image model"
+  ]
+ },
+ {
+  "id": "claude-launch-2023",
+  "year": 2023,
+  "era": "AI",
+  "title": "Anthropic Releases Claude",
+  "shortDesc": "A safety-focused AI lab launches a rival assistant.",
+  "fullDesc": "Anthropic, founded in 2021 by former OpenAI researchers, released its assistant Claude in March 2023. It has focused on AI safety and grown into one of the leading AI labs.",
+  "realFacts": [
+   "The founders include Dario and Daniela Amodei",
+   "Amazon and Google invested billions",
+   "Claude's models are trained with constitutional AI",
+   "It has several model tiers"
+  ],
+  "wiki": [
+   "Anthropic",
+   "Claude (language model)",
+   "Dario Amodei"
+  ]
+ },
+ {
+  "id": "sora-2024",
+  "year": 2024,
+  "era": "AI",
+  "title": "OpenAI Previews Sora Video Generation",
+  "shortDesc": "Text prompts turn into realistic video clips.",
+  "fullDesc": "In February 2024 OpenAI previewed Sora, a model that creates realistic video from text. It raised hopes and fears about the future of film and the spread of fake videos.",
+  "realFacts": [
+   "Clips ran up to a minute",
+   "It was released to the public in December 2024",
+   "Hollywood unions raised concerns",
+   "Rivals include Google's Veo"
+  ],
+  "wiki": [
+   "Sora (text-to-video model)",
+   "OpenAI",
+   "Text-to-video model"
+  ]
+ },
+ {
+  "id": "stargate-2025",
+  "year": 2025,
+  "era": "AI",
+  "title": "The Stargate AI Infrastructure Project Is Announced",
+  "shortDesc": "A 500 billion dollar plan for AI data centers.",
+  "fullDesc": "In January 2025 President Trump announced Stargate, a plan by OpenAI, Oracle and SoftBank to invest up to 500 billion dollars in AI data centers in the US. It showed how big AI spending had become.",
+  "realFacts": [
+   "The first site was in Abilene, Texas",
+   "Tech companies planned hundreds of billions in spending",
+   "Power demand from data centers surged",
+   "Critics doubted the funding"
+  ],
+  "wiki": [
+   "Stargate LLC",
+   "Abilene, Texas",
+   "Data center"
+  ]
+ },
+ {
+  "id": "lehman-collapse-2008",
+  "year": 2008,
+  "era": "Finance",
+  "title": "Lehman Brothers Collapses",
+  "shortDesc": "The largest bankruptcy in US history deepens the financial crisis.",
+  "fullDesc": "On September 15, 2008 Lehman Brothers filed for bankruptcy with over 600 billion dollars in debt. Its failure froze credit markets and deepened the financial crisis.",
+  "realFacts": [
+   "It was founded in 1850",
+   "The government declined to bail it out",
+   "AIG was rescued the next day",
+   "Millions lost jobs and homes"
+  ],
+  "wiki": [
+   "Bankruptcy of Lehman Brothers",
+   "Lehman Brothers",
+   "Financial crisis of 2007–2008"
+  ]
+ },
+ {
+  "id": "greek-crisis-2010",
+  "year": 2010,
+  "era": "Finance",
+  "title": "The Greek Debt Crisis",
+  "shortDesc": "Greece is bailed out and austerity reshapes the country.",
+  "fullDesc": "In 2010 Greece needed an international bailout when it could no longer borrow. The deal came with harsh spending cuts, the economy shrank by about a quarter, and the crisis threatened the euro.",
+  "realFacts": [
+   "Greece got three bailouts totalling over 280 billion euros",
+   "Unemployment passed 27 percent",
+   "A 2015 referendum rejected terms but the government accepted a deal",
+   "Greece left bailout programs in 2018"
+  ],
+  "wiki": [
+   "Greek government-debt crisis",
+   "Syntagma Square",
+   "Alexis Tsipras"
+  ]
+ },
+ {
+  "id": "amazon-trillion-2018",
+  "year": 2013,
+  "era": "Finance",
+  "title": "Amazon Hits a $1 Trillion Value",
+  "shortDesc": "Online shopping makes the company one of the world's most valuable.",
+  "fullDesc": "Amazon reached a market value of 1 trillion dollars in September 2018, the second US company to do so after Apple. It began as an online bookstore in 1994.",
+  "realFacts": [
+   "Jeff Bezos became the world's richest person",
+   "AWS cloud earns most of the profit",
+   "Bezos stepped down as CEO in 2021",
+   "Prime has over 200 million members"
+  ],
+  "wiki": [
+   "Amazon (company)",
+   "Jeff Bezos",
+   "Amazon Web Services"
+  ]
+ },
+ {
+  "id": "tesla-gigafactory-2016",
+  "year": 2016,
+  "era": "Business",
+  "title": "Tesla Opens the Gigafactory",
+  "shortDesc": "A huge battery plant in Nevada aims to cut electric car costs.",
+  "fullDesc": "Tesla opened its Gigafactory in Nevada in 2016 to make batteries on a huge scale with Panasonic. It was part of a push to make electric cars affordable.",
+  "realFacts": [
+   "It was one of the largest buildings in the world by footprint",
+   "Tesla now has factories in China, Germany and Texas",
+   "Battery costs fell by about 90 percent over a decade",
+   "Musk's goal was 500,000 cars a year"
+  ],
+  "wiki": [
+   "Gigafactory Nevada",
+   "Tesla, Inc.",
+   "Panasonic"
+  ]
+ },
+ {
+  "id": "bitcoin-pizza-2010",
+  "year": 2010,
+  "era": "Finance",
+  "title": "The Bitcoin Pizza Purchase",
+  "shortDesc": "Ten thousand bitcoin buy two pizzas.",
+  "fullDesc": "On May 22, 2010 programmer Laszlo Hanyecz paid 10,000 bitcoin for two pizzas, the first known purchase with the cryptocurrency. Bitcoin Pizza Day is now celebrated every year.",
+  "realFacts": [
+   "Those coins would be worth hundreds of millions today",
+   "The pizzas were Papa John's",
+   "He paid about 41 dollars",
+   "Bitcoin's price passed 100,000 dollars in 2024"
+  ],
+  "wiki": [
+   "Bitcoin",
+   "Laszlo Hanyecz",
+   "Cryptocurrency"
+  ]
+ },
+ {
+  "id": "super-mario-64-1996",
+  "year": 1996,
+  "era": "Games",
+  "title": "Super Mario 64 Defines 3D Games",
+  "shortDesc": "Nintendo shows how to move a character through a 3D world.",
+  "fullDesc": "Nintendo released Super Mario 64 in 1996 alongside the Nintendo 64. Its analogue stick control and free camera set the template for 3D action games.",
+  "realFacts": [
+   "It sold over 11 million copies",
+   "Shigeru Miyamoto led its design",
+   "It was a launch title for the N64",
+   "Many games copied its camera"
+  ],
+  "wiki": [
+   "Super Mario 64",
+   "Nintendo 64",
+   "Shigeru Miyamoto"
+  ]
+ },
+ {
+  "id": "ocarina-of-time-1998",
+  "year": 1998,
+  "era": "Games",
+  "title": "The Legend of Zelda: Ocarina of Time",
+  "shortDesc": "Often voted the greatest game of all time.",
+  "fullDesc": "Ocarina of Time was released in November 1998 for the Nintendo 64. Its lock-on targeting and open world became hugely influential, and it topped critics' lists for years.",
+  "realFacts": [
+   "It scored 99 on Metacritic",
+   "It sold about 7.6 million copies",
+   "Link travels through time",
+   "It introduced Z-targeting"
+  ],
+  "wiki": [
+   "The Legend of Zelda: Ocarina of Time",
+   "Link (The Legend of Zelda)",
+   "Nintendo 64"
+  ]
+ },
+ {
+  "id": "playstation-1994",
+  "year": 1994,
+  "era": "Games",
+  "title": "The Sony PlayStation Launches",
+  "shortDesc": "Sony enters gaming and changes the industry.",
+  "fullDesc": "Sony launched the PlayStation in Japan in December 1994. It began after a failed partnership with Nintendo, and its CD-based games helped make it a hit, selling over 100 million units.",
+  "realFacts": [
+   "It was the first console to reach 100 million",
+   "Ken Kutaragi led the project",
+   "Final Fantasy VII boosted it in 1997",
+   "It led to the PS5"
+  ],
+  "wiki": [
+   "PlayStation (console)",
+   "Ken Kutaragi",
+   "Sony Interactive Entertainment"
+  ]
+ },
+ {
+  "id": "xbox-halo-2001",
+  "year": 2001,
+  "era": "Games",
+  "title": "Microsoft Launches Xbox and Halo",
+  "shortDesc": "A software giant takes on Sony and Nintendo.",
+  "fullDesc": "Microsoft launched the original Xbox in November 2001, with Halo: Combat Evolved as its star launch game. Halo made console shooters mainstream and helped establish Xbox.",
+  "realFacts": [
+   "Halo shipped with the console in North America",
+   "Xbox Live launched in 2002",
+   "Microsoft bought Activision in 2023 for 69 billion dollars",
+   "Master Chief became a gaming icon"
+  ],
+  "wiki": [
+   "Xbox (console)",
+   "Halo: Combat Evolved",
+   "Master Chief (Halo)"
+  ]
+ },
+ {
+  "id": "wii-2006",
+  "year": 2006,
+  "era": "Games",
+  "title": "The Nintendo Wii Launches",
+  "shortDesc": "Motion controls bring gaming to families and grandparents.",
+  "fullDesc": "Nintendo launched the Wii in November 2006 with motion controls and Wii Sports. It sold over 100 million units and widened gaming to people who had never played.",
+  "realFacts": [
+   "Wii Sports was packed in with the console",
+   "It beat Xbox 360 and PS3 in sales",
+   "Its Mii avatars became popular",
+   "The Wii U that followed flopped"
+  ],
+  "wiki": [
+   "Wii",
+   "Wii Sports",
+   "Satoru Iwata"
+  ]
+ },
+ {
+  "id": "nintendo-switch-2017",
+  "year": 2017,
+  "era": "Games",
+  "title": "The Nintendo Switch Launches",
+  "shortDesc": "A console you can take anywhere.",
+  "fullDesc": "Nintendo launched the Switch in March 2017. A hybrid between a home console and a handheld, it sold over 150 million units and became one of the best-selling consoles ever.",
+  "realFacts": [
+   "Zelda: Breath of the Wild launched with it",
+   "It passed the Wii in sales",
+   "The Switch 2 arrived in June 2025",
+   "It is a tablet with detachable controllers"
+  ],
+  "wiki": [
+   "Nintendo Switch",
+   "Nintendo",
+   "Joy-Con"
+  ]
+ },
+ {
+  "id": "street-fighter-ii-1991",
+  "year": 1991,
+  "era": "Games",
+  "title": "Street Fighter II Starts the Fighting Game Boom",
+  "shortDesc": "Arcades fill with players competing head to head.",
+  "fullDesc": "Capcom released Street Fighter II in 1991, and it became a smash hit in arcades. Its head-to-head matches and special moves created the fighting game genre and competitive gaming culture.",
+  "realFacts": [
+   "It sold over 200,000 arcade cabinets",
+   "The SNES version sold millions",
+   "Characters like Ryu and Chun-Li became icons",
+   "It inspired Mortal Kombat"
+  ],
+  "wiki": [
+   "Street Fighter II",
+   "Capcom",
+   "Fighting game"
+  ]
+ },
+ {
+  "id": "oregon-trail-1971",
+  "year": 1971,
+  "era": "Games",
+  "title": "The Oregon Trail Is Created",
+  "shortDesc": "A student teaching game becomes a classroom classic.",
+  "fullDesc": "In 1971 student teachers in Minnesota created The Oregon Trail, a text game about a wagon journey, to teach history. It grew into a school favourite and sold over 65 million copies in its versions.",
+  "realFacts": [
+   "Dysentery became a running joke",
+   "It ran on a mainframe",
+   "MECC published later versions",
+   "It is in the Video Game Hall of Fame"
+  ],
+  "wiki": [
+   "The Oregon Trail (video game)",
+   "Oregon Trail",
+   "MECC"
+  ]
+ },
+ {
+  "id": "stirling-bridge-1297",
+  "year": 1297,
+  "era": "Medieval",
+  "title": "William Wallace Wins at Stirling Bridge",
+  "shortDesc": "A Scottish army defeats the English and a legend begins.",
+  "fullDesc": "On September 11, 1297 Scottish forces under William Wallace and Andrew Moray defeated a larger English army at Stirling Bridge. Wallace was later captured and executed in 1305, and he became a national hero.",
+  "realFacts": [
+   "Moray died of his wounds soon after",
+   "The Scots won by striking as the English crossed a narrow bridge",
+   "Robert the Bruce won independence at Bannockburn in 1314",
+   "Braveheart dramatised the story in 1995"
+  ],
+  "wiki": [
+   "Battle of Stirling Bridge",
+   "William Wallace",
+   "Stirling Castle"
+  ]
+ },
+ {
+  "id": "zheng-he-1405",
+  "year": 1405,
+  "era": "Medieval",
+  "title": "Zheng He's Treasure Fleet Sails",
+  "shortDesc": "China sends the largest fleet the world had seen across the Indian Ocean.",
+  "fullDesc": "Starting in 1405 the Chinese admiral Zheng He led seven voyages with hundreds of ships, reaching India, Arabia and East Africa. China then ended the voyages and turned inward.",
+  "realFacts": [
+   "The fleet carried about 27,000 men",
+   "His largest ships were far bigger than Columbus's",
+   "He was a Muslim eunuch from Yunnan",
+   "The Ming court stopped the voyages in 1433"
+  ],
+  "wiki": [
+   "Zheng He",
+   "Ming treasure voyages",
+   "Yongle Emperor"
+  ]
+ },
+ {
+  "id": "mansa-musa-1324",
+  "year": 1324,
+  "era": "Medieval",
+  "title": "Mansa Musa's Pilgrimage to Mecca",
+  "shortDesc": "The ruler of Mali travels with so much gold he upsets prices in Cairo.",
+  "fullDesc": "In 1324 Mansa Musa, emperor of Mali, travelled to Mecca with a huge caravan and so much gold that prices fell in Cairo. He is often described as one of the richest people in history.",
+  "realFacts": [
+   "He gave away so much gold that its value dropped",
+   "Timbuktu became a great centre of learning",
+   "He brought scholars and architects back to Mali",
+   "Medieval maps showed him holding a gold nugget"
+  ],
+  "wiki": [
+   "Mansa Musa",
+   "Mali Empire",
+   "Timbuktu"
+  ]
+ },
+ {
+  "id": "suleiman-1520",
+  "year": 1520,
+  "era": "Renaissance",
+  "title": "Suleiman the Magnificent Becomes Sultan",
+  "shortDesc": "The Ottoman Empire reaches its peak under a long reign.",
+  "fullDesc": "Suleiman became Ottoman sultan in 1520 and ruled for 46 years. Under him the empire reached its height, with conquests in Europe, a strong navy and a golden age of law and architecture.",
+  "realFacts": [
+   "He took Belgrade in 1521 and besieged Vienna in 1529",
+   "He was called the Lawgiver in Turkey",
+   "The architect Sinan built great mosques",
+   "His wife Hürrem was powerful at court"
+  ],
+  "wiki": [
+   "Suleiman the Magnificent",
+   "Ottoman Empire",
+   "Süleymaniye Mosque"
+  ]
+ },
+ {
+  "id": "shakespeare-globe-1599",
+  "year": 1599,
+  "era": "Renaissance",
+  "title": "The Globe Theatre Opens",
+  "shortDesc": "Shakespeare's company builds a home for his best plays.",
+  "fullDesc": "The Globe Theatre was built in London in 1599 by Shakespeare's company, the Lord Chamberlain's Men. Many of his greatest plays, including Hamlet and Macbeth, were staged there.",
+  "realFacts": [
+   "It burned down in 1613 when a cannon set fire to the thatch",
+   "A reconstruction opened in 1997",
+   "Ordinary people paid a penny to stand",
+   "Shakespeare wrote 37 plays"
+  ],
+  "wiki": [
+   "Globe Theatre",
+   "William Shakespeare",
+   "Shakespeare's Globe"
+  ]
+ },
+ {
+  "id": "sekigahara-1600",
+  "year": 1600,
+  "era": "Renaissance",
+  "title": "The Battle of Sekigahara",
+  "shortDesc": "Tokugawa Ieyasu wins the battle that unites Japan.",
+  "fullDesc": "On October 21, 1600 Tokugawa Ieyasu defeated rival warlords at Sekigahara in the largest battle in Japanese history. He became shogun in 1603, and his family ruled for more than 250 years.",
+  "realFacts": [
+   "About 160,000 men took part",
+   "Some commanders switched sides mid-battle",
+   "Edo became the capital, later Tokyo",
+   "The Tokugawa era was a long period of peace"
+  ],
+  "wiki": [
+   "Battle of Sekigahara",
+   "Tokugawa Ieyasu",
+   "Tokugawa shogunate"
+  ]
+ }
+]

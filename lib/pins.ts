@@ -1,5 +1,6 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
+import { schedulePrefsPush } from '@/lib/prefsSync'
 
 // Pinned sessions stay at the top of the Sessions page. Kept in this browser only.
 const KEY = 'diverge.pinned'
@@ -24,6 +25,7 @@ export function usePins() {
     try { window.localStorage.setItem(KEY, JSON.stringify(next)) } catch { /* private mode */ }
     setIds(next)
     window.dispatchEvent(new Event(EVENT))
+    schedulePrefsPush()
   }, [])
   return { ids, has: (id: string) => ids.includes(id), toggle }
 }

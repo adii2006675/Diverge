@@ -1,5 +1,6 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
+import { schedulePrefsPush } from '@/lib/prefsSync'
 
 // On/off switches for parts of the session page ("features"). Kept in this browser only; every feature is on by default.
 export type Feature = 'askNext' | 'whatChanged' | 'realHistory'
@@ -23,6 +24,7 @@ export function useFeature(f: Feature): [boolean, (on: boolean) => void] {
     try { window.localStorage.setItem(key(f), v ? 'on' : 'off') } catch { /* private mode: keep the change for this page only */ }
     setOn(v)
     window.dispatchEvent(new Event(EVENT))
+    schedulePrefsPush()
   }, [f])
   return [on, set]
 }

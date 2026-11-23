@@ -1,5 +1,6 @@
 'use client'
 import { createContext, useContext, useEffect, useState } from 'react'
+import { themeVarsFor, ACCENT_KEYS } from '@/lib/themeVars'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 import { normalizeLength, normalizeDepth, normalizeTone, normalizePlausibility, DEFAULT_LENGTH, DEFAULT_DEPTH, DEFAULT_TONE, DEFAULT_PLAUSIBILITY } from '@/lib/aiSettings'
@@ -47,44 +48,6 @@ const AuthContext = createContext<AuthContextType>({
   refreshProfile: async () => {},
 })
 
-const ACCENT_COLORS: Record<string, string> = {
-  none: 'var(--text)',
-  red: '#F43F5E',
-  orange: '#F59E0B',
-  blue: '#3B82F6',
-  green: '#10B981',
-  purple: '#8B5CF6',
-  pink: '#EC4899',
-  teal: '#FACC15', // the stored value is still 'teal' (safe for any database constraint); it shows as Yellow
-}
-
-const FONT_SCALES: Record<string, string> = {
-  small: '8px',
-  medium: '12px',
-  large: '16px',
-}
-
-const THEME_VARS: Record<string, { bg: string; star: string; text: string; textDim: string; navBg: string; cardBg: string; borderColor: string }> = {
-  light: {
-    bg: '#FAFAFA',
-    star: '#000000',
-    text: '#0A0A0A',
-    textDim: 'rgba(10,10,10,0.55)',
-    navBg: 'rgba(250,250,250,0.97)',
-    cardBg: 'rgba(0,0,0,0.03)',
-    borderColor: 'rgba(0,0,0,0.1)',
-  },
-  dark: {
-    bg: '#080810',
-    star: '#FFFFFF',
-    text: '#FFFFFF',
-    textDim: 'rgba(255,255,255,0.55)',
-    navBg: 'rgba(8,8,16,0.97)',
-    cardBg: 'rgba(255,255,255,0.03)',
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-}
-
 // Signed-out visitors keep their settings in this browser only.
 const GUEST_KEY = 'diverge_guest_settings'
 
@@ -108,7 +71,7 @@ function normalizeTheme(value: unknown): string {
   return value === 'dim' ? 'dark' : THEME_KEYS.includes(value as string) ? (value as string) : 'dark'
 }
 function normalizeAccent(value: unknown): string {
-  return typeof value === 'string' && value in ACCENT_COLORS ? value : 'orange'
+  return typeof value === 'string' && ACCENT_KEYS.includes(value) ? value : 'orange'
 }
 
 function loadGuestSettings(): UserSettings {
@@ -130,36 +93,25 @@ function loadGuestSettings(): UserSettings {
 }
 
 // Text colours that stay readable on the accent: the 'no accent' option makes the accent white (dark theme) or near-black (light theme).
-function accentInk(hex: string) {
-  const m = /^#([0-9a-f]{6})$/i.exec(hex.trim())
-  if (!m) return { on: '#fff', onDark: '#1b1305' }
-  const [r, g, b] = [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16) / 255).map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
-  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
-  return { on: lum > 0.55 ? '#0A0A0A' : '#fff', onDark: lum < 0.08 ? '#fff' : '#1b1305' }
+// The last theme that was applied is remembered in this browser, so a refresh paints it straight away (see the script in the layout).
+const THEME_CACHE = 'diverge_theme_cache'
+const SESSION_HINT = 'diverge_session_hint'
+
+function applyThemeToDOM(theme: string, accentKey: string, fontSize: string, remember = true) {
+  const root = document.documentElement
+  const vars = themeVarsFor(theme, accentKey, fontSize)
+  for (const k of Object.keys(vars)) root.style.setProperty(k, vars[k])
+  root.setAttribute('data-theme', theme)
+  if (remember) { try { localStorage.setItem(THEME_CACHE, JSON.stringify({ theme, accent: accentKey, fontSize })) } catch { /* private mode */ } }
 }
 
-function applyThemeToDOM(theme: string, accentKey: string, fontSize: string) {
-  const root = document.documentElement
-  const themeVars = THEME_VARS[theme] || THEME_VARS.dark
-  const accent = accentKey === 'none' ? themeVars.text : (ACCENT_COLORS[accentKey] || ACCENT_COLORS.orange)
-  const scale = FONT_SCALES[fontSize] || FONT_SCALES.medium
-
-  root.style.setProperty('--bg', themeVars.bg)
-  root.style.setProperty('--star-color', accent)
-  root.style.setProperty('--text', themeVars.text)
-  root.style.setProperty('--text-dim', themeVars.textDim)
-  root.style.setProperty('--nav-bg', themeVars.navBg)
-  root.style.setProperty('--card-bg', 'color-mix(in srgb, var(--text) 4.5%, var(--bg))')
-  root.style.setProperty('--surface', 'color-mix(in srgb, var(--text) 3%, var(--bg))')
-  root.style.setProperty('--border-color', themeVars.borderColor)
-  root.style.setProperty('--accent', accent)
-  // With the None colour the accent equals the text colour, so the logo and the thinking animation would be one flat colour; their accent strand takes the opposite tone instead.
-  root.style.setProperty('--accent-strand', accentKey === 'none' ? (theme === 'light' ? '#C9C9D3' : '#2B2B38') : accent)
-  const ink = accentInk(accentKey === 'none' ? themeVars.text : accent)
-  root.style.setProperty('--on-accent', ink.on)
-  root.style.setProperty('--on-accent-dark', ink.onDark)
-  root.style.setProperty('--font-scale', scale)
-  root.setAttribute('data-theme', theme)
+// A tiny hint that someone was signed in, so the nav can show their avatar (not "Sign In") while the session is being restored.
+function writeSessionHint(initial: string, avatar: string | null) {
+  try { localStorage.setItem(SESSION_HINT, JSON.stringify({ i: initial, a: avatar })) } catch { /* private mode */ }
+}
+function clearSessionHint() {
+  try { localStorage.removeItem(SESSION_HINT) } catch { /* private mode */ }
+  document.documentElement.classList.remove('has-session')
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -174,7 +126,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .select('*')
       .eq('id', userId)
       .single()
-    if (data) setProfile(data)
+    if (data) {
+      setProfile(data)
+      writeSessionHint((data.username || data.email || '?').toString().charAt(0).toUpperCase(), data.avatar_url || null)
+    }
   }
 
   async function fetchSettings(userId: string) {
@@ -234,6 +189,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut()
     setUser(null)
     setProfile(null)
+    clearSessionHint()
     applyGuestSettings()
   }
 
@@ -262,7 +218,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    applyThemeToDOM('dark', 'orange', 'medium')
+    // Start from the remembered theme (already painted by the layout script), not the defaults, until settings load.
+    try {
+      const c = JSON.parse(localStorage.getItem(THEME_CACHE) || 'null')
+      if (c && typeof c.theme === 'string') applyThemeToDOM(c.theme, String(c.accent), String(c.fontSize), false)
+      else applyThemeToDOM('dark', 'orange', 'medium', false)
+    } catch { applyThemeToDOM('dark', 'orange', 'medium', false) }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
@@ -270,6 +231,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         fetchProfile(session.user.id)
         fetchSettings(session.user.id)
       } else {
+        clearSessionHint()
         applyGuestSettings()
       }
       setLoading(false)

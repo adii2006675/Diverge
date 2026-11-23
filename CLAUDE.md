@@ -18,7 +18,7 @@ Diverge is an alternate-history app: pick a real historical event, ask "what if"
 
 **API routes:** `api/diverge` (what-if analysis, large system prompt, JSON output), `api/summary` (timeline summary and real-vs-alternate comparison table), `api/auth/signup` (creates user and profile row).
 
-**Key folders:** `components/` (Nav, StarBackground, CardBorderTrace, DualSlider), `context/AuthContext.tsx` (user, profile, settings), `lib/events.ts` (static event data and eras), `lib/supabase.ts` (client), `types/` (shared types).
+**Key folders:** `components/` (Nav, StarBackground, CardBorderTrace, DualSlider), `context/AuthContext.tsx` (user, profile, settings), `data/events.json` (the one source of event data; run `npm run build:events` after editing it, which writes `lib/eventIndex.json`, `public/event-data/<id>.json` and card thumbnails), `lib/events.ts` (the small event list, eras and filters), `lib/eventDetail.ts` (loads an event's long text on demand), `lib/supabase.ts` (client), `types/` (shared types).
 
 ## Redesign rules
 

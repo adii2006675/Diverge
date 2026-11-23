@@ -35,6 +35,19 @@ export function burstLimited(key: string, max: number, windowMs = 3_600_000): bo
   return false
 }
 
+/**
+ * Request limit that survives restarts and works across servers when supabase/rate_limits.sql has been run.
+ * Without it (or if the database is unreachable) it falls back to the in-memory limit above, so requests never fail because of it.
+ */
+export async function isLimited(key: string, max: number, windowSeconds: number): Promise<boolean> {
+  try {
+    const anon = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, { auth: { persistSession: false, autoRefreshToken: false } })
+    const { data, error } = await anon.rpc('hit_rate_limit', { p_key: key, p_max: max, p_window_seconds: windowSeconds })
+    if (!error && typeof data === 'boolean') return data
+  } catch { /* fall through to the memory limit */ }
+  return burstLimited(key, max, windowSeconds * 1000)
+}
+
 export function clientIp(req: NextRequest): string {
   return (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'local'
 }
@@ -61,7 +74,7 @@ export async function resolveCaller(req: NextRequest, opts: { consume: boolean }
     return { status: 401, code: 'sign_in_required', message: 'Sign in to get 2 free questions, or add your own Anthropic API key.' }
   }
   const db = dbFor(token)
-  if (burstLimited(`ip:${clientIp(req)}`, 40)) {
+  if (await isLimited(`ai:${clientIp(req)}`, 40, 3600)) {
     return { status: 429, code: 'rate_limited', message: 'Too many requests from this network. Try again in a while, or add your own API key.' }
   }
 

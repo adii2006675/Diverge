@@ -3,6 +3,7 @@ import { useAskNext, useFeature } from '@/lib/askNext'
 import { useT } from '@/lib/useT'
 import { buzz } from '@/lib/haptics'
 import { useAutoT } from '@/lib/autoTranslate'
+import { useEventDetail, getEventDetail } from '@/lib/eventDetail'
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { ALL_EVENTS, formatEventYear } from '@/lib/events'
@@ -12,13 +13,11 @@ import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import { supabase } from '@/lib/supabase'
 import EventImage from '@/components/EventImage'
 import CountUp from '@/components/CountUp'
-import TwoTimelines from '@/components/TwoTimelines'
 import Nav from '@/components/Nav'
 import AIResponseSettings from '@/components/AIResponseSettings'
 import { streamAnswer, aiHeaders, AiError, setUserApiKey } from '@/lib/aiClient'
 import { createShare, revokeShare, shareUrl } from '@/lib/share'
 import { hostOf, isWikipedia } from '@/lib/sourceHost'
-import { renderTimelineImage, downloadBlob } from '@/lib/exportImage'
 import { normalizeLength, normalizeDepth, normalizeTone, normalizePlausibility } from '@/lib/aiSettings'
 import { LOCALES, normalizeLanguage } from '@/lib/i18n'
 import './diverge.css'
@@ -141,7 +140,6 @@ export default function DivergePage() {
   const lastShare = useRef<{ signature: string; id: string } | null>(null)
   const [sharing, setSharing] = useState(false)
   const [branching, setBranching] = useState(false)
-  const [exporting, setExporting] = useState(false)
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null)
   const speakToken = useRef(0)
   const reduceMotion = useReducedMotion()
@@ -217,7 +215,9 @@ export default function DivergePage() {
   const divergence = currentResponse?.divergenceScore || 0
   const mood = (currentResponse?.worldMood || 'STABLE') as WorldMood
   const currentYear = currentResponse?.year || (event ? formatEventYear(event.year) : '?')
-  const realFacts = event?.realFacts || []
+  // The long text of the event is loaded when the page opens; a question waits for it so the AI always gets the real facts.
+  const eventDetail = useEventDetail(event?.id)
+  const realFacts = eventDetail?.realFacts || []
   const isAnswerOpen = (i: number) => openAnswers[i] ?? i === whatIfs.length - 1
 
   // Real events around and after the timeline's current year, from the static event list.
@@ -284,6 +284,7 @@ export default function DivergePage() {
 
     try {
       const previousWhatIfs = whatIfs.map(w => w.question)
+      const factsForAsk = event ? ((await getEventDetail(event.id))?.realFacts ?? realFacts) : []
       const currentWorldState = latest
         ? latest.response.keyFacts.join('. ')
         : 'History as it really happened.'
@@ -293,7 +294,7 @@ export default function DivergePage() {
       const ac = new AbortController()
       abortRef.current = ac
       await streamAnswer({
-        startingEvent, previousWhatIfs, currentWorldState, newQuestion: question, realFacts,
+        startingEvent, previousWhatIfs, currentWorldState, newQuestion: question, realFacts: factsForAsk,
         length: normalizeLength(settings?.ai_response_style),
         depth: normalizeDepth(settings?.ai_depth),
         tone: normalizeTone(settings?.ai_tone),
@@ -406,7 +407,7 @@ export default function DivergePage() {
       await downloadChatPdf({
         title: cleanSessionTitle(startingEvent),
         realTitle: event?.title || customInfo?.title || customCardTitle,
-        realSummary: event ? at(event.fullDesc) : (customInfo ? at(trimSummary(customInfo.extract, 900)) : ''),
+        realSummary: event ? at(eventDetail?.fullDesc || '') : (customInfo ? at(trimSummary(customInfo.extract, 900)) : ''),
         realFacts: realFacts.map(f => at(f)),
         whatIfs,
       })
@@ -633,25 +634,6 @@ export default function DivergePage() {
 
   // Stop talking when leaving the page.
   useEffect(() => () => { if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.cancel() }, [])
-
-  async function handleExportImage() {
-    if (!event || whatIfs.length === 0 || exporting) return
-    setExporting(true)
-    try {
-      const blob = await renderTimelineImage({
-        title: event.title,
-        startYear: event.year,
-        excludeEventId: event.id,
-        nodes: whatIfs.map(w => ({ question: w.question, year: w.response.year, score: w.response.divergenceScore, yearNum: parseYear(w.response.year) })),
-      })
-      downloadBlob(blob, `diverge-${event.id}.png`)
-      showToast(t('Image saved to your downloads.'))
-    } catch (err) {
-      console.error(err)
-      showToast(t('Could not create the image.'))
-    }
-    setExporting(false)
-  }
 
   async function copySummary() {
     if (!summary) return
@@ -1076,19 +1058,6 @@ export default function DivergePage() {
             </div>}
           </div>
 
-          {event && whatIfs.length > 0 && (
-            <TwoTimelines
-              startYear={event.year}
-              excludeEventId={event.id}
-              onExport={handleExportImage}
-              exporting={exporting}
-              nodes={whatIfs.map(w => ({ question: w.question, year: w.response.year, score: w.response.divergenceScore, yearNum: parseYear(w.response.year) }))}
-              activeIdx={activeTimelineIdx}
-              onSelect={i => { setWorldOpen(false); selectAnswer(i) }}
-              onSelectStart={() => { setWorldOpen(false); setActiveTimelineIdx(-1); threadRef.current?.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }) }}
-            />
-          )}
-
           {whatChangedOn && whatIfs.length > 0 && (
             <div className="dv-card">
               <h3>{t('What changed')}</h3>
@@ -1128,7 +1097,7 @@ export default function DivergePage() {
                 )}
               </div>
               <p className="dv-prose soft">
-                {event ? at(event.fullDesc) : (customInfo ? at(trimSummary(customInfo.extract)) : whatIfs.length === 0 ? t('Ask a what-if and the real history behind it will show up here.') : t(CUSTOM_START_COPY))}
+                {event ? at(eventDetail?.fullDesc || event.shortDesc) : (customInfo ? at(trimSummary(customInfo.extract)) : whatIfs.length === 0 ? t('Ask a what-if and the real history behind it will show up here.') : t(CUSTOM_START_COPY))}
               </p>
               {!event && customInfo && (
                 <p className="dv-sources" style={{ marginTop: '.6em' }}><a href={customInfo.url} target="_blank" rel="noreferrer">{t('Read more on Wikipedia')}</a></p>

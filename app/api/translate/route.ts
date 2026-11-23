@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { isLimited } from '@/lib/aiServer'
 
 // Translates site text (About, Terms, Privacy, event titles and descriptions) into the language chosen in Settings.
 // The browser keeps what it gets back, and this server remembers it too, so each piece of text is translated once per language.
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
   }
   const list = texts as string[]
   if (list.reduce((n, t) => n + t.length, 0) > MAX_TOTAL_CHARS) return NextResponse.json({ error: 'Too much text.' }, { status: 413 })
-  if (tooMany(ipOf(req))) return NextResponse.json({ error: 'Too many requests.' }, { status: 429 })
+  if (await isLimited(`tr:${ipOf(req)}`, 150, 600)) return NextResponse.json({ error: 'Too many requests.' }, { status: 429 })
 
   const result: string[] = list.map(t => cache.get(`${language}|${t}`) ?? '')
   const missing = list.map((t, i) => ({ t, i })).filter(x => !result[x.i])

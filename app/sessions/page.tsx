@@ -13,6 +13,7 @@ import { useT } from '@/lib/useT'
 import { useAutoT } from '@/lib/autoTranslate'
 import { createShare, revokeShare, shareUrl } from '@/lib/share'
 import { isWikipedia } from '@/lib/sourceHost'
+import { getEventDetail } from '@/lib/eventDetail'
 import { usePins } from '@/lib/pins'
 import { buzz } from '@/lib/haptics'
 import type { WhatIfEntry } from '@/types'
@@ -122,13 +123,14 @@ export default function SessionsPage() {
     })
     if (entries.length === 0) { showToast(t('There is nothing to download in this session yet.')); return }
     const ev = ALL_EVENTS.find(e => e.id === session.event_id)
+    const detail = ev ? await getEventDetail(ev.id) : null
     try {
       const { downloadChatPdf } = await import('@/lib/exportPdf')
       await downloadChatPdf({
         title: cleanTitle(session.event_title) || t('Alternate timeline'),
         realTitle: ev ? at(ev.title) : '',
-        realSummary: ev ? at(ev.fullDesc) : '',
-        realFacts: ev ? ev.realFacts.map(f => at(f)) : [],
+        realSummary: detail ? at(detail.fullDesc) : '',
+        realFacts: detail ? detail.realFacts.map(f => at(f)) : [],
         whatIfs: entries,
       })
     } catch (err) {

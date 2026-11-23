@@ -114,7 +114,8 @@ export default function Nav({ active }: { active?: string }) {
           >
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
           </button>
-          {!user ? (
+          {!user ? (<>
+            <span className="nav-ghost" aria-hidden="true" />
             <button
               onClick={() => router.push('/auth')}
               className="app-nav-signin"
@@ -122,7 +123,7 @@ export default function Nav({ active }: { active?: string }) {
             >
               {t('Sign In')}
             </button>
-          ) : (
+          </>) : (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {/* Profile icon */}
               <div ref={userMenuRef} style={{ position: 'relative' }}>

@@ -8,7 +8,8 @@ import DualSlider from '@/components/DualSlider'
 import TiltCard from '@/components/TiltCard'
 import EventImage from '@/components/EventImage'
 import { useT } from '@/lib/useT'
-import { useEventText } from '@/lib/localizeEvent'
+import { useEventText, eventText as plainEventText } from '@/lib/localizeEvent'
+import { useEventDetail, getEventDetail } from '@/lib/eventDetail'
 import { translate } from '@/lib/i18n'
 import type { HistoricalEvent } from '@/lib/events'
 import { useBookmarks } from '@/lib/bookmarks'
@@ -97,6 +98,7 @@ const EventCardItem = memo(function EventCardItem({ event, idx, entered, languag
   return (
     <motion.div
       className={`event-card${lifted ? ' is-lifted' : ''}`}
+      onPointerEnter={() => { void getEventDetail(event.id) }}
       // The first load fades up in a stagger; after that, cards that appear because of a filter just fade in quickly.
       initial={entered ? { opacity: 0 } : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
@@ -107,7 +109,7 @@ const EventCardItem = memo(function EventCardItem({ event, idx, entered, languag
       <TiltCard radius={16}>
         <div style={{ position: 'relative', zIndex: 1 }}>
           <div className="ev-img" style={{ height: 130, overflow: 'hidden', position: 'relative', background: 'var(--bg)' }}>
-            <EventImage key={event.id} id={event.id} title={event.title} year={event.year} loading="lazy" />
+            <EventImage key={event.id} id={event.id} title={event.title} year={event.year} loading="lazy" small />
             <HeartButton saved={saved} onToggle={() => onToggle(event.id)} labelOn={tr('Remove from favorites')} labelOff={tr('Add to favorites')} />
             <div className="ev-badge" style={{ position: 'absolute', top: 10, left: 12 }}>
               <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', background: 'var(--bg)', padding: '2px 7px', borderRadius: 4 }}>
@@ -128,7 +130,7 @@ const EventCardItem = memo(function EventCardItem({ event, idx, entered, languag
 export default function ExplorePage() {
   const router = useRouter()
   const { t, language } = useT()
-  const { eventText: et } = useEventText()
+  const { eventText: et, at } = useEventText()
   const fmtYear = (y: number) => (y < 0 ? `${Math.abs(y)} ${t('BC')}` : String(y))
   const reduce = useReducedMotion()
   // Several eras can be on at once. An empty list means "All".
@@ -202,23 +204,58 @@ export default function ExplorePage() {
     if (!eraMatch || !yearMatch) return false
     if (savedOnly && !bookmarks.has(e.id)) return false
     if (!needle) return true
-    const local = et(e)
+    const local = plainEventText(language, e)
     return [e.title, e.shortDesc, local.title, local.shortDesc, e.era, fmtYear(e.year), String(e.year)].some(f => f.toLowerCase().includes(needle))
   })
 
+  // Only the first cards are drawn; more are added as the person scrolls, so the page stays fast with thousands of events.
+  const PAGE = 24
+  const [shown, setShown] = useState(PAGE)
+  const filterKey = `${selectedEras.join('|')}|${filterMin}|${filterMax}|${needle}|${savedOnly}`
+  useEffect(() => { setShown(PAGE) }, [filterKey])
+  const visible = filtered.length > shown ? filtered.slice(0, shown) : filtered
+  const moreRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (shown >= filtered.length) return
+    // Add the next batch when the end of the list comes within a screen or so of the viewport.
+    const check = () => {
+      const el = moreRef.current
+      if (el && el.getBoundingClientRect().top < window.innerHeight + 900) setShown(n => n + PAGE)
+    }
+    check()
+    window.addEventListener('scroll', check, { passive: true })
+    window.addEventListener('resize', check)
+    return () => { window.removeEventListener('scroll', check); window.removeEventListener('resize', check) }
+  }, [shown, filtered.length])
+
   const expandedEvent = filtered.find(e => e.id === expandedId) || ALL_EVENTS.find(e => e.id === expandedId)
+  const expandedDetail = useEventDetail(expandedEvent?.id)
+
+  // If the long text arrives while the pop-up is still opening, let the pop-up size itself to the text instead of the earlier height.
+  const heightAnim = useRef<{ stop: () => void } | null>(null)
+  const openedWithDetail = useRef(false)
+  useEffect(() => {
+    const el = modalRef.current
+    if (!el || !expandedDetail || openedWithDetail.current) return
+    heightAnim.current?.stop()
+    el.style.height = ''
+    el.style.overflowY = 'auto'
+  }, [expandedDetail])
 
   useLayoutEffect(() => {
     const el = modalRef.current
     const from = fromRect.current
     if (!expandedId || !el) return
+    openedWithDetail.current = !!expandedDetail
     if (!from || reduce) { zoomBack.current = null; animate(el, { opacity: [0, 1] }, { duration: 0.2 }); return }
     const g = zoomTarget(el, from)
     const natural = el.offsetHeight
     zoomBack.current = g
     el.style.overflowY = 'hidden'
     animate(el, { x: [g.x, 0], y: [g.y, 0], scale: [g.scale, 1], opacity: [0.2, 1] }, SPRING)
-    animate(el, { height: [g.height, natural], borderRadius: [g.radius, 20] }, SPRING).then(() => { el.style.height = ''; el.style.overflowY = 'auto' })
+    const ha = animate(el, { height: [g.height, natural], borderRadius: [g.radius, 20] }, SPRING)
+    heightAnim.current = ha
+    ha.then(() => { el.style.height = ''; el.style.overflowY = 'auto' })
   }, [expandedId, reduce])
 
   // "/" opens the search bar. Keyboard action, so nothing animates.
@@ -394,9 +431,17 @@ export default function ExplorePage() {
       {/* Cards grid */}
       <div className="ex-wrap" style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto', padding: '0 40px 80px' }}>
         {filtered.length > 0 && (
-          <div role="status" aria-live="polite" style={{ textAlign: 'center', margin: '-8px 0 14px', color: 'var(--text-dim)', fontSize: 'calc(var(--font-scale) * 0.9)' }}>
+          // Fades in with the rest of the page (after the slider, before the cards), only on the first load.
+          <motion.div
+            role="status"
+            aria-live="polite"
+            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            style={{ textAlign: 'center', margin: '-8px 0 14px', color: 'var(--text-dim)', fontSize: 'calc(var(--font-scale) * 0.9)' }}
+          >
             {filtered.length} {t(filtered.length === 1 ? 'event' : 'events')}
-          </div>
+          </motion.div>
         )}
         {filtered.length === 0 ? (
           <motion.div
@@ -414,7 +459,7 @@ export default function ExplorePage() {
           </motion.div>
         ) : (
           <div className="ex-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
-            {filtered.map((event, idx) => (
+            {visible.map((event, idx) => (
               <EventCardItem
                 key={event.id}
                 event={event}
@@ -429,6 +474,7 @@ export default function ExplorePage() {
             ))}
           </div>
         )}
+        {shown < filtered.length && <div ref={moreRef} aria-hidden="true" style={{ height: 1 }} />}
       </div>
 
       {/* Expanded modal */}
@@ -476,7 +522,7 @@ export default function ExplorePage() {
                   <div style={{ padding: '20px 24px 24px' }}>
                     <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 12, color: 'var(--text)' }}>{et(expandedEvent).title}</div>
                     <div style={{ fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: 24 }}>
-                      {et(expandedEvent).fullDesc}
+                      {at(expandedDetail?.fullDesc || expandedEvent.shortDesc)}
                     </div>
                     <div style={{ display: 'flex', gap: 10 }}>
                       <button

@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
 import SettingsPanel from '@/components/SettingsPanel'
 import StreakBadge from '@/components/StreakBadge'
+import YourData from '@/components/YourData'
 import { useT } from '@/lib/useT'
 
 export default function ProfilePage() {
@@ -205,15 +206,15 @@ export default function ProfilePage() {
                 type="button"
                 onClick={() => router.push(b.href)}
                 style={{ flex: '1 1 150px', padding: '12px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text)', fontSize: 'var(--font-scale)', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'border-color 0.18s' }}
-                onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)'}
-                onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-color)'}
               >
                 {t(b.label)}
               </button>
             ))}
           </div>
+          <YourData />
           <div style={{ fontSize: 'var(--font-scale)', color: 'var(--text-dim)', marginTop: 10, opacity: 0.7 }}>{t('Member since')} {new Date(user.created_at).toLocaleDateString(locale, { month: 'long', year: 'numeric' })}</div>
         </div>
+
       </div>
     </main>
   )

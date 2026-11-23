@@ -1,0 +1,794 @@
+[
+ {
+  "id": "coca-cola-1886",
+  "year": 1886,
+  "era": "Food",
+  "title": "Coca-Cola Is Invented",
+  "shortDesc": "An Atlanta pharmacist mixes a syrup that becomes the world's best-known soft drink.",
+  "fullDesc": "On May 8, 1886 pharmacist John Pemberton sold the first Coca-Cola as a fountain drink in Atlanta, Georgia. Businessman Asa Candler bought the company soon after and built it into a national brand.",
+  "realFacts": [
+   "Bottling began in 1894",
+   "The formula is kept a company secret",
+   "It is sold in more than 200 countries",
+   "Pemberton died in 1888, before the brand's rise"
+  ],
+  "wiki": [
+   "Coca-Cola",
+   "John Pemberton"
+  ]
+ },
+ {
+  "id": "sliced-bread-1928",
+  "year": 1928,
+  "era": "Food",
+  "title": "Sliced Bread Is Sold for the First Time",
+  "shortDesc": "A bakery in Missouri sells the first commercially sliced loaves.",
+  "fullDesc": "On July 7, 1928 the Chillicothe Baking Company in Missouri sold the first commercially sliced bread, cut by a machine invented by Otto Rohwedder. It soon spread across the United States.",
+  "realFacts": [
+   "Wonder Bread began selling sliced loaves in 1930",
+   "The slicing machine took Rohwedder years to perfect",
+   "Sliced bread boosted toaster sales",
+   "A 1943 wartime ban on sliced bread was quickly reversed"
+  ],
+  "wiki": [
+   "Sliced bread",
+   "Otto Frederick Rohwedder"
+  ]
+ },
+ {
+  "id": "mcdonalds-franchise-1955",
+  "year": 1955,
+  "era": "Food",
+  "title": "Ray Kroc Opens the First McDonald's Franchise",
+  "shortDesc": "A milkshake machine salesman turns a California burger stand into a global chain.",
+  "fullDesc": "On April 15, 1955 Ray Kroc opened a McDonald's restaurant in Des Plaines, Illinois, as a franchise of the McDonald brothers' California business. He later bought out the brothers and built it into the world's largest fast-food chain.",
+  "realFacts": [
+   "He bought the brothers out in 1961 for $2.7 million",
+   "The company went public in 1965",
+   "The Big Mac arrived in 1967",
+   "It now has tens of thousands of restaurants"
+  ],
+  "wiki": [
+   "McDonald's",
+   "Ray Kroc"
+  ]
+ },
+ {
+  "id": "instant-noodles-1958",
+  "year": 1958,
+  "era": "Food",
+  "title": "Instant Ramen Is Invented",
+  "shortDesc": "Momofuku Ando creates a cheap meal that only needs hot water.",
+  "fullDesc": "In 1958 Momofuku Ando of Nissin Foods in Japan introduced Chikin Ramen, the first instant noodles. In 1971 he created Cup Noodles, and instant noodles became a global staple.",
+  "realFacts": [
+   "Ando developed it in a backyard shed",
+   "Cup Noodles launched in 1971",
+   "More than 100 billion servings are eaten each year",
+   "It spread cheap meals through many countries"
+  ],
+  "wiki": [
+   "Instant noodle",
+   "Momofuku Ando"
+  ]
+ },
+ {
+  "id": "starbucks-1971",
+  "year": 1971,
+  "era": "Food",
+  "title": "The First Starbucks Opens",
+  "shortDesc": "A Seattle shop selling whole coffee beans starts a worldwide chain.",
+  "fullDesc": "Starbucks opened its first store at Pike Place Market in Seattle in 1971, founded by Jerry Baldwin, Zev Siegl and Gordon Bowker. Howard Schultz bought the company in 1987 and expanded it into a global coffeehouse chain.",
+  "realFacts": [
+   "Schultz bought it for $3.8 million in 1987",
+   "The company went public in 1992",
+   "It has tens of thousands of stores worldwide",
+   "It popularised the specialty coffee drink"
+  ],
+  "wiki": [
+   "Starbucks",
+   "Howard Schultz"
+  ]
+ },
+ {
+  "id": "green-revolution-1966",
+  "year": 1966,
+  "era": "Food",
+  "title": "The Green Revolution Takes Off",
+  "shortDesc": "High-yield wheat and rice help avert famines in Asia.",
+  "fullDesc": "In the 1960s the agricultural scientist Norman Borlaug developed high-yield, disease-resistant wheat in Mexico. In 1966 India imported thousands of tons of the seeds, and new crop varieties soon raised harvests across Asia.",
+  "realFacts": [
+   "Borlaug won the Nobel Peace Prize in 1970",
+   "India and Pakistan greatly increased wheat output",
+   "New rice varieties followed from the Philippines",
+   "Critics point to heavy use of fertilisers and water"
+  ],
+  "wiki": [
+   "Green Revolution",
+   "Norman Borlaug"
+  ]
+ },
+ {
+  "id": "irish-famine-1845",
+  "year": 1845,
+  "era": "Food",
+  "title": "The Irish Potato Famine Begins",
+  "shortDesc": "A crop disease leaves Ireland starving and millions leave.",
+  "fullDesc": "In 1845 a blight destroyed Ireland's potato crop, the main food for much of the poor. About a million people died over the next years and another million or more emigrated.",
+  "realFacts": [
+   "Ireland's population fell by about a quarter",
+   "Britain's response is still criticised",
+   "Millions settled in the United States and Britain",
+   "The famine lasted until about 1852"
+  ],
+  "wiki": [
+   "Great Famine (Ireland)",
+   "Potato blight"
+  ]
+ },
+ {
+  "id": "impossible-burger-2016",
+  "year": 2016,
+  "era": "Food",
+  "title": "The Impossible Burger Arrives",
+  "shortDesc": "A plant-based burger that tastes like beef reaches restaurants.",
+  "fullDesc": "In July 2016 Impossible Foods launched its plant-based burger at a restaurant in New York City. It uses a protein called heme to give it a meaty taste, and sparked a boom in plant-based meat.",
+  "realFacts": [
+   "Beyond Meat went public in 2019",
+   "Fast food chains added plant-based options",
+   "Sales growth slowed in the following years",
+   "It reopened the debate over how food is made and labelled"
+  ],
+  "wiki": [
+   "Impossible Foods",
+   "Plant-based meat"
+  ]
+ },
+ {
+  "id": "benz-motorwagen-1886",
+  "year": 1886,
+  "era": "Cars",
+  "title": "Karl Benz Patents the First Practical Automobile",
+  "shortDesc": "A three-wheeled motor carriage is often called the first true car.",
+  "fullDesc": "On January 29, 1886 Karl Benz was granted a patent for his gas-powered Motorwagen in Germany. It is widely seen as the first practical automobile, and his wife Bertha took it on a famous long trip in 1888.",
+  "realFacts": [
+   "Bertha Benz drove about 106 km in August 1888",
+   "She bought fuel at a pharmacy",
+   "It had three wheels and a one-cylinder engine",
+   "Benz and Daimler's companies later merged"
+  ],
+  "wiki": [
+   "Benz Patent-Motorwagen",
+   "Karl Benz"
+  ]
+ },
+ {
+  "id": "vw-beetle-1938",
+  "year": 1938,
+  "era": "Cars",
+  "title": "The Volkswagen Beetle Begins",
+  "shortDesc": "A small, cheap car designed by Ferdinand Porsche becomes the best-selling car of its era.",
+  "fullDesc": "In 1938 the foundation stone was laid for the Volkswagen factory in Germany to build a small people's car designed by Ferdinand Porsche. After World War II the Beetle was built in huge numbers and became a symbol of the 1960s.",
+  "realFacts": [
+   "More than 21 million were built by 2003",
+   "Production ended in Mexico in 2003",
+   "It was a counterculture icon in the United States",
+   "A newer model, the New Beetle, appeared in 1998"
+  ],
+  "wiki": [
+   "Volkswagen Beetle",
+   "Ferdinand Porsche"
+  ]
+ },
+ {
+  "id": "ford-mustang-1964",
+  "year": 1964,
+  "era": "Cars",
+  "title": "The Ford Mustang Is Unveiled",
+  "shortDesc": "A stylish, affordable sports car sells a million in 18 months.",
+  "fullDesc": "Ford introduced the Mustang on April 17, 1964 at the New York World's Fair. Its sporty looks and modest price made it an immediate success, selling about a million in its first 18 months.",
+  "realFacts": [
+   "Lee Iacocca led its development",
+   "It created the pony car class",
+   "Rivals like the Camaro followed",
+   "The Mustang is still sold today"
+  ],
+  "wiki": [
+   "Ford Mustang",
+   "Lee Iacocca"
+  ]
+ },
+ {
+  "id": "toyota-prius-1997",
+  "year": 1997,
+  "era": "Cars",
+  "title": "The Toyota Prius Goes on Sale",
+  "shortDesc": "The first mass-produced hybrid car launches in Japan.",
+  "fullDesc": "Toyota released the Prius in Japan in December 1997, the first mass-produced hybrid car. It combined a petrol engine with an electric motor, and it reached other countries in 2000.",
+  "realFacts": [
+   "It was popular with celebrities and eco-conscious drivers",
+   "Millions have been sold worldwide",
+   "It helped normalise hybrid and electric vehicles",
+   "Rivals later built their own hybrids"
+  ],
+  "wiki": [
+   "Toyota Prius",
+   "Hybrid vehicle"
+  ]
+ },
+ {
+  "id": "dieselgate-2015",
+  "year": 2015,
+  "era": "Cars",
+  "title": "The Volkswagen Emissions Scandal",
+  "shortDesc": "VW is caught using software to cheat diesel pollution tests.",
+  "fullDesc": "On September 18, 2015 US regulators accused Volkswagen of using software to cheat on diesel emissions tests. About 11 million cars worldwide were affected, and the company paid tens of billions of dollars in fines and settlements.",
+  "realFacts": [
+   "The CEO, Martin Winterkorn, resigned",
+   "Cars emitted far more pollution on the road than in tests",
+   "Some executives were convicted",
+   "It accelerated Europe's move toward electric cars"
+  ],
+  "wiki": [
+   "Volkswagen emissions scandal",
+   "Martin Winterkorn"
+  ]
+ },
+ {
+  "id": "waymo-2020",
+  "year": 2020,
+  "era": "Cars",
+  "title": "Waymo Opens Driverless Taxis to the Public",
+  "shortDesc": "Passengers ride in cars with no one behind the wheel in Phoenix.",
+  "fullDesc": "In October 2020 Waymo opened its robotaxi service to the public in Phoenix, Arizona, with no safety driver behind the wheel. It was one of the first fully driverless taxi services open to anyone.",
+  "realFacts": [
+   "Waymo grew out of Google's self-driving project",
+   "It expanded to San Francisco and other cities",
+   "Competitors such as Cruise struggled",
+   "Regulators and the public still debate safety"
+  ],
+  "wiki": [
+   "Waymo",
+   "Self-driving car"
+  ]
+ },
+ {
+  "id": "marathon-490bc",
+  "year": -490,
+  "era": "Ancient",
+  "title": "The Battle of Marathon",
+  "shortDesc": "Athens defeats a larger Persian army.",
+  "fullDesc": "In 490 BC the Athenians defeated a Persian invasion force at Marathon, northeast of Athens. The victory protected Greece for a time, and later tradition linked it to the long-distance race.",
+  "realFacts": [
+   "Persia returned in 480 BC under Xerxes",
+   "The marathon race was introduced in 1896",
+   "The legend of a runner is probably embellished",
+   "The battle became a symbol of defending freedom"
+  ],
+  "wiki": [
+   "Battle of Marathon",
+   "Miltiades"
+  ]
+ },
+ {
+  "id": "alexander-death-323bc",
+  "year": -323,
+  "era": "Ancient",
+  "title": "Alexander the Great Dies in Babylon",
+  "shortDesc": "The young conqueror dies at 32 and his empire splits apart.",
+  "fullDesc": "In June 323 BC Alexander the Great died in Babylon at the age of 32, after conquering lands from Greece to India. His generals divided the empire among themselves.",
+  "realFacts": [
+   "He left no clear successor",
+   "The generals, called the Diadochi, fought for decades",
+   "Ptolemy took Egypt and Seleucus took much of Asia",
+   "Greek culture spread across the region"
+  ],
+  "wiki": [
+   "Death of Alexander the Great",
+   "Alexander the Great"
+  ]
+ },
+ {
+  "id": "fall-of-rome-476",
+  "year": 476,
+  "era": "Ancient",
+  "title": "The Western Roman Empire Falls",
+  "shortDesc": "The last western emperor is removed from power.",
+  "fullDesc": "In 476 the Germanic leader Odoacer deposed Romulus Augustulus, the last emperor of the Western Roman Empire. The Eastern Roman Empire, centred on Constantinople, continued for nearly another thousand years.",
+  "realFacts": [
+   "Italy came under Germanic rule",
+   "The Byzantine Empire survived until 1453",
+   "The decline was gradual rather than sudden",
+   "The date is often used to mark the end of antiquity"
+  ],
+  "wiki": [
+   "Fall of the Western Roman Empire",
+   "Odoacer"
+  ]
+ },
+ {
+  "id": "hastings-1066",
+  "year": 1066,
+  "era": "Medieval",
+  "title": "The Battle of Hastings",
+  "shortDesc": "William of Normandy wins the English crown.",
+  "fullDesc": "On October 14, 1066 William, Duke of Normandy, defeated King Harold Godwinson at the Battle of Hastings. William became king of England and the Norman conquest changed English language, law and landholding.",
+  "realFacts": [
+   "Harold had just beaten a Norse invasion in the north",
+   "William was crowned on Christmas Day 1066",
+   "The Bayeux Tapestry records the story",
+   "The Domesday Book surveyed the country in 1086"
+  ],
+  "wiki": [
+   "Battle of Hastings",
+   "William the Conqueror"
+  ]
+ },
+ {
+  "id": "waterloo-1815",
+  "year": 1815,
+  "era": "Wars",
+  "title": "The Battle of Waterloo",
+  "shortDesc": "Napoleon is defeated for the last time.",
+  "fullDesc": "On June 18, 1815 the Duke of Wellington and Prussia's Gebhard von Blücher defeated Napoleon at Waterloo in Belgium. It ended his return from exile and his rule of France.",
+  "realFacts": [
+   "Napoleon was exiled to Saint Helena",
+   "He died there in 1821",
+   "The Congress of Vienna redrew Europe's map",
+   "Europe had relative peace for decades"
+  ],
+  "wiki": [
+   "Battle of Waterloo",
+   "Duke of Wellington"
+  ]
+ },
+ {
+  "id": "korean-war-1950",
+  "year": 1950,
+  "era": "Wars",
+  "title": "The Korean War Begins",
+  "shortDesc": "North Korea invades the South, and the Cold War turns hot.",
+  "fullDesc": "On June 25, 1950 North Korea invaded South Korea. A UN force led by the United States defended the South and China entered the war later that year, which ended in an armistice in 1953.",
+  "realFacts": [
+   "No peace treaty was ever signed",
+   "The border runs along a demilitarised zone",
+   "Millions of people were killed or displaced",
+   "The peninsula remains divided"
+  ],
+  "wiki": [
+   "Korean War",
+   "Korean Demilitarized Zone"
+  ]
+ },
+ {
+  "id": "six-day-war-1967",
+  "year": 1967,
+  "era": "Wars",
+  "title": "The Six-Day War",
+  "shortDesc": "Israel fights Egypt, Jordan and Syria and takes new territory.",
+  "fullDesc": "From June 5 to 10, 1967 Israel fought Egypt, Jordan and Syria. Israel captured the Sinai Peninsula, Gaza, the West Bank, East Jerusalem and the Golan Heights.",
+  "realFacts": [
+   "Israel began with a surprise air attack",
+   "It agreed to return Sinai to Egypt in a 1979 peace treaty",
+   "The captured territories remain disputed",
+   "The war changed politics in the Middle East"
+  ],
+  "wiki": [
+   "Six-Day War",
+   "Moshe Dayan"
+  ]
+ },
+ {
+  "id": "fall-of-saigon-1975",
+  "year": 1975,
+  "era": "Wars",
+  "title": "The Fall of Saigon",
+  "shortDesc": "North Vietnamese forces take the South's capital, ending the Vietnam War.",
+  "fullDesc": "On April 30, 1975 North Vietnamese forces captured Saigon, the capital of South Vietnam. The war ended with the country reunified under communist rule, and the last Americans were evacuated by helicopter.",
+  "realFacts": [
+   "Vietnam was formally reunified in 1976",
+   "Hundreds of thousands fled by boat in later years",
+   "About 58,000 Americans had died in the war",
+   "Saigon was renamed Ho Chi Minh City"
+  ],
+  "wiki": [
+   "Fall of Saigon",
+   "Vietnam War"
+  ]
+ },
+ {
+  "id": "falklands-1982",
+  "year": 1982,
+  "era": "Wars",
+  "title": "The Falklands War",
+  "shortDesc": "Britain and Argentina fight over islands in the South Atlantic.",
+  "fullDesc": "On April 2, 1982 Argentina invaded the Falkland Islands, a British territory. Britain sent a task force, and Argentina surrendered on June 14 after about 10 weeks of fighting.",
+  "realFacts": [
+   "About 255 British and 649 Argentine personnel died",
+   "The war helped Margaret Thatcher win re-election in 1983",
+   "It contributed to the fall of Argentina's military government",
+   "The islands remain British"
+  ],
+  "wiki": [
+   "Falklands War",
+   "Falkland Islands"
+  ]
+ },
+ {
+  "id": "gulf-war-1991",
+  "year": 1991,
+  "era": "Wars",
+  "title": "The Gulf War",
+  "shortDesc": "A US-led coalition drives Iraq out of Kuwait.",
+  "fullDesc": "After Iraq invaded Kuwait in August 1990, a US-led coalition launched Operation Desert Storm in January 1991. A ground offensive in February freed Kuwait in about 100 hours.",
+  "realFacts": [
+   "Over 30 countries joined the coalition",
+   "Retreating Iraqi forces set Kuwaiti oil wells on fire",
+   "Saddam Hussein remained in power",
+   "US forces stayed in the region for years"
+  ],
+  "wiki": [
+   "Gulf War",
+   "Operation Desert Storm"
+  ]
+ },
+ {
+  "id": "iraq-invasion-2003",
+  "year": 2003,
+  "era": "Wars",
+  "title": "The US-Led Invasion of Iraq",
+  "shortDesc": "Saddam Hussein is toppled, but the war and occupation last years.",
+  "fullDesc": "On March 20, 2003 a US-led coalition invaded Iraq, saying it held weapons of mass destruction. Saddam Hussein's government fell within weeks, but no such weapons were found and a long insurgency followed.",
+  "realFacts": [
+   "Saddam was captured in December 2003 and executed in 2006",
+   "US combat troops left in 2011",
+   "Hundreds of thousands of Iraqis died",
+   "The war split international opinion"
+  ],
+  "wiki": [
+   "2003 invasion of Iraq",
+   "Iraq War"
+  ]
+ },
+ {
+  "id": "syrian-civil-war-2011",
+  "year": 2011,
+  "era": "Wars",
+  "title": "The Syrian Civil War Begins",
+  "shortDesc": "Protests against the government grow into a long and brutal war.",
+  "fullDesc": "In March 2011 protests against President Bashar al-Assad began in Syria and were met with force. The unrest grew into a civil war involving many groups and foreign powers.",
+  "realFacts": [
+   "Hundreds of thousands of people were killed",
+   "Millions fled the country",
+   "The Islamic State took large areas in 2014",
+   "Assad's government fell in December 2024"
+  ],
+  "wiki": [
+   "Syrian civil war",
+   "Bashar al-Assad"
+  ]
+ },
+ {
+  "id": "churchill-pm-1940",
+  "year": 1940,
+  "era": "Politics",
+  "title": "Winston Churchill Becomes Prime Minister",
+  "shortDesc": "Britain gets a new leader as Germany attacks in the west.",
+  "fullDesc": "On May 10, 1940, the day Germany invaded France and the Low Countries, Winston Churchill became Britain's prime minister. His speeches, including blood, toil, tears and sweat, rallied the country.",
+  "realFacts": [
+   "Nearly 340,000 troops were evacuated from Dunkirk",
+   "Britain stood alone against Germany for a year",
+   "He lost the 1945 election just after victory",
+   "He served again from 1951 to 1955"
+  ],
+  "wiki": [
+   "Winston Churchill",
+   "Dunkirk evacuation"
+  ]
+ },
+ {
+  "id": "salt-march-1930",
+  "year": 1930,
+  "era": "Politics",
+  "title": "Gandhi's Salt March",
+  "shortDesc": "A 240-mile walk to the sea challenges British rule in India.",
+  "fullDesc": "On March 12, 1930 Mahatma Gandhi began a march of about 240 miles to the sea at Dandi to make salt, defying British salt laws. Thousands joined, and the protest became a symbol of nonviolent resistance.",
+  "realFacts": [
+   "Gandhi was arrested weeks later",
+   "Tens of thousands were jailed",
+   "It drew world attention to the independence movement",
+   "India became independent in 1947"
+  ],
+  "wiki": [
+   "Salt March",
+   "Mahatma Gandhi"
+  ]
+ },
+ {
+  "id": "berlin-airlift-1948",
+  "year": 1948,
+  "era": "Cold War",
+  "title": "The Berlin Airlift",
+  "shortDesc": "Western allies fly in supplies to a city blockaded by the Soviets.",
+  "fullDesc": "In June 1948 the Soviet Union blocked road and rail access to West Berlin. The Western allies supplied the city by air for almost a year, delivering over two million tons of goods.",
+  "realFacts": [
+   "The blockade ended in May 1949",
+   "Planes landed as often as every minute",
+   "It helped lead to the creation of NATO",
+   "Germany was divided into East and West that year"
+  ],
+  "wiki": [
+   "Berlin Blockade",
+   "Berlin Airlift"
+  ]
+ },
+ {
+  "id": "thatcher-pm-1979",
+  "year": 1979,
+  "era": "Politics",
+  "title": "Margaret Thatcher Becomes Prime Minister",
+  "shortDesc": "Britain elects its first female leader.",
+  "fullDesc": "On May 4, 1979 Margaret Thatcher became the first woman to be Prime Minister of the United Kingdom. She led for 11 years, pursued free-market policies and clashed with trade unions.",
+  "realFacts": [
+   "She won the Falklands War in 1982",
+   "Many state industries were privatised",
+   "The miners' strike of 1984 to 1985 was a major fight",
+   "Her party forced her to resign in 1990"
+  ],
+  "wiki": [
+   "Margaret Thatcher",
+   "Premiership of Margaret Thatcher"
+  ]
+ },
+ {
+  "id": "gorbachev-1985",
+  "year": 1985,
+  "era": "Cold War",
+  "title": "Mikhail Gorbachev Takes Power",
+  "shortDesc": "A new Soviet leader opens the system and changes the world.",
+  "fullDesc": "Mikhail Gorbachev became leader of the Soviet Union on March 11, 1985. His policies of glasnost, or openness, and perestroika, or restructuring, set off changes that ended the Cold War.",
+  "realFacts": [
+   "He won the Nobel Peace Prize in 1990",
+   "He signed arms control treaties with Ronald Reagan",
+   "Eastern European regimes fell in 1989",
+   "The Soviet Union dissolved in 1991"
+  ],
+  "wiki": [
+   "Mikhail Gorbachev",
+   "Glasnost"
+  ]
+ },
+ {
+  "id": "putin-2000",
+  "year": 2000,
+  "era": "Politics",
+  "title": "Vladimir Putin Becomes President of Russia",
+  "shortDesc": "A former intelligence officer takes over after Yeltsin resigns.",
+  "fullDesc": "Boris Yeltsin resigned on December 31, 1999 and Vladimir Putin became acting president. He was elected in March 2000, and has led Russia as president or prime minister ever since.",
+  "realFacts": [
+   "He served as president until 2008, then prime minister",
+   "He returned as president in 2012",
+   "Constitutional changes in 2020 allow him to stay in office for many years",
+   "Critics point to the weakening of opposition and a free press"
+  ],
+  "wiki": [
+   "Vladimir Putin",
+   "2000 Russian presidential election"
+  ]
+ },
+ {
+  "id": "merkel-chancellor-2005",
+  "year": 2005,
+  "era": "Politics",
+  "title": "Angela Merkel Becomes Chancellor",
+  "shortDesc": "Germany elects its first woman leader, who stays for 16 years.",
+  "fullDesc": "On November 22, 2005 Angela Merkel became the first female Chancellor of Germany. She led the country for 16 years and was a central figure in Europe through its financial and migration crises.",
+  "realFacts": [
+   "She grew up in East Germany and trained as a physicist",
+   "She led through the eurozone crisis",
+   "She stepped down in December 2021",
+   "Her decision to accept refugees in 2015 was hotly debated"
+  ],
+  "wiki": [
+   "Angela Merkel",
+   "2005 German federal election"
+  ]
+ },
+ {
+  "id": "darwin-origin-1859",
+  "year": 1859,
+  "era": "Science",
+  "title": "Darwin Publishes On the Origin of Species",
+  "shortDesc": "A book on natural selection changes biology forever.",
+  "fullDesc": "Charles Darwin published On the Origin of Species on November 24, 1859. It argued that species evolve by natural selection, and it reshaped biology and public thinking about life.",
+  "realFacts": [
+   "The first printing sold out almost at once",
+   "Alfred Russel Wallace had reached a similar idea",
+   "It sparked fierce religious and scientific debate",
+   "Genetics later explained how inheritance works"
+  ],
+  "wiki": [
+   "On the Origin of Species",
+   "Charles Darwin"
+  ]
+ },
+ {
+  "id": "telephone-1876",
+  "year": 1876,
+  "era": "Tech",
+  "title": "Alexander Graham Bell Patents the Telephone",
+  "shortDesc": "The first words are spoken over a wire.",
+  "fullDesc": "Alexander Graham Bell received a patent for the telephone on March 7, 1876. Three days later he made the first call, speaking to his assistant Thomas Watson.",
+  "realFacts": [
+   "Elisha Gray filed a similar patent the same day",
+   "Bell founded the company that became AT&T",
+   "Phone lines spread across cities within years",
+   "The first words were reportedly: Mr. Watson, come here"
+  ],
+  "wiki": [
+   "Alexander Graham Bell",
+   "Telephone"
+  ]
+ },
+ {
+  "id": "edison-light-bulb-1879",
+  "year": 1879,
+  "era": "Tech",
+  "title": "Edison's Practical Light Bulb",
+  "shortDesc": "A lamp that burns for hours makes electric lighting possible.",
+  "fullDesc": "In October 1879 Thomas Edison's team tested a carbon-filament lamp that burned for about 13 hours, and later for far longer. It made electric lighting practical, and Edison's company built the first power stations.",
+  "realFacts": [
+   "The Pearl Street power station opened in New York in 1882",
+   "Others had made light bulbs before him",
+   "Bamboo filaments later lasted over a thousand hours",
+   "Electric lighting spread to homes within decades"
+  ],
+  "wiki": [
+   "Thomas Edison",
+   "Incandescent light bulb"
+  ]
+ },
+ {
+  "id": "penicillin-1928",
+  "year": 1928,
+  "era": "Science",
+  "title": "Alexander Fleming Discovers Penicillin",
+  "shortDesc": "A mould in a lab dish leads to the first antibiotic.",
+  "fullDesc": "In September 1928 Alexander Fleming noticed that a mould had killed bacteria in a dish at his London hospital lab. Howard Florey and Ernst Chain later turned penicillin into a usable drug, and the three shared the 1945 Nobel Prize.",
+  "realFacts": [
+   "Penicillin was mass produced during World War II",
+   "It saved huge numbers of soldiers from infection",
+   "Antibiotic resistance is now a major problem",
+   "Fleming warned about resistance in 1945"
+  ],
+  "wiki": [
+   "Penicillin",
+   "Alexander Fleming"
+  ]
+ },
+ {
+  "id": "dna-structure-1953",
+  "year": 1953,
+  "era": "Science",
+  "title": "The Structure of DNA Is Revealed",
+  "shortDesc": "Watson and Crick describe the double helix.",
+  "fullDesc": "In April 1953 James Watson and Francis Crick published the double-helix structure of DNA in the journal Nature. They used X-ray data from Rosalind Franklin and Maurice Wilkins, and shared the 1962 Nobel Prize with Wilkins.",
+  "realFacts": [
+   "Franklin's Photo 51 was key evidence",
+   "Franklin died in 1958 and could not share the Nobel",
+   "It opened the way for modern genetics",
+   "The Human Genome Project followed in 1990"
+  ],
+  "wiki": [
+   "Molecular structure of Nucleic Acids: A Structure for Deoxyribose Nucleic Acid",
+   "Rosalind Franklin"
+  ]
+ },
+ {
+  "id": "hubble-launch-1990",
+  "year": 1990,
+  "era": "Science",
+  "title": "The Hubble Space Telescope Is Launched",
+  "shortDesc": "A telescope in orbit begins to transform astronomy.",
+  "fullDesc": "The Hubble Space Telescope was launched on April 24, 1990. After a flaw in its mirror was found, astronauts fixed it in 1993, and Hubble went on to take some of the most famous images in astronomy.",
+  "realFacts": [
+   "Its Deep Field images showed thousands of galaxies",
+   "It helped measure the age and expansion of the universe",
+   "It has been serviced several times",
+   "The James Webb Telescope succeeded it in 2021"
+  ],
+  "wiki": [
+   "Hubble Space Telescope",
+   "Hubble Deep Field"
+  ]
+ },
+ {
+  "id": "human-genome-2003",
+  "year": 2003,
+  "era": "Science",
+  "title": "The Human Genome Is Sequenced",
+  "shortDesc": "Scientists finish reading the roughly three billion letters of human DNA.",
+  "fullDesc": "On April 14, 2003 the Human Genome Project announced it had finished sequencing the human genome, after a draft in 2000. It took 13 years, cost about 2.7 billion dollars, and involved labs in several countries.",
+  "realFacts": [
+   "Sequencing costs have since fallen enormously",
+   "It found that humans have about 20,000 genes",
+   "It helped launch personalised medicine",
+   "A fully complete sequence was published in 2022"
+  ],
+  "wiki": [
+   "Human Genome Project",
+   "Human genome"
+  ]
+ },
+ {
+  "id": "crispr-2012",
+  "year": 2012,
+  "era": "Science",
+  "title": "CRISPR Gene Editing Is Developed",
+  "shortDesc": "Two scientists show how to edit DNA with precision.",
+  "fullDesc": "In 2012 Jennifer Doudna and Emmanuelle Charpentier published a paper showing how the CRISPR system could be used to cut and edit DNA precisely. They won the 2020 Nobel Prize in Chemistry.",
+  "realFacts": [
+   "In 2018 a Chinese scientist created gene-edited babies and was jailed",
+   "The first CRISPR therapy was approved in 2023",
+   "It treats sickle cell disease",
+   "It raises questions about the ethics of editing human genes"
+  ],
+  "wiki": [
+   "CRISPR gene editing",
+   "Jennifer Doudna"
+  ]
+ },
+ {
+  "id": "higgs-boson-2012",
+  "year": 2012,
+  "era": "Science",
+  "title": "Physicists Discover the Higgs Boson",
+  "shortDesc": "CERN confirms the particle that gives matter its mass.",
+  "fullDesc": "On July 4, 2012 scientists at CERN in Switzerland announced the discovery of a particle consistent with the Higgs boson, predicted in 1964. Peter Higgs and François Englert shared the 2013 Nobel Prize in Physics.",
+  "realFacts": [
+   "It was found at the Large Hadron Collider",
+   "Its mass is roughly 130 times that of a proton",
+   "It completed the Standard Model of particle physics",
+   "It took nearly 50 years to find"
+  ],
+  "wiki": [
+   "Higgs boson",
+   "Large Hadron Collider"
+  ]
+ },
+ {
+  "id": "ligo-gravitational-waves-2015",
+  "year": 2015,
+  "era": "Science",
+  "title": "Gravitational Waves Are Detected",
+  "shortDesc": "A century after Einstein predicted them, ripples in spacetime are heard.",
+  "fullDesc": "On September 14, 2015 LIGO detected gravitational waves from two black holes merging about 1.3 billion light years away. The discovery was announced in February 2016, and won the 2017 Nobel Prize in Physics.",
+  "realFacts": [
+   "Einstein had predicted them in 1915",
+   "The signal lasted a fraction of a second",
+   "More mergers have been detected since",
+   "It opened a new way to observe the universe"
+  ],
+  "wiki": [
+   "First observation of gravitational waves",
+   "LIGO"
+  ]
+ },
+ {
+  "id": "james-webb-2021",
+  "year": 2021,
+  "era": "Science",
+  "title": "The James Webb Space Telescope Launches",
+  "shortDesc": "The most powerful space telescope ever sees the early universe.",
+  "fullDesc": "The James Webb Space Telescope launched on December 25, 2021 and its first images were released in July 2022. It observes in infrared from a point about 1.5 million kilometres from Earth.",
+  "realFacts": [
+   "It cost about 10 billion dollars",
+   "It has a mirror 6.5 metres across",
+   "It has seen some of the earliest galaxies",
+   "It studies the atmospheres of planets around other stars"
+  ],
+  "wiki": [
+   "James Webb Space Telescope",
+   "Webb's First Deep Field"
+  ]
+ }
+]

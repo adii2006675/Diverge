@@ -1,5 +1,6 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
+import { schedulePrefsPush } from '@/lib/prefsSync'
 
 // A short buzz on phones that support it (Android browsers; iPhones ignore it). Off by default and switched on in Settings.
 const KEY = 'diverge.haptics'
@@ -29,6 +30,7 @@ export function useHaptics(): [boolean, (on: boolean) => void] {
     try { window.localStorage.setItem(KEY, v ? 'on' : 'off') } catch { /* private mode */ }
     setOn(v)
     window.dispatchEvent(new Event(EVENT))
+    schedulePrefsPush()
     if (v) buzz(20)
   }, [])
   return [on, set]

@@ -135,7 +135,7 @@ export default function AuthPage() {
       }
     } catch (err: any) {
       console.error('Auth error:', err)
-      setError(err?.message || err?.error_description || JSON.stringify(err) || t('Something went wrong. Please try again.'))
+      setError(t(err?.message || err?.error_description || JSON.stringify(err) || 'Something went wrong. Please try again.'))
     }
     setLoading(false)
   }
